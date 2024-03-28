@@ -2,7 +2,7 @@
   "main": "index.js",
   "module": "dist/esm/index.js",
   "types": "dist/index.d.ts",
-  "name": "@graffiticode/l0001/form",
+  "name": "@graffiticode/l0002",
   "version": "1.0.0",
   "description": "",
   "scripts": {

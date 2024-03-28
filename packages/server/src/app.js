@@ -6,8 +6,7 @@ import { createRequire } from "module";
 import morgan from "morgan";
 import cors from "cors";
 import { buildValidateToken } from "./auth.js";
-import { buildCompile } from "./comp.js";
-import { compile as langCompile } from "./lang/index.js";
+import { compile } from "./compile.js";
 import * as routes from "./routes/index.js";
 
 EventEmitter.defaultMaxListeners = 15;
@@ -15,7 +14,6 @@ EventEmitter.defaultMaxListeners = 15;
 const env = process.env.NODE_ENV || "development";
 
 export const createApp = ({ authUrl } = {}) => {
-  const compile = buildCompile({ langCompile });
   const app = express();
   app.all("*", (req, res, next) => {
     if (req.headers.host.match(/^localhost/) === null) {

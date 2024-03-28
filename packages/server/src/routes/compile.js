@@ -19,7 +19,7 @@ function getItemsFromRequest(req) {
   } else if (body.id) {
     items = [].concat(body);
   } else {
-    items = body;
+    items = [].concat(body);
   }
   if (!(Array.isArray(items) && items.every(item => isNonNullObject(item)))) {
     throw new InvalidArgumentError("item must be a non-null object");
@@ -32,15 +32,8 @@ const buildPostCompileHandler = ({ compile }) => {
     console.log("httpHandler()");
     const auth = req.auth.context;
     const authToken = parseAuthTokenFromRequest(req);
-    const items = getItemsFromRequest(req);
-    let data = await Promise.all(items.map(async item => {
-      let { lang, code, data } = item;
-      console.log("postCompileHandler() item=" + JSON.stringify(item, null, 2));
-      return await compile({ auth, authToken, code, data });
-    }));
-    if (data.length === 1) {
-      data = data[0];
-    }
+    const data = await compile({ auth, authToken, lang: "0001", ...req.body });
+    console.log("postCompileHandler() data=" + JSON.stringify(data, null, 2));
     res.set("Access-Control-Allow-Origin", "*");
     res.status(200).json(createCompileSuccessResponse({ data }));
   });

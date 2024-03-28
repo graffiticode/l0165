@@ -1,6 +1,5 @@
 import { isNonEmptyString, getClientHost, getClientPort } from "../util.js";
 import { HttpError } from "./../errors/http.js";
-import { decodeID } from "./../id.js";
 import { gql, GraphQLClient } from "graphql-request";
 
 const normalizeIds = ids => ids.map(id => id.split(/[ ]/g).join("+"));
@@ -70,20 +69,6 @@ export const getStorageTypeForRequest = req => {
   return (
     req.get("x-graffiticode-storage-type") || "ephemeral"
   );
-};
-
-export const getStorageTypeForId = id => {
-  try {
-    const ids = decodeID(id);
-    if (ids[1] === 0) {
-      // [_, 0, _] means invalid id.
-      return "persistent";
-    }
-    return "ephemeral";
-  } catch (x) {
-    // Just in case.
-    return "persistent";
-  }
 };
 
 export const optionsHandler = buildHttpHandler(async (req, res) => {

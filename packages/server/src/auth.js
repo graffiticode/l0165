@@ -5,8 +5,7 @@ export const buildValidateToken = ({ authUrl = "https://auth.graffiticode.com" }
   const client = createClient(authUrl);
   return async token => {
     try {
-      const { uid } = await client.verifyToken(token);
-      return { uid };
+      return await client.verifyToken(token);
     } catch (err) {
       throw new UnauthenticatedError(`${err.code} - ${err.message}`);
     }
