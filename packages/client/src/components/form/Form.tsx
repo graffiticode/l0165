@@ -23,7 +23,7 @@ function render({state}) {
 export const Form = ({ state }) => {
   return (
     <div className="p-2">
-      { render({state}) }
+      {render({state})}
     </div>
   );
 }

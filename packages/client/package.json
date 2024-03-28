@@ -5,10 +5,12 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "build": "rollup -c --bundleConfigAsCjs",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "npm run build-component; npm run build-view",
+    "build-component": "rollup -c --bundleConfigAsCjs",
+    "build-view": "react-scripts build",
+    "start": "react-scripts start",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
@@ -16,7 +18,13 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-scripts": "^5.0.1"
+  },
   "devDependencies": {
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@chromatic-com/storybook": "^1.2.25",
     "@rollup/plugin-commonjs": "^25.0.7",
     "@rollup/plugin-node-resolve": "^15.2.3",
@@ -38,5 +46,17 @@
     "storybook": "^8.0.4",
     "tslib": "^2.6.2",
     "typescript": "^5.4.3"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
   }
 }
