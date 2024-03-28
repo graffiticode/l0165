@@ -46,6 +46,9 @@ export const createApp = ({ authUrl } = {}) => {
   const validateToken = buildValidateToken({ authUrl });
   app.use(routes.auth({ validateToken }));
 
+  // serve up static content from dist
+  app.use(express.static('public'));
+
   // Routes
   app.use("/", routes.root());
   app.use("/compile", routes.compile({compile}));

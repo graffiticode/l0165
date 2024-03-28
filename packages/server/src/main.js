@@ -2,7 +2,7 @@
 
 import { createApp } from "./app.js";
 
-const port = process.env.PORT || "50001";
+const port = process.env.PORT || "50002";
 const authUrl = process.env.AUTH_URL || "https://auth.graffiticode.org";
 
 const app = createApp({ authUrl });

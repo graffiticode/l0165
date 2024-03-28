@@ -12,6 +12,7 @@ import { InvalidArgumentError } from "../errors/http.js";
 
 function getItemsFromRequest(req) {
   const { body } = req;
+  console.log("getItemsFromRequest() body=" + JSON.stringify(body, null, 2));
   let items;
   if (body.item) {
     items = [].concat(body.item);
@@ -28,11 +29,13 @@ function getItemsFromRequest(req) {
 
 const buildPostCompileHandler = ({ compile }) => {
   return buildHttpHandler(async (req, res) => {
+    console.log("httpHandler()");
     const auth = req.auth.context;
     const authToken = parseAuthTokenFromRequest(req);
     const items = getItemsFromRequest(req);
     let data = await Promise.all(items.map(async item => {
       let { lang, code, data } = item;
+      console.log("postCompileHandler() item=" + JSON.stringify(item, null, 2));
       return await compile({ auth, authToken, code, data });
     }));
     if (data.length === 1) {
