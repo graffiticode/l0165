@@ -8,6 +8,10 @@ import cors from "cors";
 import { buildValidateToken } from "./auth.js";
 import { compile } from "./compile.js";
 import * as routes from "./routes/index.js";
+import path from "path";
+import { fileURLToPath } from 'url';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 EventEmitter.defaultMaxListeners = 15;
 
@@ -50,7 +54,9 @@ export const createApp = ({ authUrl } = {}) => {
   // Routes
   app.use("/", routes.root());
   app.use("/compile", routes.compile({compile}));
-  app.use("/form", routes.formRouter());
+  app.get('/form', function (req, res) {
+    res.sendFile(path.join(__dirname.slice(0, __dirname.length - "src/".length), 'public', 'index.html'));
+  });
 
   // Error handling
   app.use((err, req, res, next) => {

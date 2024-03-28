@@ -22,32 +22,34 @@ const checkLangParam = async ({ lang, pingLang }) => {
 
 const buildGetFormHandler = ({ pingLang, getBaseUrlForLanguage }) => () => {
   return buildHttpHandler(async (req, res) => {
-    // const ids = parseIdsFromRequest(req);
-    // const params = new URLSearchParams();
-    // if (req.auth.token) {
-    //   params.set("access_token", req.auth.token);
-    // }
-    // const protocol = req.headers.host.indexOf("localhost") !== -1 && "http" || "https";
-    // let lang;
-    // if (ids.length === 1) {
-    //   const id = ids[0];
-    //   const dataParams = new URLSearchParams();
-    //   dataParams.set("id", id);
-    //   if (req.auth.token) {
-    //     dataParams.set("access_token", req.auth.token);
-    //   }
-    //   const auth = req.auth.context;
-    //   const tasks = await getTasks({ auth, ids, req });
-    //   lang = tasks[0].lang;
-    //   params.set("id", id);
-    //   params.set("url", `${protocol}://${req.headers.host}/data?${dataParams.toString()}`);
-    // } else {
-    //   throw new InvalidArgumentError("Missing or invalid parameters");
-    // }
-    // lang = await checkLangParam({ lang, pingLang });
-    // const baseUrl = getBaseUrlForLanguage(lang);
-    // const formUrl = `${baseUrl}/form?${params.toString()}`;
-    res.redirect("https://google.com");
+    console.log("getFormHandler() req.query=" + JSON.stringify(req.query, null, 2));
+    res.send("<b>hello</b>");
+    return;
+    const ids = parseIdsFromRequest(req);
+    const params = new URLSearchParams();
+    if (req.auth.token) {
+      params.set("access_token", req.auth.token);
+    }
+    const protocol = req.headers.host.indexOf("localhost") !== -1 && "http" || "https";
+    let lang;
+    if (ids.length === 1) {
+      const id = ids[0];
+      const dataParams = new URLSearchParams();
+      dataParams.set("id", id);
+      if (req.auth.token) {
+        dataParams.set("access_token", req.auth.token);
+      }
+      const auth = req.auth.context;
+      const tasks = await getTasks({ auth, ids, req });
+      lang = tasks[0].lang;
+      params.set("id", id);
+      params.set("url", `${protocol}://${req.headers.host}/data?${dataParams.toString()}`);
+    } else {
+      throw new InvalidArgumentError("Missing or invalid parameters");
+    }
+    lang = await checkLangParam({ lang, pingLang });
+    const baseUrl = getBaseUrlForLanguage(lang);
+    const formUrl = `${baseUrl}/form?${params.toString()}`;
   });
 };
 
