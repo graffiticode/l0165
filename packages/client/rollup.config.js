@@ -14,12 +14,7 @@ export default [
     input: "src/index.ts",
     output: [
       {
-        file: packageJson.main,
-        format: "cjs",
-        sourcemap: true,
-      },
-      {
-        file: packageJson.module,
+        file: packageJson.exports,
         format: "esm",
         sourcemap: true,
       },

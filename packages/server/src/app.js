@@ -54,8 +54,8 @@ export const createApp = ({ authUrl } = {}) => {
   // Routes
   app.use("/", routes.root());
   app.use("/compile", routes.compile({compile}));
-  app.get('/form', function (req, res) {
-    res.sendFile(path.join(__dirname.slice(0, __dirname.length - "src/".length), 'public', 'index.html'));
+  app.get("/form", function (req, res) {
+    res.sendFile(path.join(__dirname.slice(0, __dirname.length - "/src".length), 'public', 'index.html'));
   });
 
   // Error handling

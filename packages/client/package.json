@@ -1,12 +1,11 @@
 {
-  "main": "index.js",
-  "module": "dist/esm/index.js",
+  "exports": "dist/esm/index.js",
   "types": "dist/index.d.ts",
   "name": "@graffiticode/l0002",
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "rollup": "rollup -c --bundleConfigAsCjs",
+    "build": "rollup -c --bundleConfigAsCjs",
     "test": "echo \"Error: no test specified\" && exit 1",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
