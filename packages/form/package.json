@@ -2,7 +2,7 @@
   "main": "index.js",
   "module": "dist/esm/index.js",
   "types": "dist/index.d.ts",
-  "name": "form",
+  "name": "@graffiticode/l0001/form",
   "version": "1.0.0",
   "description": "",
   "scripts": {
@@ -13,6 +13,10 @@
   },
   "author": "",
   "license": "ISC",
+  "peerDependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
   "devDependencies": {
     "@chromatic-com/storybook": "^1.2.25",
     "@rollup/plugin-commonjs": "^25.0.7",
@@ -28,7 +32,6 @@
     "@storybook/react-vite": "^8.0.4",
     "@storybook/test": "^8.0.4",
     "@types/react": "^18.2.73",
-    "react": "^18.2.0",
     "rollup": "^4.13.1",
     "rollup-plugin-dts": "^6.1.0",
     "rollup-plugin-peer-deps-external": "^2.2.4",
