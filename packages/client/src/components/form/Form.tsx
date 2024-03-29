@@ -12,6 +12,10 @@ function renderJSON(data, depth = 0) {
 }
 
 function render({state}) {
+  console.log("render() search=" + window.location.search);
+  const params = new URLSearchParams(window.location.search);
+  const url  = params.get("url");
+  console.log("render() url=" + url);
   const { data } = state;
   if (typeof data.hello === "string") {
     return <span className="text-sm">{`hello, ${data.hello}!`}</span>;

@@ -55,6 +55,7 @@ export const createApp = ({ authUrl } = {}) => {
   app.use("/", routes.root());
   app.use("/compile", routes.compile({compile}));
   app.get("/form", function (req, res) {
+    console.log("GET /form query=" + JSON.stringify(req.query, null, 2));
     res.sendFile(path.join(__dirname.slice(0, __dirname.length - "/src".length), 'public', 'index.html'));
   });
 

@@ -1,12 +1,12 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import './index.css';
-import { Form } from './components/form/Form';
+import { View } from "./view";
 
-ReactDOM.render(
+const root = createRoot(document.getElementById('root'));
+
+root.render(
   <React.StrictMode>
-    <Form state={{data: {hello: "world"}}} />
+    <View />
   </React.StrictMode>,
-  document.getElementById('root')
 );
-

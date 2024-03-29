@@ -7,7 +7,7 @@
   "scripts": {
     "build": "npm run build-component; npm run build-view",
     "build-component": "rollup -c --bundleConfigAsCjs",
-    "build-view": "react-scripts build",
+    "build-view": "react-scripts build; rm -rf ../server/public/static; cp -r build/* ../server/public",
     "start": "react-scripts start",
     "storybook": "storybook dev -p 6006",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -19,9 +19,11 @@
     "react-dom": "^18.2.0"
   },
   "dependencies": {
+    "bent": "^7.3.12",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-scripts": "^5.0.1"
+    "react-scripts": "^5.0.1",
+    "swr": "^2.2.5"
   },
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
