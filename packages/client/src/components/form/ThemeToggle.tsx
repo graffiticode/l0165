@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { useTheme } from 'next-themes'
 
 function SunIcon(props: React.ComponentPropsWithoutRef<'svg'>) {
   return (
@@ -21,27 +20,22 @@ function MoonIcon(props: React.ComponentPropsWithoutRef<'svg'>) {
   )
 }
 
-export function ThemeToggle() {
-  const [ resolvedTheme, setTheme ] = useState("light")
-  console.log("ThemeToggle() resolvedTheme=" + resolvedTheme);
-  const otherTheme = resolvedTheme === 'dark' ? 'light' : 'dark'
-  const [mounted, setMounted] = useState(false)
-
+export function ThemeToggle({ theme, setTheme }) {
+  const [ newTheme, setNewTheme ] = useState(theme)
+  const otherTheme = newTheme === 'dark' && 'light' || 'dark';
   useEffect(() => {
-    setMounted(true)
-  }, [])
-
+    setTheme(newTheme);
+  }, [newTheme]);
   return (
     <button
       type="button"
-      className="flex h-6 w-6 items-center justify-center rounded-md transition hover:bg-zinc-900/5 dark:hover:bg-white/5"
-      aria-label={mounted ? `Switch to ${otherTheme} theme` : 'Toggle theme'}
-      onClick={() => setTheme(otherTheme)}
+      className="flex items-center justify-center rounded-md transition"
+      onClick={() => setNewTheme(otherTheme)}
       >
       {
-        resolvedTheme === "light" &&
-          <SunIcon className="h-5 w-5 stroke-zinc-900" /> ||
-          <MoonIcon className="h-5 w-5 stroke-white" />
+        newTheme === "dark" &&
+          <MoonIcon className="h-5 w-5 stroke-white" /> ||
+          <SunIcon className="h-5 w-5 stroke-zinc-900" />
       }
     </button>
   )

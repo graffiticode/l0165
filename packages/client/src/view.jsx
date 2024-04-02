@@ -26,8 +26,7 @@ export const View = () => {
     }
   }, [id]);
 
-  const [ state ] = useState(createState({hello: "world"}, (data, { type, args }) => {
-    console.log("state.apply() type=" + type + " args=" + JSON.stringify(args, null, 2));
+  const [ state ] = useState(createState({}, (data, { type, args }) => {
     switch (type) {
     case "compiled":
       return {
@@ -55,7 +54,7 @@ export const View = () => {
     compile
   );
 
-  if (resp.data) {    
+  if (resp.data) {
     state.apply({
       type: "compiled",
       args: resp.data,

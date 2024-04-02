@@ -12,11 +12,21 @@ export default {
 export const Default = {
   args: {
     state: {
-      apply({type, args}) {
-      },
+      apply() {},
       data: {
         hello: "world",
-        darkMode: false,
+      },
+    },
+  },
+};
+
+export const Object = {
+  args: {
+    state: {
+      apply() {},
+      data: {
+        foo: 10,
+        bar: "baz",
       },
     },
   },

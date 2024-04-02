@@ -12,7 +12,6 @@ import { InvalidArgumentError } from "../errors/http.js";
 
 function getItemsFromRequest(req) {
   const { body } = req;
-  console.log("getItemsFromRequest() body=" + JSON.stringify(body, null, 2));
   let items;
   if (body.item) {
     items = [].concat(body.item);
