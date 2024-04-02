@@ -5,8 +5,8 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "build": "npm run build-component; npm run build-view",
-    "build-component": "rollup -c --bundleConfigAsCjs",
+    "build": "npm run build-package; npm run build-view",
+    "build-package": "rollup -c --bundleConfigAsCjs",
     "build-view": "react-scripts build; rm -rf ../server/public/static; cp -r build/* ../server/public",
     "dev": "node src/index.js",
     "start": "react-scripts start",
