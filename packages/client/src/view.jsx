@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import useSWR from 'swr';
-//import { Form } from "@graffiticode/l0002";
-import { Form } from "./components/form";
+import { Form } from "@graffiticode/l0002";
+//import { Form } from "./components/form";
 import { createState } from "./lib/state";
 import { compile } from './swr/fetchers';
 

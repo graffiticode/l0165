@@ -2,7 +2,7 @@
   "exports": "dist/esm/index.js",
   "types": "dist/index.d.ts",
   "name": "@graffiticode/l0002",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "",
   "scripts": {
     "build": "npm run build-package; npm run build-view",
@@ -21,6 +21,7 @@
     "react-dom": "^18.2.0"
   },
   "dependencies": {
+    "@graffiticode/l0002": "^1.0.2",
     "bent": "^7.3.12",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
