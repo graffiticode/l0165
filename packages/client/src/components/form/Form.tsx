@@ -1,4 +1,4 @@
-//import React, { useState, useEffect, useRef } from 'react';
+import { ThemeToggle } from "./ThemeToggle";
 
 function isNonNullObject(obj) {
   return (typeof obj === "object" && obj !== null);
@@ -12,10 +12,6 @@ function renderJSON(data, depth = 0) {
 }
 
 function render({state}) {
-  console.log("render() search=" + window.location.search);
-  const params = new URLSearchParams(window.location.search);
-  const url  = params.get("url");
-  console.log("render() url=" + url);
   const { data } = state;
   if (typeof data.hello === "string") {
     return <span className="text-sm">{`hello, ${data.hello}!`}</span>;
@@ -26,8 +22,9 @@ function render({state}) {
 
 export const Form = ({ state }) => {
   return (
-    <div className="p-2">
+    <div className="p-2 bg-gray-400 font-mono text-lg">
       {render({state})}
+      <ThemeToggle />
     </div>
   );
 }

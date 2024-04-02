@@ -1,7 +1,7 @@
 import { Form } from './Form';
 
 export default {
-  title: 'Languages/L0001',
+  title: 'L0002',
   component: Form,
   parameters: {
     layout: 'centered',
@@ -11,12 +11,12 @@ export default {
 
 export const Default = {
   args: {
-    setHeight: () => {},
     state: {
       apply({type, args}) {
       },
       data: {
-        "hello": "world",
+        hello: "world",
+        darkMode: false,
       },
     },
   },

@@ -2,6 +2,8 @@
 
 # emacs
 *~
+*#
+.#*
 
 # dependencies
 node_modules
@@ -13,6 +15,8 @@ node_modules
 
 # production
 build
+static
+storybook-static
 
 # misc
 .DS_Store

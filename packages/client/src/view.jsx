@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import useSWR from 'swr';
+//import { Form } from "@graffiticode/l0002";
 import { Form } from "./components/form";
 import { createState } from "./lib/state";
 import { compile } from './swr/fetchers';
@@ -25,9 +26,7 @@ export const View = () => {
     }
   }, [id]);
 
-  console.log("View() id=" + id + " accessToken=" + accessToken);
-  
-  const [ state ] = useState(createState({}, (data, { type, args }) => {
+  const [ state ] = useState(createState({hello: "world"}, (data, { type, args }) => {
     console.log("state.apply() type=" + type + " args=" + JSON.stringify(args, null, 2));
     switch (type) {
     case "compiled":
@@ -64,13 +63,9 @@ export const View = () => {
     setRecompile(false);
   }
 
-  useEffect(() => {
-    window.parent.postMessage({height}, "*");
-  }, [height]);
-
   return (
     isNonNullNonEmptyObject(state.data) &&
-      <Form state={state} setHeight={setHeight} /> ||
+      <Form state={state} /> ||
       <div />
   );
 }
