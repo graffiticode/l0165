@@ -6,7 +6,8 @@
     "packages/server"
   ],
   "scripts": {
-    "server": "npm run -w packages/server dev",
+    "build": "npm run -w packages/client build-view",
+    "start": "npm run -w packages/server dev",
     "lint": "eslint test/",
     "lint:fix": "eslint --fix test/"
   },
