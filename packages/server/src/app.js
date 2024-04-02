@@ -45,8 +45,8 @@ export const createApp = ({ authUrl } = {}) => {
   app.use(methodOverride());
 
   // Authentication
-  const validateToken = buildValidateToken({ authUrl });
-  app.use(routes.auth({ validateToken }));
+  // const validateToken = buildValidateToken({ authUrl });
+  // app.use(routes.auth({ validateToken }));
 
   // serve up static content from dist
   app.use(express.static('public'));
