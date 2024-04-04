@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
+
 import { ThemeToggle } from "./ThemeToggle";
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(' ')
 }
 
-function renderJSON(data, depth = 0) {
+function renderJSON(data) {
   delete data.schema;
   delete data.theme;
   return (

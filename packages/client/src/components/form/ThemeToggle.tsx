@@ -1,3 +1,4 @@
+import React from 'react';
 import { useEffect, useState } from 'react'
 
 function SunIcon(props: React.ComponentPropsWithoutRef<'svg'>) {

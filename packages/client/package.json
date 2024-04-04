@@ -1,71 +1,47 @@
 {
-  "exports": "dist/esm/index.js",
-  "types": "dist/index.d.ts",
-  "name": "@graffiticode/l0002",
-  "version": "1.0.2",
-  "description": "",
-  "scripts": {
-    "build": "npm run build-package; npm run build-view",
-    "build-package": "rollup -c --bundleConfigAsCjs",
-    "build-view": "react-scripts build; rm -rf ../server/public/static; cp -r build/* ../server/public",
-    "dev": "node src/index.js",
-    "start": "react-scripts start",
-    "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build",
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "name": "@graffiticode/component-test",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "main": "./dist/index.umd.js",
+  "module": "./dist/index.es.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "Exports": {
+    ".": {
+      "import": "./dist/index.es.js",
+      "require": "./dist/index.umd.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./style.css": "./dist/style.css"
   },
-  "author": "",
-  "license": "ISC",
-  "peerDependencies": {
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "preview": "vite preview"
+  },
+  "dependencies": {
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
-  "dependencies": {
-    "@graffiticode/l0002": "^1.0.2",
-    "bent": "^7.3.12",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "react-scripts": "^5.0.1",
-    "swr": "^2.2.5"
-  },
   "devDependencies": {
-    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
-    "@chromatic-com/storybook": "^1.2.25",
-    "@rollup/plugin-commonjs": "^25.0.7",
-    "@rollup/plugin-node-resolve": "^15.2.3",
-    "@rollup/plugin-terser": "^0.4.4",
-    "@rollup/plugin-typescript": "^11.1.6",
-    "@storybook/addon-essentials": "^8.0.4",
-    "@storybook/addon-interactions": "^8.0.4",
-    "@storybook/addon-links": "^8.0.4",
-    "@storybook/addon-onboarding": "^8.0.4",
-    "@storybook/blocks": "^8.0.4",
-    "@storybook/react": "^8.0.4",
-    "@storybook/react-vite": "^8.0.4",
-    "@storybook/test": "^8.0.4",
-    "@types/react": "^18.2.73",
+    "@types/node": "^20.12.4",
+    "@types/react": "^18.2.66",
+    "@types/react-dom": "^18.2.22",
+    "@typescript-eslint/eslint-plugin": "^7.2.0",
+    "@typescript-eslint/parser": "^7.2.0",
+    "@vitejs/plugin-react": "^4.2.1",
     "autoprefixer": "^10.4.19",
+    "eslint": "^8.57.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.6",
     "postcss": "^8.4.38",
-    "rollup": "^4.13.1",
-    "rollup-plugin-dev": "^2.0.4",
-    "rollup-plugin-dts": "^6.1.0",
-    "rollup-plugin-peer-deps-external": "^2.2.4",
-    "rollup-plugin-postcss": "^4.0.2",
-    "storybook": "^8.0.4",
     "tailwindcss": "^3.4.3",
-    "tslib": "^2.6.2",
-    "typescript": "^5.4.3"
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
+    "typescript": "^5.2.2",
+    "vite": "^5.2.0",
+    "vite-plugin-dts": "^3.8.1"
   }
 }

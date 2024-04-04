@@ -29,7 +29,7 @@ function getItemsFromRequest(req) {
 const buildPostCompileHandler = ({ compile }) => {
   return buildHttpHandler(async (req, res) => {
     console.log("httpHandler()");
-    const auth = ""; req.auth.context;
+    const auth = ""; //req.auth.context;
     const authToken = ""; //parseAuthTokenFromRequest(req);
     const data = await compile({ auth, authToken, lang: "0001", ...req.body });
     console.log("postCompileHandler() data=" + JSON.stringify(data, null, 2));
