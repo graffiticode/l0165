@@ -8,6 +8,11 @@
     "hello": {
       "description": "The person, place or thing being greeted",
       "type": "string",
+    },
+    "theme": {
+      "description": "Light or dark theme",
+      "type": "string",
+      "enum": ["light", "dark"],
     }
   },
   "required": ["hello"]
