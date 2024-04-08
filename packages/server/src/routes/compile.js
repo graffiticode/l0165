@@ -3,7 +3,6 @@ import { buildPostTasks } from "./tasks.js";
 import { buildGetData } from "./data.js";
 import {
   buildHttpHandler,
-  createCompileSuccessResponse,
   parseAuthTokenFromRequest,
   optionsHandler
 } from "./utils.js";
@@ -26,15 +25,14 @@ function getItemsFromRequest(req) {
   return items;
 }
 
+// TODO Wire up auth.
 const buildPostCompileHandler = ({ compile }) => {
   return buildHttpHandler(async (req, res) => {
-    console.log("httpHandler()");
     const auth = ""; //req.auth.context;
     const authToken = ""; //parseAuthTokenFromRequest(req);
     const data = await compile({ auth, authToken, lang: "0001", ...req.body });
-    console.log("postCompileHandler() data=" + JSON.stringify(data, null, 2));
     res.set("Access-Control-Allow-Origin", "*");
-    res.status(200).json(createCompileSuccessResponse({ data }));
+    res.status(200).json(data);
   });
 };
 

@@ -1,7 +1,7 @@
 {
   "name": "@graffiticode/l0002",
   "private": false,
-  "version": "1.0.4",
+  "version": "0.0.2",
   "type": "module",
   "main": "./dist/index.es.js",
   "module": "./dist/index.es.js",
