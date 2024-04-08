@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import useSWR from 'swr';
 import { Form } from "./components";
-//import { Form } from "./components/form";
 import { createState } from "./lib/state";
 import { compile } from './swr/fetchers';
+import assert from "assert";
 
 function isNonNullNonEmptyObject(obj) {
   return (
@@ -14,11 +14,17 @@ function isNonNullNonEmptyObject(obj) {
 }
 
 export const View = () => {
-  const params = new URLSearchParams(window.location.search);
-  const id = params.get("id");
-  const accessToken = params.get("access_token");
+  const [ id, setId ] = useState();
+  const [ accessToken, setAccessToken ] = useState();
   const [ recompile, setRecompile ] = useState(true);
   const [ height, setHeight ] = useState(0);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setId(params.get("id"));
+    setAccessToken(params.get("access_token"));
+  }, []);
+
   useEffect(() => {
     // If `id` changes, then recompile.
     if (id) {
@@ -54,7 +60,8 @@ export const View = () => {
     compile
   );
 
-  if (resp.data) {
+  if (resp.data) { 
+    assert(resp.data.data === undefined);
     state.apply({
       type: "compiled",
       args: resp.data,

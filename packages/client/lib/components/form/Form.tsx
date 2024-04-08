@@ -24,16 +24,14 @@ function render({ state }) {
 }
 
 export const Form = ({ state }) => {
-  const [ theme, setTheme ] = useState(state?.data?.theme || "light");
+  const [ theme, setTheme ] = useState(state.data.theme || "light");
   useEffect(() => {
-    if (theme !== state?.data?.theme) {
-      state.apply({
-        type: "change",
-        args: {
-          theme,
-        },
-      });
-    }
+    state.apply({
+      type: "change",
+      args: {
+        theme,
+      },
+    });
   }, [theme]);
   return (
     <div

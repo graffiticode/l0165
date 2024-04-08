@@ -1,7 +1,9 @@
 import bent from "bent";
 //import { GraphQLClient, gql } from 'graphql-request';
 
-const apiUrl = window.location.host.indexOf("localhost") >= 0 && "http://localhost:3100" || "https://api.graffiticode.com";
+const apiUrl = process.env.NEXT_PUBLIC_GC_API_URL || "https://api.graffiticode.com";
+
+console.log("API_URL=" + apiUrl);
 
 const getApiString = bent(apiUrl, "GET", "string");
 const getApiJSON = bent(apiUrl, "GET", "json");

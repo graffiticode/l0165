@@ -20,7 +20,35 @@ export const Default = {
   },
 };
 
-export const Object = {
+export const Dark = {
+  args: {
+    state: {
+      apply({ type, args }) {
+        console.log("apply() type=" + type + " args=" + JSON.stringify(args));
+      },
+      data: {
+        theme: "dark",
+        hello: "world",
+      },
+    },
+  },
+};
+
+export const Light = {
+  args: {
+    state: {
+      apply({ type, args }) {
+        console.log("apply() type=" + type + " args=" + JSON.stringify(args));
+      },
+      data: {
+        theme: "light",
+        hello: "world",
+      },
+    },
+  },
+};
+
+export const Json = {
   args: {
     state: {
       apply() {},

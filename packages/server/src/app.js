@@ -50,6 +50,7 @@ export const createApp = ({ authUrl } = {}) => {
 
   // serve up static content from dist
   app.use(express.static('dist'));
+  app.use(express.static('public'));
 
   // Routes
   app.use("/", routes.root());

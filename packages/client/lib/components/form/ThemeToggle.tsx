@@ -22,19 +22,15 @@ function MoonIcon(props: React.ComponentPropsWithoutRef<'svg'>) {
 }
 
 export function ThemeToggle({ theme, setTheme }) {
-  const [ newTheme, setNewTheme ] = useState(theme)
-  const otherTheme = newTheme === 'dark' && 'light' || 'dark';
-  useEffect(() => {
-    setTheme(newTheme);
-  }, [newTheme]);
+  const otherTheme = theme === 'dark' && 'light' || 'dark';
   return (
     <button
       type="button"
       className="flex items-center justify-center rounded-md transition"
-      onClick={() => setNewTheme(otherTheme)}
+      onClick={() => setTheme(otherTheme)}
       >
       {
-        newTheme === "dark" &&
+        theme === "dark" &&
           <MoonIcon className="h-5 w-5 stroke-white" /> ||
           <SunIcon className="h-5 w-5 stroke-zinc-900" />
       }
