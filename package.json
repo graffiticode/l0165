@@ -2,12 +2,12 @@
   "private": true,
   "type": "module",
   "workspaces": [
-    "packages/client",
-    "packages/server"
+    "packages/api",
+    "packages/web"
   ],
   "scripts": {
-    "build": "npm run -w packages/client build; npm run -w packages/server build",
-    "start": "npm run -w packages/server dev",
+    "build": "npm run -w packages/web build; npm run -w packages/api build",
+    "start": "npm run -w packages/api dev",
     "lint": "eslint test/",
     "lint:fix": "eslint --fix test/"
   },
