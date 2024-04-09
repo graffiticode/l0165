@@ -1,0 +1,28 @@
+{
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/api",
+    "packages/web"
+  ],
+  "scripts": {
+    "build": "npm run -w packages/web build; npm run -w packages/api build",
+    "start": "npm run -w packages/api dev",
+    "lint": "eslint test/",
+    "lint:fix": "eslint --fix test/"
+  },
+  "devDependencies": {
+    "eslint": "^8.44.0",
+    "eslint-config-standard": "^17.1.0",
+    "eslint-plugin-import": "^2.27.5",
+    "eslint-plugin-n": "^16.0.1",
+    "eslint-plugin-promise": "^6.1.1",
+    "jest": "^29.6.1"
+  },
+  "jest": {
+    "testPathIgnorePatterns": [
+      "<rootDir>/packages/",
+      "<rootDir>/node_modules/"
+    ]
+  }
+}
