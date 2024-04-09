@@ -24,6 +24,7 @@ function render({ state }) {
 }
 
 export const Form = ({ state }) => {
+  console.log("Form() state=" + JSON.stringify(state, null, 2));
   const [ theme, setTheme ] = useState(state.data.theme || "light");
   useEffect(() => {
     state.apply({
