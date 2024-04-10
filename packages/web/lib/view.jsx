@@ -4,6 +4,7 @@ import { Form } from "./components";
 import { createState } from "./lib/state";
 import { compile } from './swr/fetchers';
 import assert from "assert";
+import './index.css';
 
 function isNonNullNonEmptyObject(obj) {
   return (
@@ -23,6 +24,7 @@ export const View = () => {
     const params = new URLSearchParams(window.location.search);
     setId(params.get("id"));
     setAccessToken(params.get("access_token"));
+    console.log("L0002/View()");
   }, []);
 
   useEffect(() => {
