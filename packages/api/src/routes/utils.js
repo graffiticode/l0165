@@ -12,22 +12,14 @@ export const parseIdsFromRequest = req => {
   return [];
 };
 
-export const parseAuthFromRequest = req => {
-  const { access_token: queryAuth } = req.query;
-  if (isNonEmptyString(queryAuth)) {
-    return queryAuth;
-  }
-  const { auth: bodyAuth } = req.body;
-  if (isNonEmptyString(bodyAuth)) {
-    return bodyAuth;
-  }
-  return null;
-};
-
 export const parseAuthTokenFromRequest = req => {
-  const { access_token: queryAccessToken } = req.query;
-  if (isNonEmptyString(queryAccessToken)) {
-    return queryAccessToken;
+  const { access_token: queryAuthToken } = req.query;
+  if (isNonEmptyString(queryAuthToken)) {
+    return queryAuthToken;
+  }
+  const { auth: bodyAuthToken } = req.body;
+  if (isNonEmptyString(bodyAuthToken)) {
+    return bodyAuthToken;
   }
   let headerAuthToken = req.get("Authorization");
   if (isNonEmptyString(headerAuthToken)) {

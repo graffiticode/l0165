@@ -27,7 +27,7 @@ function getItemsFromRequest(req) {
 const buildPostCompileHandler = ({ compile }) => {
   return buildHttpHandler(async (req, res) => {
     const auth = ""; //req.auth.context;
-    const authToken = ""; //parseAuthTokenFromRequest(req);
+    const authToken = parseAuthTokenFromRequest(req);
     const data = await compile({ auth, authToken, lang: "0001", ...req.body });
     res.set("Access-Control-Allow-Origin", "*");
     res.status(200).json(data);
