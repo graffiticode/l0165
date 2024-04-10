@@ -2,7 +2,6 @@ import bent from "bent";
 
 function getApiUrl() {
   const host = window.document.location.host;
-  console.log("getApiUrl() host=" + host);
   return host.indexOf("localhost") === 0 && "http://localhost:3100" || "https://api.graffiticode.com";
 }
 
