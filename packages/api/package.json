@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc && vite build",
     "dev": "FIRESTORE_EMULATOR_HOST=\"127.0.0.1:8080\" AUTH_URL=\"http://127.0.0.1:4100\" nodemon --exec \"node src/main.js\"",
-    "start": "node -r @graffiticode/tracing src/app.js",
+    "start": "node -r @graffiticode/tracing src/main.js",
     "coverage": "nyc npm run test",
     "lint": "eslint src/ tools/",
     "lint:fix": "eslint --fix src/ tools/"
