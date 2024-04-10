@@ -8,7 +8,7 @@ import tailwindcss from "tailwindcss";
 export default defineConfig({
   build: {
     lib: {
-      entry: resolve(__dirname, "./lib/index.ts"),
+      entry: resolve(__dirname, "./src/index.ts"),
       name: "react-form",
       fileName: (format) => `index.${format}.js`,
     },
