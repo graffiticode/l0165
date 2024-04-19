@@ -20,6 +20,23 @@ export const getApiTask = async ({ auth, id }) => {
   }
 };
 
+export const getApiData = async ({ accessToken, id }) => {
+  try {
+    const apiUrl = getApiUrl();
+    const getApiJSON = bent(apiUrl, "GET", "json");
+    const headers = {
+      //"Authorization": accessToken
+    };
+    const { status, error, data } = await getApiJSON(`/data?id=${id}`, null, headers);
+    if (status !== "success") {
+      throw new Error(`failed to get task ${id}: ${error.message}`);
+    }
+    return data;
+  } catch (err) {
+    throw err;
+  }
+};
+
 export const postApiCompile = async ({ accessToken, id, data }) => {
   try {
     const headers = {

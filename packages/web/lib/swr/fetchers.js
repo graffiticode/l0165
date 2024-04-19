@@ -1,4 +1,5 @@
-import { postApiCompile } from "../lib/api";
+import { postApiCompile, getApiData } from "../lib/api";
+
 export const compile = async ({ accessToken, id, data }) => {
   try {
     const index = Object.keys(data).length > 0 && 1 || 2; // Empty data so use full id.
@@ -7,5 +8,13 @@ export const compile = async ({ accessToken, id, data }) => {
   } catch (x) {
     console.log("./swr/fetchers/compile()");
     console.log(x.stack);
+  }
+};
+
+export const getData = async ({ accessToken, id }) => {
+  try {
+    return await getApiData({accessToken, id});
+  } catch (err) {
+    throw err;
   }
 };

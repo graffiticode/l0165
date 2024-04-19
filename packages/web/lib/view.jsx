@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import useSWR from 'swr';
 import { Form } from "./components";
 import { createState } from "./lib/state";
-import { compile } from './swr/fetchers';
+import { compile, getData } from './swr/fetchers';
 import assert from "assert";
 import './index.css';
 
@@ -17,24 +17,29 @@ function isNonNullNonEmptyObject(obj) {
 export const View = () => {
   const [ id, setId ] = useState();
   const [ accessToken, setAccessToken ] = useState();
-  const [ recompile, setRecompile ] = useState(true);
+  const [ doGetData, setDoGetData ] = useState(true);
+  const [ recompile, setRecompile ] = useState(false);
   const [ height, setHeight ] = useState(0);
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    setId(params.get("id"));
-    setAccessToken(params.get("access_token"));
-    console.log("L0002/View()");
-  }, []);
+    if (window.location.search) {
+      const params = new URLSearchParams(window.location.search);
+      setId(params.get("id"));
+      setAccessToken(params.get("access_token"));
+      console.log("L0002/View()");
+    }
+  }, [window.location.search]);
 
   useEffect(() => {
     // If `id` changes, then recompile.
     if (id) {
-      setRecompile(true);
+      console.log("L0002/View() id=" + id);
+      setDoGetData(true);
     }
   }, [id]);
 
   const [ state ] = useState(createState({}, (data, { type, args }) => {
+    console.log("L0002 state.apply() type=" + type + " args=" + JSON.stringify(args, null, 2));
     switch (type) {
     case "compiled":
       return {
@@ -53,7 +58,24 @@ export const View = () => {
     }
   }));
 
-  const resp = useSWR(
+  const dataResp = useSWR(
+    doGetData && id && {
+      accessToken,
+      id,
+    },
+    getData
+  );
+
+  if (dataResp.data) {
+    assert(dataResp.data.data === undefined);
+    state.apply({
+      type: "compiled",
+      args: dataResp.data,
+    });
+    setDoGetData(false);
+  }
+
+  const compileResp = useSWR(
     recompile && accessToken && id && {
       accessToken,
       id,
@@ -62,11 +84,11 @@ export const View = () => {
     compile
   );
 
-  if (resp.data) { 
-    assert(resp.data.data === undefined);
+  if (compileResp.data) {
+    assert(compileResp.data.data === undefined);
     state.apply({
       type: "compiled",
-      args: resp.data,
+      args: compileResp.data,
     });
     setRecompile(false);
   }
