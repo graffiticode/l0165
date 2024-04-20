@@ -34,8 +34,8 @@ export class Transformer extends BasisTransformer {
       const err = e0;
       const val = v0.pop();
       resume(err, {
-        ...data,
         ...val,
+        ...data,
       });
     });
   }

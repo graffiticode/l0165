@@ -25,7 +25,7 @@ export const getApiData = async ({ accessToken, id }) => {
     const apiUrl = getApiUrl();
     const getApiJSON = bent(apiUrl, "GET", "json");
     const headers = {
-      //"Authorization": accessToken
+      "Authorization": accessToken || "",
     };
     const { status, error, data } = await getApiJSON(`/data?id=${id}`, null, headers);
     if (status !== "success") {

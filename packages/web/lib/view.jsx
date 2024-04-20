@@ -25,15 +25,14 @@ export const View = () => {
     if (window.location.search) {
       const params = new URLSearchParams(window.location.search);
       setId(params.get("id"));
-      setAccessToken(params.get("access_token"));
-      console.log("L0002/View()");
+      const accessToken = params.get("access_token");
+      setAccessToken(accessToken);
     }
   }, [window.location.search]);
 
   useEffect(() => {
     // If `id` changes, then recompile.
     if (id) {
-      console.log("L0002/View() id=" + id);
       setDoGetData(true);
     }
   }, [id]);
