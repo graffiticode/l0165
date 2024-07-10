@@ -38,7 +38,7 @@ export const View = () => {
   }, [id]);
 
   const [ state ] = useState(createState({}, (data, { type, args }) => {
-    // console.log("L0002 state.apply() type=" + type + " args=" + JSON.stringify(args, null, 2));
+    console.log("L0002 state.apply() type=" + type + " args=" + JSON.stringify(args, null, 2));
     switch (type) {
     case "compiled":
       return {
@@ -66,6 +66,7 @@ export const View = () => {
   );
 
   if (dataResp.data) {
+    console.log("L0002 View dataResp=" + JSON.stringify(dataResp, null, 2));
     assert(dataResp.data.data === undefined);
     state.apply({
       type: "compiled",

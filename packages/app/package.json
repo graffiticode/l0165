@@ -25,6 +25,7 @@
     "build-storybook": "storybook build"
   },
   "dependencies": {
+    "assert": "^2.1.0",
     "bent": "^7.3.12",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
