@@ -3,10 +3,10 @@
   "type": "module",
   "workspaces": [
     "packages/api",
-    "packages/web"
+    "packages/app"
   ],
   "scripts": {
-    "build": "npm run -w packages/web build; npm run -w packages/api build",
+    "build": "npm run -w packages/app build; npm run -w packages/api build",
     "dev": "npm run -w packages/api dev",
     "start": "npm run -w packages/api start",
     "lint": "eslint test/",

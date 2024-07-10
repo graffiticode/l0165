@@ -1,8 +1,8 @@
-{
+ {
   "$schema": "",
   "$id": "",
-  "title": "L0001",
-  "description": "A language for writing 'hello, world!'",
+  "title": "L0002",
+  "description": "A starter language",
   "type": "object",
   "properties": {
     "hello": {
