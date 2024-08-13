@@ -5,6 +5,12 @@ window.gcexports.globalLexicon = {
     "cls": "function",
     "length": 1
   },
+  "image" : {
+    "tk": 1,
+    "name": "IMAGE",
+    "cls": "function",
+    "length": 1
+  },
   "val" : { "tk": 1, "name": "VAL", "cls": "function", "length": 2 , "arity": 2 },
   "key" : { "tk": 1, "name": "KEY", "cls": "function", "length": 2 , "arity": 2 },
   "len" : { "tk": 1, "name": "LEN", "cls": "function", "length": 1 , "arity": 1 },

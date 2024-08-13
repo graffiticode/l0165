@@ -28,6 +28,18 @@ export class Transformer extends BasisTransformer {
     });
   }
 
+  IMAGE(node, options, resume) {
+    this.visit(node.elts[0], options, async (e0, v0) => {
+      const data = options?.data || {};
+      const err = [];
+      const val = {
+        image: v0,
+        ...data,
+      };
+      resume(err, val);
+    });
+  }
+
   PROG(node, options, resume) {
     this.visit(node.elts[0], options, async (e0, v0) => {
       const data = options?.data || {};

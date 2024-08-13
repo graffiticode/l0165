@@ -13,6 +13,11 @@
       "description": "Light or dark theme",
       "type": "string",
       "enum": ["light", "dark"],
+    },
+    "image": {
+      "description": "URL of an image to display",
+      "type": "string",
+      "subtype": "url"
     }
   },
   "required": ["hello"]

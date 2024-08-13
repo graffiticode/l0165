@@ -19,6 +19,9 @@ function render({ state }) {
   const { data } = state;
   if (typeof data?.hello === "string") {
     return <span className="text-sm">{`hello, ${data.hello}!`}</span>;
+  } else if (typeof data.image === "string") {
+    console.log("render() data=" + JSON.stringify(data, null, 2));
+    return <img src={data.image} />;
   } else {
     return renderJSON(data);
   }
