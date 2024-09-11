@@ -6,6 +6,9 @@ import tailwindcss from "tailwindcss";
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  define: {
+    'process.env': {}
+  },
   build: {
     lib: {
       entry: resolve(__dirname, "./lib/index.ts"),

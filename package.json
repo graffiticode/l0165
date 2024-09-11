@@ -10,7 +10,8 @@
     "dev": "npm run -w packages/api dev",
     "start": "npm run -w packages/api start",
     "lint": "eslint test/",
-    "lint:fix": "eslint --fix test/"
+    "lint:fix": "eslint --fix test/",
+    "pack": "npm run -w packages/app pack"
   },
   "devDependencies": {
     "eslint": "^8.44.0",

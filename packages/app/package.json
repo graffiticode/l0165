@@ -1,6 +1,6 @@
 {
   "name": "@graffiticode/l0002",
-  "version": "0.0.6",
+  "version": "0.0.1",
   "type": "module",
   "main": "./dist/index.es.js",
   "module": "./dist/index.es.js",
@@ -22,7 +22,8 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "pack": "rm *.tgz; npm pack ."
   },
   "dependencies": {
     "assert": "^2.1.0",
