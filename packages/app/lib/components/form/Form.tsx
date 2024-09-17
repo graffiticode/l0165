@@ -28,7 +28,7 @@ function render({ state }) {
 }
 
 export const Form = ({ state }) => {
-  const [ theme, setTheme ] = useState(state.data.theme || "light");
+  const [ theme, setTheme ] = useState(state.data.theme);
   useEffect(() => {
     state.apply({
       type: "change",
@@ -37,14 +37,15 @@ export const Form = ({ state }) => {
       },
     });
   }, [theme]);
+  console.log("L0002 Form() theme=" + theme);
   return (
     <div
       className={classNames(
-        theme === "light" && "bg-white text-zinc-900" || "bg-zinc-900 text-white",
+        theme === "dark" && "bg-zinc-900 text-white" || "bg-white text-zinc-900",
         "rounded-md font-mono flex flex-col gap-4 p-4"
       )}
     >
-      <ThemeToggle theme={theme} setTheme={setTheme} />
+      {theme !== undefined && <ThemeToggle theme={theme} setTheme={setTheme} />}
       {render({state})}
     </div>
   );

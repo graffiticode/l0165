@@ -3,13 +3,19 @@ window.gcexports.globalLexicon = {
     "tk": 1,
     "name": "HELLO",
     "cls": "function",
-    "length": 1
+    "length": 1,
   },
   "image" : {
     "tk": 1,
     "name": "IMAGE",
     "cls": "function",
-    "length": 1
+    "length": 1,
+  },
+  "theme" : {
+    "tk": 1,
+    "name": "THEME",
+    "cls": "function",
+    "length": 2,
   },
   "val" : { "tk": 1, "name": "VAL", "cls": "function", "length": 2 , "arity": 2 },
   "key" : { "tk": 1, "name": "KEY", "cls": "function", "length": 2 , "arity": 2 },
