@@ -1,6 +1,6 @@
 {
   "name": "@graffiticode/l0002",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "type": "module",
   "main": "./dist/index.es.js",
   "module": "./dist/index.es.js",
@@ -23,7 +23,8 @@
     "preview": "vite preview",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "pack": "rm *.tgz; npm pack ."
+    "pack": "rm *.tgz; npm pack .",
+    "publish": "npm publish --access public"
   },
   "dependencies": {
     "assert": "^2.1.0",

@@ -12,7 +12,8 @@
     "start": "npm run -w packages/api start",
     "lint": "eslint test/",
     "lint:fix": "eslint --fix test/",
-    "pack": "npm run -w packages/app pack"
+    "pack": "npm run -w packages/app pack",
+    "publish": "npm run -w packages/app publish"
   },
   "devDependencies": {
     "eslint": "^8.44.0",
