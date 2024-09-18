@@ -13,7 +13,7 @@
     "lint": "eslint test/",
     "lint:fix": "eslint --fix test/",
     "pack": "npm run -w packages/app pack",
-    "publish": "npm run -w packages/app publish"
+    "publish": "npm -w packages/app publish"
   },
   "devDependencies": {
     "eslint": "^8.44.0",
