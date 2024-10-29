@@ -52,23 +52,7 @@ export const postApiCompile = async ({ accessToken, id, data }) => {
     }
     return resp.data;
   } catch (err) {
-    console.log("postApiCompile() err=" + err);
+    console.log("L0002/postApiCompile() err=" + err);
     throw err;
   }
 };
-
-// export const postCompile = async ({ id, data }) => {
-//   const query = gql`
-//     mutation (id: String!, data: String!) {
-//       compile(id: $id, data: $data)
-//     }
-//   `;
-//   // const token = await user.getToken();
-//   const client = new GraphQLClient("/api", {
-//     headers: {
-//       // authorization: token,
-//     }
-//   });
-//   return client.request(query, { id, daa }).then(data => data.compile);
-// };
-

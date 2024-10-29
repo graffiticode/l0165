@@ -7,12 +7,12 @@
   "properties": {
     "hello": {
       "description": "The person, place or thing being greeted",
-      "type": "string",
+      "type": "string"
     },
     "theme": {
       "description": "Light or dark theme",
       "type": "string",
-      "enum": ["light", "dark"],
+      "enum": ["light", "dark"]
     },
     "image": {
       "description": "URL of an image to display",

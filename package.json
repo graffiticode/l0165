@@ -12,7 +12,7 @@
     "start": "npm run -w packages/api start",
     "lint": "eslint test/",
     "lint:fix": "eslint --fix test/",
-    "pack": "npm run -w packages/app pack",
+    "pack": "rm *.tgz; npm -w packages/app pack",
     "publish": "npm -w packages/app publish"
   },
   "devDependencies": {
