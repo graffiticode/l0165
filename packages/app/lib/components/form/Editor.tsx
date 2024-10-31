@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react'; React;
 import { EditorState } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { schema } from 'prosemirror-schema-basic';
+import { baseKeymap } from "prosemirror-commands"
 import { undo, redo, history } from "prosemirror-history";
 import { keymap } from "prosemirror-keymap";
 
@@ -19,7 +20,8 @@ export const Editor = ({ state }) => {
       schema,
       plugins: [
         history(),
-        keymap({"Mod-z": undo, "Mod-y": redo})
+        keymap({"Mod-z": undo, "Mod-y": redo}),
+        keymap(baseKeymap),
       ],
     });
 
