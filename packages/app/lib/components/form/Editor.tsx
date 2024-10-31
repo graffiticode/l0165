@@ -2,6 +2,8 @@ import React, { useEffect, useRef } from 'react'; React;
 import { EditorState } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { schema } from 'prosemirror-schema-basic';
+import { undo, redo, history } from "prosemirror-history";
+import { keymap } from "prosemirror-keymap";
 
 export const Editor = ({ state }) => {
   console.log("L0151/Editor() state=" + JSON.stringify(state, null, 2));
@@ -13,11 +15,18 @@ export const Editor = ({ state }) => {
       return;
     }
 
-    const editorState = EditorState.create({schema});
+    const editorState = EditorState.create({
+      schema,
+      plugins: [
+        history(),
+        keymap({"Mod-z": undo, "Mod-y": redo})
+      ],
+    });
 
     editorViewRef.current = new EditorView(editorRef.current, {
       state: editorState,
       dispatchTransaction(transaction) {
+        console.log("L0151/Editor() transaction=" + JSON.stringify(transaction, null, 2));
         const newState = editorViewRef.current.state.apply(transaction);
         editorViewRef.current.updateState(newState);
       }
