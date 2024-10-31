@@ -5,11 +5,10 @@ import { createState } from "./lib/state";
 import { compile } from './swr/fetchers';
 import './index.css';
 
-function isNonNullNonEmptyObject(obj) {
+function isNonNullObject(obj) {
   return (
     typeof obj === "object" &&
-      obj !== null &&
-      Object.keys(obj).length > 0
+      obj !== null
   );
 }
 
@@ -112,7 +111,7 @@ export const View = () => {
   }
 
   return (
-    isNonNullNonEmptyObject(state.data) &&
+    isNonNullObject(state.data) &&
       <Form state={state} /> ||
       <div />
   );
