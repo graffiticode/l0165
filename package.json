@@ -6,7 +6,7 @@
     "packages/app"
   ],
   "scripts": {
-    "update-lang-id": "find packages -type f -exec sed -i '' 's/0002/0002/g' {} +",
+    "update-lang-id": "find packages -type f -exec sed -i '' 's/0002/0151/g' {} +",
     "build": "npm run -w packages/app build; npm run -w packages/api build",
     "dev": "npm run -w packages/api dev",
     "start": "npm run -w packages/api start",

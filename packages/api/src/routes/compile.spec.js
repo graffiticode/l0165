@@ -15,7 +15,7 @@ describe("routes/compile", () => {
     authApp = await startAuthApp();
     app = createApp({ authUrl: authApp.url });
 
-    process.env.BASE_URL_L0002 = langApp.url;
+    process.env.BASE_URL_L0151 = langApp.url;
   });
 
   afterEach(async () => {
