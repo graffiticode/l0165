@@ -8,30 +8,20 @@ function classNames(...classes) {
 
 const items = [{
   name: "B",
-  commandName: "",
+  className: "font-bold",
+  command: schema => toggleMark(schema.marks.strong),
   selected: false,
 }, {
   name: "I",
-  commandName: "",
+  className: "italic",
+  command: schema => toggleMark(schema.marks.em),
   selected: false,
 }];
 
-export const MenuBar = ({ editorView }) => {
+export const MenuView = ({ editorView }) => {
   const toggle = item => {
     item.selected = !item.selected;
-    const { schema } = editorView.state;
-    let mark;
-    switch (item.name) {
-    case "B":
-      mark = schema.marks.strong;
-      break;
-    case "I":
-      mark = schema.marks.em;
-      break;
-    default:
-      break;
-    }
-    toggleMark(mark)(editorView.state, editorView.dispatch);
+    item.command(editorView.state.schema)(editorView.state, editorView.dispatch);
   };
 
   return (
@@ -41,13 +31,15 @@ export const MenuBar = ({ editorView }) => {
           <button
             className={classNames(
               "w-7 h-7 text-center border border-1 rounded",
-              item.selected && "bg-gray-100"
+              item.selected && "bg-gray-100",
+              item.className
             )}
             onMouseDown={
-              (e) => {
-                e.preventDefault()
-                editorView.focus()
-                toggle(item)}
+              e => {
+                e.preventDefault();
+                editorView.focus();
+                toggle(item);
+              }
             }>
             {
               item.name
@@ -58,3 +50,4 @@ export const MenuBar = ({ editorView }) => {
     </div>
   );
 };
+

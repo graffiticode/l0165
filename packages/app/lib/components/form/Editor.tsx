@@ -1,6 +1,6 @@
 import React from "react"; React;
 import { useState } from "react";
-import { MenuBar } from "./MenuBar";
+import { MenuView } from "./MenuView";
 import { TextEditor } from "./TextEditor";
 
 export const Editor = ({ state }) => {
@@ -8,7 +8,7 @@ export const Editor = ({ state }) => {
   const [ editorView, setEditorView ] = useState(null);
   return (
     <div>
-      <MenuBar editorView={editorView} />
+      <MenuView editorView={editorView} />
       <TextEditor state={state} setEditorView={setEditorView} />
     </div>
   );

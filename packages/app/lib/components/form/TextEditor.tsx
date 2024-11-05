@@ -6,6 +6,35 @@ import { baseKeymap } from "prosemirror-commands"
 import { undo, redo, history } from "prosemirror-history";
 import { keymap } from "prosemirror-keymap";
 
+import { Plugin } from 'prosemirror-state';
+import ReactDOM from 'react-dom';
+import { MenuView } from './MenuView';
+
+const menuPlugin = new Plugin({
+  view(editorView) {
+    let menuDiv = document.createElement('div');
+    editorView.dom.parentNode.insertBefore(menuDiv, editorView.dom);
+
+    const update = () => {
+      ReactDOM.render(
+        <MenuView editorView={editorView} />,
+        menuDiv
+      );
+    };
+
+    update();
+
+    return {
+      update,
+      destroy() {
+        ReactDOM.unmountComponentAtNode(menuDiv);
+        menuDiv.remove();
+      }
+    };
+  }
+});
+
+
 export const TextEditor = ({ setEditorView, state }) => {
   console.log("L0151/Editor() state=" + JSON.stringify(state, null, 2));
   const editorRef = useRef(null);
@@ -19,14 +48,16 @@ export const TextEditor = ({ setEditorView, state }) => {
       history(),
       keymap({"Mod-z": undo, "Mod-y": redo}),
       keymap(baseKeymap),
+      menuPlugin,
     ];
     const { doc } = state.data;
+    console.log("TextEditor() doc=" + JSON.stringify(doc, null, 2));
     const editorState = (
       doc &&
         EditorState.fromJSON({
           schema,
           plugins,
-        }, state.data) ||
+        }, doc) ||
         EditorState.create({
           schema,
           plugins,
@@ -53,7 +84,6 @@ export const TextEditor = ({ setEditorView, state }) => {
     return () => {
       if (editorView) {
         editorView.destroy();
-        setEditorView(null);
       }
     };
   }, []);
