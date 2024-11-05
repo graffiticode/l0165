@@ -18,14 +18,20 @@ const items = [{
   selected: false,
 }];
 
-export const MenuView = ({ editorView }) => {
+export const MenuView = ({ className, editorView }) => {
+  console.log("MenuView() editorView=" + editorView);
   const toggle = item => {
     item.selected = !item.selected;
     item.command(editorView.state.schema)(editorView.state, editorView.dispatch);
   };
 
   return (
-    <div className="flex flex-row gap-1 mb-2 text-sm font-sans">
+    <div
+      className={classNames(
+        "flex flex-row gap-1 mb-2 text-sm font-sans",
+        className
+      )}
+    >
       {
         items.map(item => (
           <button

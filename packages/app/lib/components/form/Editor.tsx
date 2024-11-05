@@ -8,7 +8,7 @@ export const Editor = ({ state }) => {
   const [ editorView, setEditorView ] = useState(null);
   return (
     <div>
-      <MenuView editorView={editorView} />
+      <MenuView className="hidden" editorView={editorView} />
       <TextEditor state={state} setEditorView={setEditorView} />
     </div>
   );

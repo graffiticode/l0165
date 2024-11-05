@@ -17,7 +17,7 @@ const menuPlugin = new Plugin({
 
     const update = () => {
       ReactDOM.render(
-        <MenuView editorView={editorView} />,
+        <MenuView className="" editorView={editorView} />,
         menuDiv
       );
     };
