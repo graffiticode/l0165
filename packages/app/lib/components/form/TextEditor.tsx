@@ -9,7 +9,6 @@ import { keymap } from "prosemirror-keymap";
 export const TextEditor = ({ setEditorView, state }) => {
   console.log("L0151/Editor() state=" + JSON.stringify(state, null, 2));
   const editorRef = useRef(null);
-  const editorViewRef = useRef(null);
 
   useEffect(() => {
     if (!editorRef.current) {
@@ -22,21 +21,22 @@ export const TextEditor = ({ setEditorView, state }) => {
       keymap(baseKeymap),
     ];
     const { doc } = state.data;
-    const editorState = doc &&
-          EditorState.fromJSON({
-            schema,
-            plugins,
-          }, state.data) ||
-          EditorState.create({
-            schema,
-            plugins,
-          });
-
-    editorViewRef.current = new EditorView(editorRef.current, {
+    const editorState = (
+      doc &&
+        EditorState.fromJSON({
+          schema,
+          plugins,
+        }, state.data) ||
+        EditorState.create({
+          schema,
+          plugins,
+        })
+    );
+    const editorView = new EditorView(editorRef.current, {
       state: editorState,
       dispatchTransaction(transaction) {
         console.log("L0151/Editor() transaction=" + JSON.stringify(transaction, null, 2));
-        const newState = editorViewRef.current.state.apply(transaction);
+        const newState = editorView.state.apply(transaction);
         console.log("L0151/Editor() json=" + JSON.stringify(newState.doc.toJSON(), null, 2));
         state.apply({
           type: "update",
@@ -44,16 +44,16 @@ export const TextEditor = ({ setEditorView, state }) => {
             doc: newState.doc.toJSON(),
           },
         });
-        editorViewRef.current.updateState(newState);
+        editorView.updateState(newState);
       }
     });
 
-    setEditorView(editorViewRef.current);
+    setEditorView(editorView);
 
     return () => {
-      if (editorViewRef.current) {
-        editorViewRef.current.destroy();
-        editorViewRef.current = null;
+      if (editorView) {
+        editorView.destroy();
+        setEditorView(null);
       }
     };
   }, []);

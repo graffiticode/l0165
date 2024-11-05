@@ -1,5 +1,4 @@
 import React from "react"; React;
-import { useState } from "react";
 import { toggleMark } from "prosemirror-commands";
 
 function classNames(...classes) {
@@ -7,35 +6,55 @@ function classNames(...classes) {
   return className;
 }
 
-export const MenuBar = ({ editorView }) => {
-  const [ bold, setBold ] = useState(false);
-  const [ italic, setItalic ] = useState(false);
-  const toggleBold = () => {
-    setBold(!bold);
-    const { schema } = editorView.state;
-    toggleMark(schema.marks.strong)(editorView.state, editorView.dispatch);
-  };
+const items = [{
+  name: "B",
+  commandName: "",
+  selected: false,
+}, {
+  name: "I",
+  commandName: "",
+  selected: false,
+}];
 
-  const toggleItalic = () => {
-    setItalic(!italic);
+export const MenuBar = ({ editorView }) => {
+  const toggle = item => {
+    item.selected = !item.selected;
     const { schema } = editorView.state;
-    toggleMark(schema.marks.em)(editorView.state, editorView.dispatch);
+    let mark;
+    switch (item.name) {
+    case "B":
+      mark = schema.marks.strong;
+      break;
+    case "I":
+      mark = schema.marks.em;
+      break;
+    default:
+      break;
+    }
+    toggleMark(mark)(editorView.state, editorView.dispatch);
   };
 
   return (
     <div className="flex flex-row gap-1 mb-2 text-sm font-sans">
-      <button
-        className={classNames(
-          "w-7 h-7 text-center border border-1 rounded",
-          bold && "bg-gray-100"
-        )}
-        onClick={toggleBold}><b>B</b></button>
-      <button
-        className={classNames(
-          "w-7 h-7 text-center border border-1 rounded",
-          italic && "bg-gray-100"
-        )}
-        onClick={toggleItalic}><i>I</i></button>
+      {
+        items.map(item => (
+          <button
+            className={classNames(
+              "w-7 h-7 text-center border border-1 rounded",
+              item.selected && "bg-gray-100"
+            )}
+            onMouseDown={
+              (e) => {
+                e.preventDefault()
+                editorView.focus()
+                toggle(item)}
+            }>
+            {
+              item.name
+            }
+          </button>
+        ))
+      }
     </div>
   );
 };
