@@ -1,3 +1,6 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+.ProseMirror-focused {
+    outline: 0;
+}

@@ -9,26 +9,43 @@ function classNames(...classes) {
 const items = [{
   name: "B",
   className: "font-bold",
-  command: schema => toggleMark(schema.marks.strong),
   selected: false,
+  command: schema => toggleMark(schema.marks.strong),
+  mark: schema => schema.marks.strong,
 }, {
   name: "I",
   className: "italic",
-  command: schema => toggleMark(schema.marks.em),
   selected: false,
+  command: schema => toggleMark(schema.marks.em),
+  mark: schema => schema.marks.em,
 }];
 
+const isMarkActive = ({ state, mark }) => {
+  const { from, $from, to, empty } = state.selection;
+  if (empty) {
+    return !!mark.isInSet(state.storedMarks || $from.marks());
+  } else {
+    return state.doc.rangeHasMark(from, to, mark);
+  }
+}
+
 export const MenuView = ({ className, editorView }) => {
-  console.log("MenuView() editorView=" + editorView);
   const toggle = item => {
     item.selected = !item.selected;
     item.command(editorView.state.schema)(editorView.state, editorView.dispatch);
   };
 
+  editorView && items.forEach(item =>
+    item.selected = isMarkActive({
+      state: editorView.state,
+      mark: item.mark(editorView.state.schema)
+    })
+  );
+
   return (
     <div
       className={classNames(
-        "flex flex-row gap-1 mb-2 text-sm font-sans",
+        "flex flex-row gap-1 mb-2 text-sm font-sans pb-1 border-b border-gray-200",
         className
       )}
     >

@@ -36,7 +36,6 @@ const menuPlugin = new Plugin({
 
 
 export const TextEditor = ({ setEditorView, state }) => {
-  console.log("L0151/Editor() state=" + JSON.stringify(state, null, 2));
   const editorRef = useRef(null);
 
   useEffect(() => {
@@ -51,7 +50,6 @@ export const TextEditor = ({ setEditorView, state }) => {
       menuPlugin,
     ];
     const { doc } = state.data;
-    console.log("TextEditor() doc=" + JSON.stringify(doc, null, 2));
     const editorState = (
       doc &&
         EditorState.fromJSON({
@@ -66,9 +64,7 @@ export const TextEditor = ({ setEditorView, state }) => {
     const editorView = new EditorView(editorRef.current, {
       state: editorState,
       dispatchTransaction(transaction) {
-        console.log("L0151/Editor() transaction=" + JSON.stringify(transaction, null, 2));
         const newState = editorView.state.apply(transaction);
-        console.log("L0151/Editor() json=" + JSON.stringify(newState.doc.toJSON(), null, 2));
         state.apply({
           type: "update",
           args: {
@@ -80,6 +76,7 @@ export const TextEditor = ({ setEditorView, state }) => {
     });
 
     setEditorView(editorView);
+    editorView.focus();
 
     return () => {
       if (editorView) {
@@ -89,17 +86,10 @@ export const TextEditor = ({ setEditorView, state }) => {
   }, []);
 
   return (
-    <div>
-      <div
-        ref={editorRef}
-        style={{
-          border: '1px solid #ccc',
-          padding: '8px',
-          background: '#fff',
-          color: '#333',
-          fontFamily: 'Arial, sans-serif'
-        }}
-      />
+    <div
+      ref={editorRef}
+      className="border border-gray-300 p-2 bg-white font-sans"
+    >
     </div>
   );
 };
