@@ -14,16 +14,13 @@ const menuPlugin = new Plugin({
   view(editorView) {
     let menuDiv = document.createElement('div');
     editorView.dom.parentNode.insertBefore(menuDiv, editorView.dom);
-
     const update = () => {
       ReactDOM.render(
         <MenuView className="" editorView={editorView} />,
         menuDiv
       );
     };
-
     update();
-
     return {
       update,
       destroy() {
@@ -34,15 +31,12 @@ const menuPlugin = new Plugin({
   }
 });
 
-
-export const TextEditor = ({ setEditorView, state }) => {
+export const TextEditor = ({ state }) => {
   const editorRef = useRef(null);
-
   useEffect(() => {
     if (!editorRef.current) {
       return;
     }
-
     const plugins = [
       history(),
       keymap({"Mod-z": undo, "Mod-y": redo}),
@@ -74,22 +68,17 @@ export const TextEditor = ({ setEditorView, state }) => {
         editorView.updateState(newState);
       }
     });
-
-    setEditorView(editorView);
     editorView.focus();
-
     return () => {
       if (editorView) {
         editorView.destroy();
       }
     };
   }, []);
-
   return (
     <div
       ref={editorRef}
       className="border border-gray-300 p-2 bg-white font-sans"
-    >
-    </div>
+    />
   );
 };

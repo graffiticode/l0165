@@ -34,14 +34,12 @@ export const MenuView = ({ className, editorView }) => {
     item.selected = !item.selected;
     item.command(editorView.state.schema)(editorView.state, editorView.dispatch);
   };
-
   editorView && items.forEach(item =>
     item.selected = isMarkActive({
       state: editorView.state,
       mark: item.mark(editorView.state.schema)
     })
   );
-
   return (
     <div
       className={classNames(
@@ -73,4 +71,3 @@ export const MenuView = ({ className, editorView }) => {
     </div>
   );
 };
-
