@@ -35,9 +35,7 @@ const menuPlugin = new Plugin({
 const debouncedStateUpdate = debounce(({ state, editorState }) => {
   state.apply({
     type: "update",
-    args: {
-      editorState: editorState.toJSON(),
-    },
+    args: {editorState},
   });
 }, 1000);
 
@@ -62,7 +60,10 @@ export const TextEditor = ({ state }) => {
       dispatchTransaction(transaction) {
         const editorState = editorView.state.apply(transaction);
         editorView.updateState(editorState);
-        debouncedStateUpdate({state, editorState});
+        debouncedStateUpdate({
+          state,
+          editorState: editorState.toJSON()
+        });
       }
     });
     setEditorView(editorView);
@@ -76,7 +77,6 @@ export const TextEditor = ({ state }) => {
   const { editorState } = state.data;
   useEffect(() => {
     if (editorState) {
-      // updateEditorState(editorView, doc);
       const newEditorState = EditorState.fromJSON({
         schema,
         plugins,
