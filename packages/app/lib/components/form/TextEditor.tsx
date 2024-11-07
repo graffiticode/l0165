@@ -9,6 +9,7 @@ import { keymap } from "prosemirror-keymap";
 import { Plugin } from 'prosemirror-state';
 import ReactDOM from 'react-dom';
 import { MenuView } from './MenuView';
+import { debounce } from "lodash";
 
 const menuPlugin = new Plugin({
   view(editorView) {
@@ -31,6 +32,15 @@ const menuPlugin = new Plugin({
   }
 });
 
+const debouncedStateUpdate = debounce(({ state, editorState }) => {
+  state.apply({
+    type: "update",
+    args: {
+      editorState: editorState.toJSON(),
+    },
+  });
+}, 1000);
+
 export const TextEditor = ({ state }) => {
   const [ editorView, setEditorView ] = useState(null);
   const editorRef = useRef(null);
@@ -50,14 +60,9 @@ export const TextEditor = ({ state }) => {
         plugins,
       }),
       dispatchTransaction(transaction) {
-        const newState = editorView.state.apply(transaction);
-        state.apply({
-          type: "update",
-          args: {
-            editorState: newState.toJSON(),
-          },
-        });
-        editorView.updateState(newState);
+        const editorState = editorView.state.apply(transaction);
+        editorView.updateState(editorState);
+        debouncedStateUpdate({state, editorState});
       }
     });
     setEditorView(editorView);
