@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react'; React;
+import React, { useState, useEffect, useRef } from 'react'; React;
 import { EditorState } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { schema } from 'prosemirror-schema-basic';
@@ -32,42 +32,35 @@ const menuPlugin = new Plugin({
 });
 
 export const TextEditor = ({ state }) => {
+  const [ editorView, setEditorView ] = useState(null);
   const editorRef = useRef(null);
+  const plugins = [
+    history(),
+    keymap({"Mod-z": undo, "Mod-y": redo}),
+    keymap(baseKeymap),
+    menuPlugin,
+  ];
   useEffect(() => {
     if (!editorRef.current) {
       return;
     }
-    const plugins = [
-      history(),
-      keymap({"Mod-z": undo, "Mod-y": redo}),
-      keymap(baseKeymap),
-      menuPlugin,
-    ];
-    const { doc } = state.data;
-    const editorState = (
-      doc &&
-        EditorState.fromJSON({
-          schema,
-          plugins,
-        }, doc) ||
-        EditorState.create({
-          schema,
-          plugins,
-        })
-    );
     const editorView = new EditorView(editorRef.current, {
-      state: editorState,
+      state: EditorState.create({
+        schema,
+        plugins,
+      }),
       dispatchTransaction(transaction) {
         const newState = editorView.state.apply(transaction);
         state.apply({
           type: "update",
           args: {
-            doc: newState.doc.toJSON(),
+            editorState: newState.toJSON(),
           },
         });
         editorView.updateState(newState);
       }
     });
+    setEditorView(editorView);
     editorView.focus();
     return () => {
       if (editorView) {
@@ -75,6 +68,17 @@ export const TextEditor = ({ state }) => {
       }
     };
   }, []);
+  const { editorState } = state.data;
+  useEffect(() => {
+    if (editorState) {
+      // updateEditorState(editorView, doc);
+      const newEditorState = EditorState.fromJSON({
+        schema,
+        plugins,
+      }, editorState);
+      editorView.updateState(newEditorState);
+    }
+  }, [editorState]);
   return (
     <div
       ref={editorRef}
