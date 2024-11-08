@@ -1,5 +1,6 @@
 import React from "react"; React;
 import "../../index.css";
+import "./Form.css";
 import { Editor } from "./Editor";
 
 function classNames(...classes) {

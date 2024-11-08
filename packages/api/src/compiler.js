@@ -96,22 +96,22 @@ const applyRules = ({ cols, rows }) => {
     if (rowAttrs[rowIndex] === undefined) {
       rowAttrs[rowIndex] = {};
     }
-    rowAttrs[rowIndex].color = +row[totalCol] !== total && "#f99" || "#fff";
+    rowAttrs[rowIndex].color = /*+row[totalCol] !== total && "#f99" ||*/ "#fff";
   });
   return rowAttrs;
 };
 
-const makeEditorState = ({ type }) => {
+const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+
+const makeEditorState = ({ type, x, y }) => {
   switch (type) {
-  case "table":
+  case "table": {
+    const cols = Array.apply(null, Array(x)).map(function (_, i) { return letters[i]; })
+    const rows = Array.apply(null, Array(y)).map(function () { return cols; })
     return {
       doc: buildDocFromTable({
-        cols: ["a", "b", "c"],
-        rows: [
-          {a: "", b: "", c: ""},
-          {a: "", b: "", c: ""},
-          {a: "", b: "", c: ""},
-        ],
+        cols,
+        rows,
       }),
       selection: {
         type: "text",
@@ -119,6 +119,7 @@ const makeEditorState = ({ type }) => {
         head: 1,
       },
     };
+  }
   default:
     return null;
   }
@@ -164,17 +165,33 @@ export class Transformer extends BasisTransformer {
     });
   }
 
+  TABLE(node, options, resume) {
+    this.visit(node.elts[0], options, async (e0, v0) => {
+      this.visit(node.elts[1], options, async (e1, v1) => {
+        const data = options?.data || {};
+        const err = [];
+        const val = {
+          type: "table",
+          editorState: makeEditorState({
+            type: "table",
+            ...v0
+          }),
+          ...v1,
+        };
+        resume(err, val);
+      });
+    });
+  }
+
   PROG(node, options, resume) {
     this.visit(node.elts[0], options, async (e0, v0) => {
       const data = options?.data || {};
+      console.log("PROG() data=" + JSON.stringify(data, null, 2));
       const err = e0;
       const val = v0.pop();
-      const editorState = data.editorState || makeEditorState(data);
-      console.log("PROG() editorState=" + JSON.stringify(editorState, null, 2));
       resume(err, {
         ...val,
         ...data,
-        editorState,
       });
     });
   }
