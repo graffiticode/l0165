@@ -1,0 +1,105 @@
+.ProseMirror {
+  border: thin solid #ccc;
+  outline: none;
+}
+
+main {
+  margin: auto;
+  width: 80%;
+  max-width: 700px;
+}
+
+.menu {
+  display: flex;
+  margin-bottom: 5px;
+}
+
+.button {
+  cursor: pointer;
+  width: 24px;
+  height: 24px;
+  margin-right: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: none;
+  border: thin solid #ccc;
+  border-radius: 0.25rem;
+  color: #777;
+  background-color: white;
+
+  &[aria-pressed="true"] {
+    background-color: #ddd;
+    color: blue;
+  }
+}
+
+.button:hover {
+  color: #333
+}
+
+.button.bold {
+  font-weight: 700;
+}
+
+.button.italic {
+  font-style: italic;
+}
+
+.visually-hidden {
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  height: 1px;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+
+.ProseMirror .tableWrapper {
+  overflow-x: auto;
+}
+.ProseMirror table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  width: 250;
+  height: 250;
+  overflow: hidden;
+  border: 1px solid #eee;
+  height: 24px;
+}
+.ProseMirror td,
+.ProseMirror th {
+  vertical-align: middle;
+  box-sizing: border-box;
+  position: relative;
+  text-align: right;
+  padding: 4px;
+  border: 1px solid #eee;
+}
+.ProseMirror .column-resize-handle {
+  position: absolute;
+  right: -2px;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  z-index: 20;
+  background-color: #adf;
+  pointer-events: none;
+}
+.ProseMirror.resize-cursor {
+  cursor: ew-resize;
+  cursor: col-resize;
+}
+/* Give selected cells a blue overlay */
+.ProseMirror .selectedCell:after {
+  z-index: 2;
+  position: absolute;
+  content: '';
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background: rgba(200, 200, 255, 0.4);
+  pointer-events: none;
+}
