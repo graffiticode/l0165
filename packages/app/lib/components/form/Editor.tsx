@@ -1,6 +1,7 @@
 import React from "react"; React;
 import { MenuView } from "./MenuView";
 import { TextEditor } from "./TextEditor";
+import { TableEditor } from "./TableEditor";
 
 export const Editor = ({ state }) => {
   const { type } = state.data;
@@ -8,9 +9,9 @@ export const Editor = ({ state }) => {
     <div>
       <MenuView className="hidden" editorView={null} />
       {
-        type === "table" && <div>Table Editor goes here.</div> ||
-          type === "text" && <TextEditor state={state} /> ||
-          <div />
+        type === "table" && <TableEditor state={state} /> ||
+        type === "text" && <TextEditor state={state} /> ||
+        <div />
       }
     </div>
   );
