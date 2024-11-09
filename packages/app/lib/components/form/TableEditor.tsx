@@ -148,7 +148,6 @@ export const TableEditor = ({ state }) => {
       }
     });
     setEditorView(editorView);
-    editorView.focus();
     return () => {
       if (editorView) {
         editorView.destroy();
