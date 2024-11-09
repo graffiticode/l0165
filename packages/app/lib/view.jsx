@@ -54,7 +54,7 @@ export const View = () => {
       //   ...args,
       // };
     case "update":
-//      setDoRecompile(true);
+      setDoRecompile(true);
       return {
         ...data,
         ...args,
