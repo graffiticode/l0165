@@ -20,6 +20,7 @@ const buildCell = ({ col, row, attrs }) => {
   let content;
   let colspan = 1;
   let rowspan = 1;
+  const colwidth = col === "_" && [40] || null;
   let background = "#fff";
   if (typeof cell === "object") {
     content = cell.doc.content;
@@ -45,9 +46,9 @@ const buildCell = ({ col, row, attrs }) => {
     "attrs": {
       colspan,
       rowspan,
-      "colwidth": null,
-      "width": "50px",
-      "height": "50px",
+      colwidth,
+      width: "50px",
+      height: "50px",
       background,
     },
     "content": content,
