@@ -42,6 +42,7 @@ import { undo, redo, history } from "prosemirror-history";
 // import { keymap } from "prosemirror-keymap";
 
 import { Plugin } from 'prosemirror-state';
+import { Decoration, DecorationSet } from "prosemirror-view";
 import ReactDOM from 'react-dom';
 import { MenuView } from './MenuView';
 import { debounce } from "lodash";
@@ -66,6 +67,107 @@ const menuPlugin = new Plugin({
     };
   }
 });
+
+const applyDecoration = ({ doc, cells }) => {
+  const decorations = [];
+  cells.forEach(({ from, to, color, border }) => {
+    decorations.push(Decoration.node(from, to, {
+      style: `
+        background-color: ${color};
+        ${border};
+      `
+    }));
+  });
+  return DecorationSet.create(doc, decorations);
+};
+
+const applyModelRules = ({ doc }) => {
+  // Multiply first row and first column values and compare to body values.
+  const cells = getCells(doc);
+  console.log("applyModelRules() cells=" + JSON.stringify(cells, null, 2));
+  let rowVals = [];
+  let colVals = [];
+  let rowSums = [];
+  let colSums = [];
+  let cellColors = [];
+  cells.forEach(({ row, col, val }) => {
+    if (row === 1) {
+      colVals[col] = val;
+    } else {
+      if (colSums[col] === undefined) {
+        colSums[col] = val;
+      } else {
+        colSums[col] += val;
+      }
+    }
+    if (cellColors[row] === undefined) {
+      cellColors[row] = [];
+    }
+    if (col === 1) {
+      rowVals[row] = val;
+    } else {
+      if (rowSums[row] === undefined) {
+        rowSums[row] = val;
+      } else {
+        rowSums[row] += val;
+      }
+    }
+    // const shapedTerms = shapeGridTermsByValue({ cells, terms });
+    // const color = getGridCellColor({row, col, val, rowVals, colVals, terms: shapedTerms});
+    cellColors[row][col] = "#fff"; //color;
+  });
+  const coloredCells = cells.map(cell => ({
+    ...cell,
+    border:
+    cell.col === 1 && cell.row === 1 && "border: 1px solid #ddd; border-right: 1px solid #aaa; border-bottom: 1px solid #aaa;" ||
+      cell.col === 1 && "text-align: center; border: 1px solid #ddd; border-right: 1px solid #aaa;" ||
+      cell.row === 1 && "text-align: center; border: 1px solid #ddd; border-bottom: 1px solid #aaa;" ||
+      "border: 1px solid #ddd;",
+    color:
+      (cell.col === 1 || cell.row === 1) && "#fff" ||
+      "#fff"
+  }));
+  return applyDecoration({doc, cells: coloredCells});
+}
+
+const modelBackgroundPlugin = () => new Plugin({
+  state: {
+    init(_, { doc }) {
+      return applyModelRules({doc});
+    },
+    apply(tr, decorationSet, oldState, newState) {
+      oldState = oldState;
+      newState = newState;
+      if (tr.docChanged) {
+        return applyModelRules({doc: tr.doc});
+      }
+      return decorationSet;
+    },
+  },
+  props: {
+    decorations(state) {
+      return this.getState(state);
+    }
+  }
+});
+
+const getCells = (doc) => {
+  const cells = [];
+  let row = 0, col = 0;
+  doc.descendants((node, pos) => {
+    if (node.type.name === "table_row") {
+      row++;
+      col = 0;
+    }
+    if (node.type.name === "table_cell") {
+      col++;
+      // const val = Number.parseInt(node.textContent.replace(/,/g, ""));
+      const val = node.textContent;
+      cells.push({row, col, val, from: pos, to: pos + node.nodeSize});
+    }
+  });
+  return cells;
+};
 
 const debouncedStateUpdate = debounce(({ state, editorState }) => {
   state.apply({
@@ -153,15 +255,26 @@ export const TableEditor = ({ state }) => {
     if (editorView && editorState) {
       const newEditorState = EditorState.fromJSON({
         schema,
-        plugins,
-      }, editorState);
+        plugins: [
+          columnResizing(),
+          tableEditing(),
+          history(),
+          keymap({"Mod-z": undo, "Mod-y": redo}),
+          keymap({
+            ...baseKeymap,
+            Tab: goToNextCell(1),
+            'Shift-Tab': goToNextCell(-1),
+          }),
+          menuPlugin,
+          modelBackgroundPlugin(),
+      ]}, editorState);
       editorView.updateState(newEditorState);
     }
   }, [editorView, editorState]);
   return (
     <div
       ref={editorRef}
-      className="border border-gray-300 p-2 bg-white font-sans"
+      className="border border-gray-300 p-2 bg-white text-xs font-sans"
     />
   );
 };
