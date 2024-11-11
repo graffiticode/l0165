@@ -1,3 +1,5 @@
+// TODO render value from forumula and cache value
+
 import React, { useState, useEffect, useRef } from 'react'; React;
 
 import 'prosemirror-view/style/prosemirror.css';
@@ -46,6 +48,8 @@ import { Decoration, DecorationSet } from "prosemirror-view";
 import ReactDOM from 'react-dom';
 import { MenuView } from './MenuView';
 import { debounce } from "lodash";
+
+import { Parser } from "@artcompiler/parselatex";
 
 const menuPlugin = new Plugin({
   view(editorView) {
@@ -122,7 +126,7 @@ const applyModelRules = ({ doc }) => {
     cell.col === 1 && cell.row === 1 && "border: 1px solid #ddd; border-right: 1px solid #aaa; border-bottom: 1px solid #aaa;" ||
       cell.col === 1 && "text-align: center; border: 1px solid #ddd; border-right: 1px solid #aaa;" ||
       cell.row === 1 && "text-align: center; border: 1px solid #ddd; border-bottom: 1px solid #aaa;" ||
-      "border: 1px solid #ddd;",
+      "text-align: left; border: 1px solid #ddd;",
     color:
       (cell.col === 1 || cell.row === 1) && "#fff" ||
       "#fff"
@@ -163,7 +167,14 @@ const getCells = (doc) => {
       col++;
       // const val = Number.parseInt(node.textContent.replace(/,/g, ""));
       const val = node.textContent;
-      cells.push({row, col, val, from: pos, to: pos + node.nodeSize});
+      let ast;
+      try {
+        ast = Parser.create({allowThousandsSeparator: true}, val);
+      } catch (x) {
+        console.log("parse error: " + x.stack);
+      }
+      console.log("getCells() ast=" + JSON.stringify(ast, null, 2));
+      cells.push({row, col, val, ast, from: pos, to: pos + node.nodeSize});
     }
   });
   return cells;

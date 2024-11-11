@@ -105,6 +105,7 @@ const applyRules = ({ cols, rows }) => {
 const letters = "_ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
 const makeEditorState = ({ type, x, y }) => {
+  x = x > 26 && 26 || x;  // Max col count is 26.
   switch (type) {
   case "table": {
     const cols = Array.apply(null, Array(x + 1)).map((_, i) => letters[i])

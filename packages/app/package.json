@@ -26,6 +26,7 @@
     "pack": "rm *.tgz; npm pack ."
   },
   "dependencies": {
+    "@artcompiler/parselatex": "file:artcompiler-parselatex-1.7.0.tgz",
     "assert": "^2.1.0",
     "bent": "^7.3.12",
     "prosemirror-example-setup": "^1.2.3",
