@@ -126,12 +126,6 @@ if (fix) initEditorState = initEditorState.apply(fix.setMeta('addToHistory', fal
 export const TableEditor = ({ state }) => {
   const [ editorView, setEditorView ] = useState(null);
   const editorRef = useRef(null);
-  // const plugins = [
-  //   history(),
-  //   keymap({"Mod-z": undo, "Mod-y": redo}),
-  //   keymap(baseKeymap),
-  //   menuPlugin,
-  // ];
   useEffect(() => {
     if (!editorRef.current) {
       return;
