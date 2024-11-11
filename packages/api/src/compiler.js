@@ -101,13 +101,17 @@ const applyRules = ({ cols, rows }) => {
   return rowAttrs;
 };
 
-const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+const letters = "_ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
 const makeEditorState = ({ type, x, y }) => {
   switch (type) {
   case "table": {
-    const cols = Array.apply(null, Array(x)).map(function (_, i) { return letters[i]; })
-    const rows = Array.apply(null, Array(y)).map(function () { return cols; })
+    const cols = Array.apply(null, Array(x + 1)).map((_, i) => letters[i])
+    const rows = Array.apply(null, Array(y + 1)).map((_, i) =>
+      cols.reduce((rows, col) =>
+        ({ ...rows, [col]: col === "_" && i > 0 && i || i === 0 && col !== "_" && col || ""}), {}
+      )
+    );
     return {
       doc: buildDocFromTable({
         cols,
