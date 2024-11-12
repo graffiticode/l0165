@@ -88,7 +88,7 @@ const applyDecoration = ({ doc, cells }) => {
 const applyModelRules = ({ doc }) => {
   // Multiply first row and first column values and compare to body values.
   const cells = getCells(doc);
-  console.log("applyModelRules() cells=" + JSON.stringify(cells, null, 2));
+  // console.log("applyModelRules() cells=" + JSON.stringify(cells, null, 2));
   let rowVals = [];
   let colVals = [];
   let rowSums = [];
@@ -165,7 +165,6 @@ const getCells = (doc) => {
     }
     if (node.type.name === "table_cell") {
       col++;
-      // const val = Number.parseInt(node.textContent.replace(/,/g, ""));
       const val = node.textContent;
       let ast;
       try {
@@ -173,7 +172,6 @@ const getCells = (doc) => {
       } catch (x) {
         console.log("parse error: " + x.stack);
       }
-      console.log("getCells() ast=" + JSON.stringify(ast, null, 2));
       cells.push({row, col, val, ast, from: pos, to: pos + node.nodeSize});
     }
   });
@@ -191,7 +189,7 @@ const schema = new Schema({
   nodes: baseSchema.spec.nodes.append(
     tableNodes({
       tableGroup: 'block',
-      cellContent: 'block+',
+      cellContent: 'paragraph',
       cellAttributes: {
         background: {
           default: null,

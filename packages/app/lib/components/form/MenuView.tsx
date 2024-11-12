@@ -1,5 +1,6 @@
 import React from "react"; React;
 import { toggleMark } from "prosemirror-commands";
+import { FormulaBar } from "./FormulaBar";
 
 function classNames(...classes) {
   const className = classes.filter(Boolean).join(' ')
@@ -43,31 +44,38 @@ export const MenuView = ({ className, editorView }) => {
   return (
     <div
       className={classNames(
-        "flex flex-row gap-1 mb-2 text-sm font-sans pb-1 border-b border-gray-200",
+        "flex flex-col gap-1 mb-2 text-sm font-sans pb-1 border-b border-gray-200",
         className
       )}
     >
-      {
-        items.map(item => (
-          <button
-            className={classNames(
-              "w-7 h-7 text-center border border-1 rounded",
-              item.selected && "bg-gray-100",
-              item.className
-            )}
-            onMouseDown={
-              e => {
-                e.preventDefault();
-                editorView.focus();
-                toggle(item);
+      <div
+        className={classNames(
+          "flex flex-row gap-1 mb-2 text-sm font-sans"
+        )}
+      >
+        {
+          items.map(item => (
+            <button
+              className={classNames(
+                "w-7 h-7 text-center border border-1 rounded",
+                item.selected && "bg-gray-100",
+                item.className
+              )}
+              onMouseDown={
+                e => {
+                  e.preventDefault();
+                  editorView.focus();
+                  toggle(item);
+                }
+              }>
+              {
+                item.name
               }
-            }>
-            {
-              item.name
-            }
-          </button>
-        ))
-      }
+            </button>
+          ))
+        }
+      </div>
+      <FormulaBar editorView={editorView} />
     </div>
   );
 };
