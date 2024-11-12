@@ -1,7 +1,7 @@
 import React from "react"; React;
 import { useEffect, useState } from "react";
 
-const updateTextNode = ({ editorView, from, to, text }) => {
+const updateTextNode = ({ editorView, from, text }) => {
   const { doc, tr } = editorView.state;
   const resolvedPos = doc.resolve(from);
   const start = resolvedPos.start(resolvedPos.depth)
@@ -19,7 +19,7 @@ export const FormulaBar = ({ editorView }) => {
   const [ value, setValue ] = useState("");
   useEffect(() => {
     if (state) {
-      const { from, to } = state.selection;
+      const { from } = state.selection;
       const pos = state.doc.resolve(from);
       const node = state.doc.nodeAt(pos.pos - 1);
       const value = node?.textContent || "";
@@ -28,8 +28,8 @@ export const FormulaBar = ({ editorView }) => {
   }, [state]);
   const handleChange = value => {
     setValue(value);
-    const { from, to } = state.selection;
-    updateTextNode({editorView, from, to, text: value});
+    const { from } = state.selection;
+    updateTextNode({editorView, from, text: value});
   };
   return (
     <div className="flex flex-row gap-2 rounded-md">
