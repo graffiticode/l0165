@@ -250,7 +250,8 @@ class ParagraphView {
       if ((selection.head < start || selection.head > end) && this.wasFocused) {
         console.log("Input effectively blurred: pos=" + pos);
         this.wasFocused = false;
-      } else if (selection.head >= start && selection.head <= end) {
+      } else if (selection.head >= start && selection.head <= end && !this.wasFocused) {
+        console.log("Input effectively focused: pos=" + pos);
         this.wasFocused = true;
       }
     }, 1000);  }
