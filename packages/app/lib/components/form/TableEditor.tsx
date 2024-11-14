@@ -1,22 +1,19 @@
-// TODO render value from forumula and cache value
-
 import React, { useState, useEffect, useRef } from 'react'; React;
 
 import 'prosemirror-view/style/prosemirror.css';
 import 'prosemirror-menu/style/menu.css';
 import 'prosemirror-example-setup/style/style.css';
 import 'prosemirror-gapcursor/style/gapcursor.css';
-//import '../style/tables.css';
 import "prosemirror-tables/style/tables.css";
 
 import { EditorView } from 'prosemirror-view';
-import { EditorState } from 'prosemirror-state';
-// import { DOMParser, Schema } from 'prosemirror-model';
+import {
+  EditorState,
+  TextSelection,
+} from 'prosemirror-state';
 import { Schema } from 'prosemirror-model';
 import { schema as baseSchema } from 'prosemirror-schema-basic';
 import { keymap } from 'prosemirror-keymap';
-// import { exampleSetup, buildMenuItems } from 'prosemirror-example-setup';
-// import { MenuItem, Dropdown } from 'prosemirror-menu';
 
 import {
 //   addColumnAfter,
@@ -32,17 +29,12 @@ import {
 //   toggleHeaderColumn,
 //   toggleHeaderCell,
   goToNextCell,
-//   deleteTable,
+  //   deleteTable,
 } from "prosemirror-tables";
 import { tableEditing, columnResizing, tableNodes, fixTables } from "prosemirror-tables";
 
-// import { EditorState } from 'prosemirror-state';
-// import { EditorView } from 'prosemirror-view';
-// import { schema } from 'prosemirror-schema-basic';
 import { baseKeymap } from "prosemirror-commands"
 import { undo, redo, history } from "prosemirror-history";
-// import { keymap } from "prosemirror-keymap";
-
 import { Plugin } from 'prosemirror-state';
 import { Decoration, DecorationSet } from "prosemirror-view";
 import ReactDOM from 'react-dom';
@@ -85,10 +77,10 @@ const applyDecoration = ({ doc, cells }) => {
   return DecorationSet.create(doc, decorations);
 };
 
-const applyModelRules = ({ doc }) => {
+const applyModelRules = (state) => {
+  const { doc, selection } = state;
   // Multiply first row and first column values and compare to body values.
   const cells = getCells(doc);
-  // console.log("applyModelRules() cells=" + JSON.stringify(cells, null, 2));
   let rowVals = [];
   let colVals = [];
   let rowSums = [];
@@ -126,6 +118,8 @@ const applyModelRules = ({ doc }) => {
     cell.col === 1 && cell.row === 1 && "border: 1px solid #ddd; border-right: 1px solid #aaa; border-bottom: 1px solid #aaa;" ||
       cell.col === 1 && "text-align: center; border: 1px solid #ddd; border-right: 1px solid #aaa;" ||
       cell.row === 1 && "text-align: center; border: 1px solid #ddd; border-bottom: 1px solid #aaa;" ||
+      selection.anchor > cell.from && selection.anchor < cell.to &&
+      "text-align: left; border: 2px solid indigo;" ||
       "text-align: left; border: 1px solid #ddd;",
     color:
       (cell.col === 1 || cell.row === 1) && "#fff" ||
@@ -136,16 +130,15 @@ const applyModelRules = ({ doc }) => {
 
 const modelBackgroundPlugin = () => new Plugin({
   state: {
-    init(_, { doc }) {
-      return applyModelRules({doc});
+    init(_, state) {
+      return applyModelRules(state);
     },
     apply(tr, decorationSet, oldState, newState) {
+      tr = tr;
       oldState = oldState;
       newState = newState;
-      if (tr.docChanged) {
-        return applyModelRules({doc: tr.doc});
-      }
-      return decorationSet;
+      decorationSet = decorationSet;
+      return applyModelRules(newState);
     },
   },
   props: {
@@ -155,7 +148,7 @@ const modelBackgroundPlugin = () => new Plugin({
   }
 });
 
-const getCells = (doc) => {
+const getCells = doc => {
   const cells = [];
   let row = 0, col = 0;
   doc.descendants((node, pos) => {
@@ -234,6 +227,36 @@ let initEditorState = EditorState.create({
 const fix = fixTables(initEditorState);
 if (fix) initEditorState = initEditorState.apply(fix.setMeta('addToHistory', false));
 
+class ParagraphView {
+  dom;
+  contentDOM;
+  constructor(node) {
+    // Create a new DOM element to represent the node
+    this.dom = document.createElement("div");
+    this.dom.className = "custom-paragraph";
+
+    // ContentDOM is where ProseMirror will render the node's content
+    this.contentDOM = document.createElement("p");
+    this.dom.appendChild(this.contentDOM);
+
+    // Optional: Setup initial rendering based on node attributes
+    this.update(node);
+    if (node.content.size == 0) this.dom.classList.add("empty")
+  }
+  update(node) {
+    if (node.type.name != "paragraph") return false
+    if (node.content.size > 0) {
+      this.dom.classList.remove("empty");
+      const val = node.textContent.indexOf("sum") > 0 && "300" || node.textContent;
+      this.contentDOM.textContent = val;
+    } else {
+      this.dom.classList.add("empty")
+    }
+    return true
+  }
+  stopEvent() { return true }
+}
+
 export const TableEditor = ({ state }) => {
   const [ editorView, setEditorView ] = useState(null);
   const editorRef = useRef(null);
@@ -250,6 +273,9 @@ export const TableEditor = ({ state }) => {
           state,
           editorState: editorState.toJSON()
         });
+      },
+      nodeViews: {
+        paragraph(node) { return new ParagraphView(node) }
       }
     });
     setEditorView(editorView);
@@ -278,6 +304,12 @@ export const TableEditor = ({ state }) => {
           modelBackgroundPlugin(),
       ]}, editorState);
       editorView.updateState(newEditorState);
+      const cells = getCells(newEditorState.doc);
+      const firstCell = cells.find(cell => cell.col === 2 && cell.row === 2);
+      const pos = firstCell && firstCell.from + 1 || 0;
+      if (!pos) return;
+      const resolvedPos = newEditorState.doc.resolve(pos);
+      editorView.dispatch(editorView.state.tr.setSelection(new TextSelection(resolvedPos)));
     }
   }, [editorView, editorState]);
   return (
