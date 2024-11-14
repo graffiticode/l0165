@@ -56,6 +56,7 @@ export const MenuView = ({ className, editorView }) => {
         {
           items.map(item => (
             <button
+              key={item.name}
               className={classNames(
                 "w-7 h-7 text-center border border-1 rounded",
                 item.selected && "bg-gray-100",

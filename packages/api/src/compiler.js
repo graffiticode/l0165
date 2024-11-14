@@ -119,6 +119,11 @@ const makeEditorState = ({ type, x, y }) => {
         cols,
         rows,
       }),
+      selection: {
+        type: "text",
+        anchor: 1,
+        head: 1,
+      },
     };
   }
   default:

@@ -119,7 +119,7 @@ const applyModelRules = (state) => {
       cell.col === 1 && "text-align: center; border: 1px solid #ddd; border-right: 1px solid #aaa;" ||
       cell.row === 1 && "text-align: center; border: 1px solid #ddd; border-bottom: 1px solid #aaa;" ||
       selection.anchor > cell.from && selection.anchor < cell.to &&
-      "text-align: left; border: 2px solid indigo;" ||
+      "text-align: left; border: 2px solid royalblue;" ||
       "text-align: left; border: 1px solid #ddd;",
     color:
       (cell.col === 1 || cell.row === 1) && "#fff" ||
