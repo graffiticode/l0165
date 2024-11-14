@@ -228,20 +228,34 @@ const fix = fixTables(initEditorState);
 if (fix) initEditorState = initEditorState.apply(fix.setMeta('addToHistory', false));
 
 class ParagraphView {
-  dom;
-  contentDOM;
-  constructor(node) {
-    // Create a new DOM element to represent the node
+  // TODO If this node is the current node, show node content otherwise render
+  // the value of the content.
+  public dom;
+  public paragraph;
+  private wasFocused;
+  constructor(node, view, getPos) {
     this.dom = document.createElement("div");
     this.dom.className = "custom-paragraph";
-
-    // ContentDOM is where ProseMirror will render the node's content
-    this.contentDOM = document.createElement("p");
-    this.dom.appendChild(this.contentDOM);
-
-    // Optional: Setup initial rendering based on node attributes
+    this.paragraph = document.createElement("p");
+    this.dom.appendChild(this.paragraph);
     this.update(node);
     if (node.content.size == 0) this.dom.classList.add("empty")
+    setInterval(() => {
+      const selection = view.state.selection;
+      const pos = getPos();
+      if (!pos) return;
+      const resolvedPos = view.state.doc.resolve(pos);
+      const start = resolvedPos.start();
+      const end = resolvedPos.end();
+      if ((selection.head < start || selection.head > end) && this.wasFocused) {
+        console.log("Input effectively blurred: pos=" + pos);
+        this.wasFocused = false;
+      } else if (selection.head >= start && selection.head <= end) {
+        this.wasFocused = true;
+      }
+    }, 1000);  }
+  get contentDOM() {
+    return this.paragraph; // Makes this element the content editable area
   }
   update(node) {
     if (node.type.name != "paragraph") return false
@@ -275,7 +289,7 @@ export const TableEditor = ({ state }) => {
         });
       },
       nodeViews: {
-        paragraph(node) { return new ParagraphView(node) }
+        paragraph(node, view, getPos) { return new ParagraphView(node, view, getPos) }
       }
     });
     setEditorView(editorView);
