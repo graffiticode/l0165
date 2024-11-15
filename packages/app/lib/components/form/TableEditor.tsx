@@ -64,6 +64,27 @@ const menuPlugin = new Plugin({
   }
 });
 
+const createFooWidget = (view, getPos) => {
+  const pos = getPos();
+  console.log("createFooWidget() pos=" + pos);
+  if (!pos) return;
+  const resolvedPos = view.state.doc.resolve(pos);
+  const nodeAtPos = resolvedPos.node();
+  console.log("createFooWidget() nodeAtPos=" + JSON.stringify(nodeAtPos, null, 2));
+  if (nodeAtPos.type.name !== "paragraph") return;
+  const textContent = nodeAtPos.textContent;
+  console.log("createFooWidget() textContent=" + textContent);
+  const span = document.createElement("span");
+  span.textContent = `eval(${textContent})`;
+  span.style.display = "none";
+  return span;
+};
+
+const fooDecoration = (pos) => {
+  return Decoration.widget(pos, createFooWidget, { side: 1 });
+  // side: 1 places the widget after the position
+};
+
 const applyDecoration = ({ doc, cells }) => {
   const decorations = [];
   cells.forEach(({ from, to, color, border }) => {
@@ -74,10 +95,16 @@ const applyDecoration = ({ doc, cells }) => {
       `
     }));
   });
+  doc.descendants((node, pos) => {
+    if (node.isBlock && node.type.name === "paragraph") {
+      decorations.push(fooDecoration(pos + node.nodeSize - 1)); // Append at the end of the paragraph
+    }
+  });
   return DecorationSet.create(doc, decorations);
 };
 
 const applyModelRules = (state) => {
+  console.log("applyModelRules()");
   const { doc, selection } = state;
   // Multiply first row and first column values and compare to body values.
   const cells = getCells(doc);
@@ -228,41 +255,24 @@ const fix = fixTables(initEditorState);
 if (fix) initEditorState = initEditorState.apply(fix.setMeta('addToHistory', false));
 
 class ParagraphView {
-  // TODO If this node is the current node, show node content otherwise render
-  // the value of the content.
   public dom;
-  public paragraph;
+  public contentDOM;
   private wasFocused;
-  constructor(node, view, getPos) {
+  constructor(node) {
     this.dom = document.createElement("div");
     this.dom.className = "custom-paragraph";
-    this.paragraph = document.createElement("p");
-    this.dom.appendChild(this.paragraph);
+    this.contentDOM = document.createElement("p");
+    this.dom.appendChild(this.contentDOM);
     this.update(node);
     if (node.content.size == 0) this.dom.classList.add("empty")
-    setInterval(() => {
-      const selection = view.state.selection;
-      const pos = getPos();
-      if (!pos) return;
-      const resolvedPos = view.state.doc.resolve(pos);
-      const start = resolvedPos.start();
-      const end = resolvedPos.end();
-      if ((selection.head < start || selection.head > end) && this.wasFocused) {
-        console.log("Input effectively blurred: pos=" + pos);
-        this.wasFocused = false;
-      } else if (selection.head >= start && selection.head <= end && !this.wasFocused) {
-        console.log("Input effectively focused: pos=" + pos);
-        this.wasFocused = true;
-      }
-    }, 1000);  }
-  get contentDOM() {
-    return this.paragraph; // Makes this element the content editable area
   }
   update(node) {
     if (node.type.name != "paragraph") return false
     if (node.content.size > 0) {
       this.dom.classList.remove("empty");
       const val = node.textContent.indexOf("sum") > 0 && "300" || node.textContent;
+      console.log("ParagraphView() update() wasFocused=" + this.wasFocused + " val=" + val);
+      console.log("ParagraphView() update() node=" + JSON.stringify(node, null, 2));
       this.contentDOM.textContent = val;
     } else {
       this.dom.classList.add("empty")
@@ -290,7 +300,7 @@ export const TableEditor = ({ state }) => {
         });
       },
       nodeViews: {
-        paragraph(node, view, getPos) { return new ParagraphView(node, view, getPos) }
+        paragraph(node) { return new ParagraphView(node) }
       }
     });
     setEditorView(editorView);
