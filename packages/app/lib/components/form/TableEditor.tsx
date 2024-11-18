@@ -64,26 +64,27 @@ const menuPlugin = new Plugin({
   }
 });
 
-const createFooWidget = (view, getPos) => {
-  const pos = getPos();
-  console.log("createFooWidget() pos=" + pos);
-  if (!pos) return;
-  const resolvedPos = view.state.doc.resolve(pos);
-  const nodeAtPos = resolvedPos.node();
-  console.log("createFooWidget() nodeAtPos=" + JSON.stringify(nodeAtPos, null, 2));
-  if (nodeAtPos.type.name !== "paragraph") return;
-  const textContent = nodeAtPos.textContent;
-  console.log("createFooWidget() textContent=" + textContent);
-  const span = document.createElement("span");
-  span.textContent = `eval(${textContent})`;
-  span.style.display = "none";
-  return span;
-};
+// const createFooWidget = (view, getPos) => {
+//   const pos = getPos();
+//   console.log("createFooWidget() pos=" + pos);
+//   if (!pos) return;
+//   const resolvedPos = view.state.doc.resolve(pos);
+//   console.log("createFooWidget() depth=" + resolvedPos.depth);
+//   const nodeAtPos = resolvedPos.node(resolvedPos.depth);
+//   console.log("createFooWidget() nodeAtPos=" + JSON.stringify(nodeAtPos, null, 2));
+//   if (nodeAtPos.type.name !== "paragraph") return;
+//   const textContent = nodeAtPos.textContent;
+//   console.log("createFooWidget() textContent=" + textContent);
+//   const span = document.createElement("span");
+//   span.textContent = `eval(${textContent})`;
+//   span.style.display = "none";
+//   return span;
+// };
 
-const fooDecoration = (pos) => {
-  return Decoration.widget(pos, createFooWidget, { side: 1 });
-  // side: 1 places the widget after the position
-};
+// const fooDecoration = (pos) => {
+//   return Decoration.widget(pos, createFooWidget, { side: 1 });
+//   // side: 1 places the widget after the position
+// };
 
 const applyDecoration = ({ doc, cells }) => {
   const decorations = [];
@@ -95,16 +96,15 @@ const applyDecoration = ({ doc, cells }) => {
       `
     }));
   });
-  doc.descendants((node, pos) => {
-    if (node.isBlock && node.type.name === "paragraph") {
-      decorations.push(fooDecoration(pos + node.nodeSize - 1)); // Append at the end of the paragraph
-    }
-  });
+  // doc.descendants((node, pos) => {
+  //   if (node.isBlock && node.type.name === "paragraph") {
+  //     decorations.push(fooDecoration(pos + node.nodeSize - 1)); // Append at the end of the paragraph
+  //   }
+  // });
   return DecorationSet.create(doc, decorations);
 };
 
 const applyModelRules = (state) => {
-  console.log("applyModelRules()");
   const { doc, selection } = state;
   // Multiply first row and first column values and compare to body values.
   const cells = getCells(doc);
@@ -258,22 +258,59 @@ class ParagraphView {
   public dom;
   public contentDOM;
   private wasFocused;
-  constructor(node) {
+  private wasBlurred;
+  private value = "";
+  private textContent = "";
+  private hasFocus;
+  constructor(node, view, getPos) {
     this.dom = document.createElement("div");
     this.dom.className = "custom-paragraph";
     this.contentDOM = document.createElement("p");
     this.dom.appendChild(this.contentDOM);
-    this.update(node);
+//    this.update(node);
     if (node.content.size == 0) this.dom.classList.add("empty")
+    setInterval(() => {
+      const selection = view.state.selection;
+      const pos = getPos();
+      if (!pos) return;
+      const resolvedPos = view.state.doc.resolve(pos);
+      const start = resolvedPos.start();
+      const end = resolvedPos.end();
+      if ((selection.head < start || selection.head > end) && this.hasFocus) {
+        this.hasFocus = false;
+        if (this.wasFocused) {
+          this.update(resolvedPos.node(resolvedPos.depth).child(0));
+          this.wasFocused = false;
+        }
+        if (!this.wasBlurred) {
+          this.wasBlurred = true;
+        }
+      } else if (selection.head >= start && selection.head <= end && !this.hasFocus) {
+        this.hasFocus = true;
+        if (!this.wasFocused) {
+//          this.update(resolvedPos.node(resolvedPos.depth).child(0));
+          this.wasFocused = true;
+        }
+        if (this.wasBlurred) {
+//          this.update(resolvedPos.node(resolvedPos.depth).child(0));
+          this.wasBlurred = false;
+        }
+      }
+    }, 1000);
   }
   update(node) {
-    if (node.type.name != "paragraph") return false
+    if (node.type.name !== "paragraph") {
+      return false
+    }
     if (node.content.size > 0) {
       this.dom.classList.remove("empty");
-      const val = node.textContent.indexOf("sum") > 0 && "300" || node.textContent;
-      console.log("ParagraphView() update() wasFocused=" + this.wasFocused + " val=" + val);
-      console.log("ParagraphView() update() node=" + JSON.stringify(node, null, 2));
-      this.contentDOM.textContent = val;
+      if (this.hasFocus) {
+        this.textContent = node.textContent;
+        this.value = this.hasFocus && this.textContent.indexOf("sum") > 0 && "300" || this.textContent;
+        this.contentDOM.textContent = this.textContent;
+      } else {
+        this.contentDOM.textContent = this.value || this.contentDOM.textContent;
+      }
     } else {
       this.dom.classList.add("empty")
     }
@@ -300,7 +337,7 @@ export const TableEditor = ({ state }) => {
         });
       },
       nodeViews: {
-        paragraph(node) { return new ParagraphView(node) }
+        paragraph(node, view, getPos) { return new ParagraphView(node, view, getPos) }
       }
     });
     setEditorView(editorView);
