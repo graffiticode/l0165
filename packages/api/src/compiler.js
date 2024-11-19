@@ -21,26 +21,19 @@ const buildCell = ({ col, row, attrs }) => {
   let colspan = 1;
   let rowspan = 1;
   const colwidth = col === "_" && [40] || null;
-  let background = "#fff";
-  if (typeof cell === "object") {
-    content = cell.doc.content;
-    colspan = content[0].content[0].content.length;
-    rowspan = content[0].content[0].length;
-  } else {
-    background = attrs.color;
-    const text = String(row[col]);
-    content = [
-      {
-        "type": "paragraph",
-        "content": row[col] && [
-          {
-            "type": "text",
-            text,
-          }
-        ]
-      }
-    ];
-  }
+  let background = attrs.color;
+  const { text } = cell; //String(row[col]);
+  content = [
+    {
+      "type": "paragraph",
+      "content": text && [
+        {
+          "type": "text",
+          text: String(text),
+        }
+      ]
+    }
+  ];
   return ({
     "type": "table_cell",
     "attrs": {
@@ -50,6 +43,7 @@ const buildCell = ({ col, row, attrs }) => {
       width: "50px",
       height: "50px",
       background,
+      ...cell.attrs,
     },
     "content": content,
   });
@@ -104,14 +98,40 @@ const applyRules = ({ cols, rows }) => {
 
 const letters = "_ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
-const makeEditorState = ({ type, x, y }) => {
-  x = x > 26 && 26 || x;  // Max col count is 26.
+const getCell = (row, col, cells) => (
+  col === "_" && row !== 0 && {
+    type: "th",
+    text: row
+  } ||
+  row === 0 && col !== "_" && {
+    type: "th",
+    text: col
+  } ||
+    row !== 0 && col !== "_" && cells[`${col}${row}`] && {
+      type: "td",
+      ...cells[`${col}${row}`],
+  } || {}
+);
+
+const makeEditorState = ({ type, cells }) => {
+  //x = x > 26 && 26 || x;  // Max col count is 26.
+  const { x, y } = Object.keys(cells).reduce((dims, cellName) => {
+    const x = letters.indexOf(cellName.slice(0, 1));
+    const y = +cellName.slice(1);
+    return {
+      x: x > dims.x && x || dims.x,
+      y: y > dims.y && y || dims.y,
+    };
+  }, {x: 0, y: 0});
   switch (type) {
   case "table": {
-    const cols = Array.apply(null, Array(x + 1)).map((_, i) => letters[i])
-    const rows = Array.apply(null, Array(y + 1)).map((_, i) =>
+    const cols = Array.apply(null, Array(x + 1)).map((_, col) => letters[col])
+    const rows = Array.apply(null, Array(y + 1)).map((_, row) =>
       cols.reduce((rows, col) =>
-        ({ ...rows, [col]: col === "_" && i > 0 && i || i === 0 && col !== "_" && col || ""}), {}
+        ({
+          ...rows,
+          [col]: getCell(row, col, cells || [])
+        }), {}
       )
     );
     return {
@@ -192,7 +212,6 @@ export class Transformer extends BasisTransformer {
   PROG(node, options, resume) {
     this.visit(node.elts[0], options, async (e0, v0) => {
       const data = options?.data || {};
-      console.log("PROG() data=" + JSON.stringify(data, null, 2));
       const err = e0;
       const val = v0.pop();
       resume(err, {

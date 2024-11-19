@@ -195,6 +195,7 @@ const getCells = doc => {
       cells.push({row, col, val, ast, from: pos, to: pos + node.nodeSize});
     }
   });
+  // console.log("getCells() cells=" + JSON.stringify(cells, null, 2));
   return cells;
 };
 
