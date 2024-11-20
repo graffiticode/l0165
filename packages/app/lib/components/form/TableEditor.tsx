@@ -106,6 +106,7 @@ const applyDecoration = ({ doc, cells }) => {
 
 const applyModelRules = (state) => {
   const { doc, selection } = state;
+  console.log("applyModelRules() doc=" + JSON.stringify(doc, null, 2));
   // Multiply first row and first column values and compare to body values.
   const cells = getCells(doc);
   let rowVals = [];
@@ -139,19 +140,21 @@ const applyModelRules = (state) => {
     // const color = getGridCellColor({row, col, val, rowVals, colVals, terms: shapedTerms});
     cellColors[row][col] = "#fff"; //color;
   });
-  const coloredCells = cells.map(cell => ({
-    ...cell,
-    border:
-    cell.col === 1 && cell.row === 1 && "border: 1px solid #ddd; border-right: 1px solid #aaa; border-bottom: 1px solid #aaa;" ||
-      cell.col === 1 && "text-align: center; border: 1px solid #ddd; border-right: 1px solid #aaa;" ||
-      cell.row === 1 && "text-align: center; border: 1px solid #ddd; border-bottom: 1px solid #aaa;" ||
-      selection.anchor > cell.from && selection.anchor < cell.to &&
-      "text-align: right; border: 2px solid royalblue;" ||
-      "text-align: right; border: 1px solid #ddd;",
-    color:
-      (cell.col === 1 || cell.row === 1) && "#fff" ||
-      "#fff"
-  }));
+  const coloredCells = cells.map(cell => (
+    {
+      ...cell,
+      readonly: cell.readonly,
+      border: cell.col === 1 && cell.row === 1 && "border: 1px solid #ddd; border-right: 1px solid #aaa; border-bottom: 1px solid #aaa;" ||
+        cell.col === 1 && "text-align: center; border: 1px solid #ddd; border-right: 1px solid #aaa;" ||
+        cell.row === 1 && "text-align: center; border: 1px solid #ddd; border-bottom: 1px solid #aaa;" ||
+        selection.anchor > cell.from && selection.anchor < cell.to &&
+        `text-align: ${cell.justify || "right"}; border: 2px solid royalblue;` ||
+        `text-align: ${cell.justify || "right"}; border: 1px solid #ddd;`,
+      color: (cell.col === 1 || cell.row === 1) && "#fff" ||
+        "#fff"
+    }
+  ));
+  console.log("coloredCells() coloredCells=" + JSON.stringify(coloredCells, null, 2));
   return applyDecoration({doc, cells: coloredCells});
 }
 
@@ -184,6 +187,7 @@ const getCells = doc => {
       col = 0;
     }
     if (node.type.name === "table_cell") {
+      console.log("getCells() node=" + JSON.stringify(node, null, 2));
       col++;
       const val = node.textContent;
       let ast;
@@ -192,7 +196,15 @@ const getCells = doc => {
       } catch (x) {
         console.log("parse error: " + x.stack);
       }
-      cells.push({row, col, val, ast, from: pos, to: pos + node.nodeSize});
+      cells.push({
+        row,
+        col,
+        val,
+        ast,
+        from: pos,
+        to: pos + node.nodeSize,
+        justify: node.attrs.justify,
+      });
     }
   });
   // console.log("getCells() cells=" + JSON.stringify(cells, null, 2));
@@ -212,6 +224,26 @@ const schema = new Schema({
       tableGroup: 'block',
       cellContent: 'paragraph',
       cellAttributes: {
+        justify: {
+          default: null,
+          getFromDOM(dom) {
+            return dom.style.textAlign || null;
+          },
+          setDOMAttr(value, attrs) {
+            if (value)
+              attrs.style = (attrs.style || '') + `text-align: ${value};`;
+          },
+        },
+        readonly: {
+          default: null,
+          getFromDOM(dom) {
+            return dom.dataset.readonly || null;
+          },
+          setDOMAttr(value, attrs) {
+            if (value)
+              attrs['data-readonly'] = value;
+          },
+        },
         background: {
           default: null,
           getFromDOM(dom) {
@@ -365,7 +397,10 @@ export const TableEditor = ({ state }) => {
           }),
           menuPlugin,
           modelBackgroundPlugin(),
-      ]}, editorState);
+        ]
+      }, editorState);
+//      console.log("editorState=" + JSON.stringify(editorState, null, 2));
+//      console.log("newEditorState=" + JSON.stringify(newEditorState, null, 2));
       editorView.updateState(newEditorState);
       const cells = getCells(newEditorState.doc);
       const firstCell = cells.find(cell => cell.col === 2 && cell.row === 2);
