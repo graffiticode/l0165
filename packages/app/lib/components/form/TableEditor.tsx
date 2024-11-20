@@ -148,10 +148,10 @@ const applyModelRules = (state) => {
         cell.col === 1 && "text-align: center; border: 1px solid #ddd; border-right: 1px solid #aaa;" ||
         cell.row === 1 && "text-align: center; border: 1px solid #ddd; border-bottom: 1px solid #aaa;" ||
         selection.anchor > cell.from && selection.anchor < cell.to &&
-        `text-align: ${cell.justify || "right"}; border: 2px solid royalblue;` ||
-        `text-align: ${cell.justify || "right"}; border: 1px solid #ddd;`,
+        `font-weight: ${cell.fontWeight || "normal"}; text-align: ${cell.justify || "right"}; border: 2px solid royalblue;` ||
+        `font-weight: ${cell.fontWeight || "normal"}; text-align: ${cell.justify || "right"}; border: 1px solid #ddd;`,
       color: (cell.col === 1 || cell.row === 1) && "#fff" ||
-        "#fff"
+        cell.background || "#fff"
     }
   ));
   console.log("coloredCells() coloredCells=" + JSON.stringify(coloredCells, null, 2));
@@ -204,6 +204,8 @@ const getCells = doc => {
         from: pos,
         to: pos + node.nodeSize,
         justify: node.attrs.justify,
+        background: node.attrs.background,
+        fontWeight: node.attrs.fontWeight,
       });
     }
   });
@@ -252,6 +254,16 @@ const schema = new Schema({
           setDOMAttr(value, attrs) {
             if (value)
               attrs.style = (attrs.style || '') + `background-color: ${value};`;
+          },
+        },
+        fontWeight: {
+          default: null,
+          getFromDOM(dom) {
+            return dom.style.fontWeight || null;
+          },
+          setDOMAttr(value, attrs) {
+            if (value)
+              attrs.style = (attrs.style || '') + `font-weight: ${value};`;
           },
         },
       },
