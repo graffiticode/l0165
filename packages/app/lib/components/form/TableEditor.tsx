@@ -106,7 +106,6 @@ const applyDecoration = ({ doc, cells }) => {
 
 const applyModelRules = (state) => {
   const { doc, selection } = state;
-  console.log("applyModelRules() doc=" + JSON.stringify(doc, null, 2));
   // Multiply first row and first column values and compare to body values.
   const cells = getCells(doc);
   let rowVals = [];
@@ -154,7 +153,6 @@ const applyModelRules = (state) => {
         cell.background || "#fff"
     }
   ));
-  console.log("coloredCells() coloredCells=" + JSON.stringify(coloredCells, null, 2));
   return applyDecoration({doc, cells: coloredCells});
 }
 
@@ -187,7 +185,6 @@ const getCells = doc => {
       col = 0;
     }
     if (node.type.name === "table_cell") {
-      console.log("getCells() node=" + JSON.stringify(node, null, 2));
       col++;
       const val = node.textContent;
       let ast;
@@ -209,7 +206,6 @@ const getCells = doc => {
       });
     }
   });
-  // console.log("getCells() cells=" + JSON.stringify(cells, null, 2));
   return cells;
 };
 
@@ -411,8 +407,6 @@ export const TableEditor = ({ state }) => {
           modelBackgroundPlugin(),
         ]
       }, editorState);
-//      console.log("editorState=" + JSON.stringify(editorState, null, 2));
-//      console.log("newEditorState=" + JSON.stringify(newEditorState, null, 2));
       editorView.updateState(newEditorState);
       const cells = getCells(newEditorState.doc);
       const firstCell = cells.find(cell => cell.col === 2 && cell.row === 2);

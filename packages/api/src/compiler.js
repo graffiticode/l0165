@@ -15,12 +15,12 @@ export class Checker extends BasisChecker {
   }
 }
 
-const buildCell = ({ col, row, attrs }) => {
+const buildCell = ({ col, row, attrs, colsAttrs }) => {
   const cell = row[col];
   let content;
   let colspan = 1;
   let rowspan = 1;
-  const colwidth = col === "_" && [40] || null;
+  const colwidth = col === "_" && [40] || [colsAttrs[col]?.width];
   let background = attrs.color;
   const { text } = cell; //String(row[col]);
   content = [
@@ -43,37 +43,38 @@ const buildCell = ({ col, row, attrs }) => {
       width: "50px",
       height: "50px",
       background,
+      ...colsAttrs[col],
       ...cell.attrs,
     },
     "content": content,
   });
 };
 
-const buildRow = ({ cols, row, attrs }) => {
+const buildRow = ({ cols, row, attrs, colsAttrs }) => {
   return ({
     "type": "table_row",
     "content": cols.map(col => {
-      return buildCell({col, row, attrs});
+      return buildCell({col, row, attrs, colsAttrs});
     }),
   })
 };
 
-const buildTable = ({ cols, rows, attrs }) => {
+const buildTable = ({ cols, rows, attrs, colsAttrs }) => {
   return ({
     "type": "table",
     "content": rows.map((row, rowIndex) => {
-      return buildRow({cols, row, attrs: attrs[rowIndex]});
+      return buildRow({cols, row, colsAttrs, attrs: attrs[rowIndex]});
     })
   })
 };
 
-const buildDocFromTable = ({ cols, rows }) => {
+const buildDocFromTable = ({ cols, rows, colsAttrs }) => {
   const attrs = applyRules({ cols, rows });
   return {
     "type": "doc",
     "content": [
       {
-        ...buildTable({cols, rows, attrs}),
+        ...buildTable({cols, rows, attrs, colsAttrs}),
       },
     ]
   }
@@ -113,7 +114,7 @@ const getCell = (row, col, cells) => (
   } || {}
 );
 
-const makeEditorState = ({ type, cells }) => {
+const makeEditorState = ({ type, columns, cells }) => {
   //x = x > 26 && 26 || x;  // Max col count is 26.
   const { x, y } = Object.keys(cells).reduce((dims, cellName) => {
     const x = letters.indexOf(cellName.slice(0, 1));
@@ -130,7 +131,7 @@ const makeEditorState = ({ type, cells }) => {
       cols.reduce((rows, col) =>
         ({
           ...rows,
-          [col]: getCell(row, col, cells || [])
+          [col]: getCell(row, col, cells || {})
         }), {}
       )
     );
@@ -138,6 +139,7 @@ const makeEditorState = ({ type, cells }) => {
       doc: buildDocFromTable({
         cols,
         rows,
+        colsAttrs: columns,
       }),
       selection: {
         type: "text",
