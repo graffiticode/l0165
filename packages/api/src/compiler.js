@@ -16,6 +16,7 @@ export class Checker extends BasisChecker {
 }
 
 const buildCell = ({ col, row, attrs, colsAttrs }) => {
+  colsAttrs = colsAttrs || {};
   const cell = row[col];
   let content;
   let colspan = 1;
@@ -34,9 +35,13 @@ const buildCell = ({ col, row, attrs, colsAttrs }) => {
       ]
     }
   ];
+  console.log("buildCell() row=" + JSON.stringify(row));
+  console.log("buildCell() row._.text=" + row._.text);
+  const isHeader = false;  // TODO col === "_";
   return ({
-    "type": "table_cell",
+    "type": isHeader && "table_header" || "table_cell",
     "attrs": {
+      name: `${col}${row._.text}`,
       colspan,
       rowspan,
       colwidth,

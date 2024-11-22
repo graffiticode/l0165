@@ -10,6 +10,7 @@ import { EditorView } from 'prosemirror-view';
 import {
   EditorState,
   TextSelection,
+  PluginKey,
 } from 'prosemirror-state';
 import { Schema } from 'prosemirror-model';
 import { schema as baseSchema } from 'prosemirror-schema-basic';
@@ -42,6 +43,58 @@ import { MenuView } from './MenuView';
 import { debounce } from "lodash";
 
 import { Parser } from "@artcompiler/parselatex";
+
+const customPluginKey = new PluginKey("customState");
+
+const customPlugin = new Plugin({
+  key: customPluginKey,
+  state: {
+    init(/*config, instance*/) {
+      return { customValue: 0 }; // Initial state
+    },
+    apply(tr, value) {
+      tr = tr;
+      const meta = tr.getMeta(customPluginKey);
+      if (meta && meta.updateCustomValue !== undefined) {
+        return { ...value, customValue: value.customValue + 1 };
+      }
+      return value; // No changes
+    }
+  },
+  props: {
+    // Optional: Custom behaviors
+  }
+});
+
+//const cellExprsPluginKey = new PluginKey("cellExprs");
+const cellExprsPlugin = new Plugin({
+  //key: cellExprsPluginKey,
+  state: {
+    init(/*config, instance*/) {
+      return { cellExprs: {} };
+    },
+    apply(tr, value, oldState, newState) {
+      tr = tr;
+      oldState = oldState;
+      newState = newState;
+      const pos = newState.selection.anchor;
+      const resolvedPos = newState.doc.resolve(pos);
+      const node = resolvedPos.node(resolvedPos.depth - 1);
+      if (node.attrs.name) {
+        const name = node.attrs.name;
+        const src = node.textContent;
+        value = {
+          ...value,
+          [name]: {src},
+        };
+        console.log("cellExprsPlugin() value=" + JSON.stringify(value, null, 2));
+      }
+      return value;
+    }
+  },
+  props: {
+  }
+});
 
 const menuPlugin = new Plugin({
   view(editorView) {
@@ -194,6 +247,7 @@ const getCells = doc => {
         console.log("parse error: " + x.stack);
       }
       cells.push({
+        name: node.attrs.name,
         row,
         col,
         val,
@@ -206,6 +260,7 @@ const getCells = doc => {
       });
     }
   });
+  console.log("getCells() cells=" + JSON.stringify(cells, null, 2));
   return cells;
 };
 
@@ -222,6 +277,17 @@ const schema = new Schema({
       tableGroup: 'block',
       cellContent: 'paragraph',
       cellAttributes: {
+        name: {
+          default: null,
+          getFromDOM(dom) {
+            return dom.dataset.name || null;
+          },
+          setDOMAttr(value, attrs) {
+            if (value) {
+              attrs.dataset = `data-name: ${value};`;
+            }
+          },
+        },
         justify: {
           default: null,
           getFromDOM(dom) {
@@ -279,6 +345,7 @@ const plugins = [
     'Shift-Tab': goToNextCell(-1),
   }),
   menuPlugin,
+  cellExprsPlugin,
 ];
 
 let initEditorState = EditorState.create({
@@ -320,7 +387,7 @@ class ParagraphView {
       if ((selection.head < start || selection.head > end) && this.hasFocus) {
         this.hasFocus = false;
         if (this.wasFocused) {
-          this.update(resolvedPos.node(resolvedPos.depth).child(0));
+          this.update(resolvedPos.node(resolvedPos.depth).child(0), view);
           this.wasFocused = false;
         }
         if (!this.wasBlurred) {
@@ -339,19 +406,23 @@ class ParagraphView {
       }
     }, 1000);
   }
-  update(node) {
+  update(node, view) {
     if (node.type.name !== "paragraph") {
       return false
     }
-    if (node.content.size > 0) {
-      this.dom.classList.remove("empty");
-      if (this.hasFocus) {
+    this.dom.classList.remove("empty");
+    if (this.hasFocus) {
+      const pluginState = customPluginKey.getState(view.state);
+      console.log("Custom Plugin State:", pluginState);
+      // const cellExprs = cellExprsPlugin.getState(view.state);
+      // console.log("cellExprs=", JSON.stringify(cellExprs, null, 2));
+      if (node.content.size > 0) {
         this.textContent = node.textContent;
         this.value = this.hasFocus && this.textContent.indexOf("sum") > 0 && "300" || this.textContent;
         this.contentDOM.textContent = this.textContent;
       } else {
         this.contentDOM.textContent = this.value || this.contentDOM.textContent;
-      }
+        }
     } else {
       this.dom.classList.add("empty")
     }
@@ -390,6 +461,7 @@ export const TableEditor = ({ state }) => {
   }, []);
   const { editorState } = state.data;
   useEffect(() => {
+//    console.log("TableEdtior() editorState=" + JSON.stringify(editorState, null, 2));
     if (editorView && editorState) {
       const newEditorState = EditorState.fromJSON({
         schema,
@@ -405,6 +477,8 @@ export const TableEditor = ({ state }) => {
           }),
           menuPlugin,
           modelBackgroundPlugin(),
+          cellExprsPlugin,
+          customPlugin,
         ]
       }, editorState);
       editorView.updateState(newEditorState);
