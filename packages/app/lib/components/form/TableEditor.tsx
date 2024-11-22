@@ -10,7 +10,6 @@ import { EditorView } from 'prosemirror-view';
 import {
   EditorState,
   TextSelection,
-  PluginKey,
 } from 'prosemirror-state';
 import { Schema } from 'prosemirror-model';
 import { schema as baseSchema } from 'prosemirror-schema-basic';
@@ -44,31 +43,7 @@ import { debounce } from "lodash";
 
 import { Parser } from "@artcompiler/parselatex";
 
-const customPluginKey = new PluginKey("customState");
-
-const customPlugin = new Plugin({
-  key: customPluginKey,
-  state: {
-    init(/*config, instance*/) {
-      return { customValue: 0 }; // Initial state
-    },
-    apply(tr, value) {
-      tr = tr;
-      const meta = tr.getMeta(customPluginKey);
-      if (meta && meta.updateCustomValue !== undefined) {
-        return { ...value, customValue: value.customValue + 1 };
-      }
-      return value; // No changes
-    }
-  },
-  props: {
-    // Optional: Custom behaviors
-  }
-});
-
-//const cellExprsPluginKey = new PluginKey("cellExprs");
 const cellExprsPlugin = new Plugin({
-  //key: cellExprsPluginKey,
   state: {
     init(/*config, instance*/) {
       return { cellExprs: {} };
@@ -345,37 +320,33 @@ const plugins = [
     'Shift-Tab': goToNextCell(-1),
   }),
   menuPlugin,
+  modelBackgroundPlugin(),
   cellExprsPlugin,
 ];
 
 let initEditorState = EditorState.create({
-//  doc,
   schema,
   plugins,
-    // .concat(
-    //   exampleSetup({
-    //     schema,
-    //     menuContent: menu,
-    //   }),
-    // ),
 });
+
 const fix = fixTables(initEditorState);
 if (fix) initEditorState = initEditorState.apply(fix.setMeta('addToHistory', false));
 
 class ParagraphView {
   public dom;
   public contentDOM;
-  private wasFocused;
-  private wasBlurred;
+  private focus;
+  private blur;
   private value = "";
   private textContent = "";
-  private hasFocus;
+  private hasFocus = false;
+  private view;
   constructor(node, view, getPos) {
+    this.view = view;
     this.dom = document.createElement("div");
     this.dom.className = "custom-paragraph";
     this.contentDOM = document.createElement("p");
     this.dom.appendChild(this.contentDOM);
-//    this.update(node);
     if (node.content.size == 0) this.dom.classList.add("empty")
     setInterval(() => {
       const selection = view.state.selection;
@@ -384,38 +355,30 @@ class ParagraphView {
       const resolvedPos = view.state.doc.resolve(pos);
       const start = resolvedPos.start();
       const end = resolvedPos.end();
-      if ((selection.head < start || selection.head > end) && this.hasFocus) {
+      const inside = selection.head >= start && selection.head <= end;
+      if (!inside && this.hasFocus) {
         this.hasFocus = false;
-        if (this.wasFocused) {
-          this.update(resolvedPos.node(resolvedPos.depth).child(0), view);
-          this.wasFocused = false;
-        }
-        if (!this.wasBlurred) {
-          this.wasBlurred = true;
-        }
-      } else if (selection.head >= start && selection.head <= end && !this.hasFocus) {
+        this.blur = true;
+        this.update(resolvedPos.node(resolvedPos.depth).child(0));
+      } else if (inside && !this.hasFocus) {
         this.hasFocus = true;
-        if (!this.wasFocused) {
-//          this.update(resolvedPos.node(resolvedPos.depth).child(0));
-          this.wasFocused = true;
-        }
-        if (this.wasBlurred) {
-//          this.update(resolvedPos.node(resolvedPos.depth).child(0));
-          this.wasBlurred = false;
-        }
+        this.focus = true;
+//        this.update(resolvedPos.node(resolvedPos.depth).child(0));
+      } else {
+        this.blur = false;
+        this.focus = false;
       }
     }, 1000);
   }
-  update(node, view) {
+  update(node) {
     if (node.type.name !== "paragraph") {
       return false
     }
     this.dom.classList.remove("empty");
+    console.log("update() node=" + JSON.stringify(node, null, 2) + " hasFocus=" + this.hasFocus + " focus=" + this.focus + " blur=" + this.blur);
     if (this.hasFocus) {
-      const pluginState = customPluginKey.getState(view.state);
-      console.log("Custom Plugin State:", pluginState);
-      // const cellExprs = cellExprsPlugin.getState(view.state);
-      // console.log("cellExprs=", JSON.stringify(cellExprs, null, 2));
+      const cellExprs = cellExprsPlugin.getState(this.view.state);
+      console.log("cellExprs=", JSON.stringify(cellExprs, null, 2));
       if (node.content.size > 0) {
         this.textContent = node.textContent;
         this.value = this.hasFocus && this.textContent.indexOf("sum") > 0 && "300" || this.textContent;
@@ -461,25 +424,10 @@ export const TableEditor = ({ state }) => {
   }, []);
   const { editorState } = state.data;
   useEffect(() => {
-//    console.log("TableEdtior() editorState=" + JSON.stringify(editorState, null, 2));
     if (editorView && editorState) {
       const newEditorState = EditorState.fromJSON({
         schema,
-        plugins: [
-          columnResizing(),
-          tableEditing(),
-          history(),
-          keymap({"Mod-z": undo, "Mod-y": redo}),
-          keymap({
-            ...baseKeymap,
-            Tab: goToNextCell(1),
-            'Shift-Tab': goToNextCell(-1),
-          }),
-          menuPlugin,
-          modelBackgroundPlugin(),
-          cellExprsPlugin,
-          customPlugin,
-        ]
+        plugins,
       }, editorState);
       editorView.updateState(newEditorState);
       const cells = getCells(newEditorState.doc);
