@@ -44,6 +44,7 @@ import { debounce } from "lodash";
 import { Parser } from "@artcompiler/parselatex";
 
 const cellExprsPlugin = new Plugin({
+  // Capture the src code of a cell when it is being edited.
   state: {
     init(/*config, instance*/) {
       return { cellExprs: {} };
@@ -92,31 +93,10 @@ const menuPlugin = new Plugin({
   }
 });
 
-// const createFooWidget = (view, getPos) => {
-//   const pos = getPos();
-//   console.log("createFooWidget() pos=" + pos);
-//   if (!pos) return;
-//   const resolvedPos = view.state.doc.resolve(pos);
-//   console.log("createFooWidget() depth=" + resolvedPos.depth);
-//   const nodeAtPos = resolvedPos.node(resolvedPos.depth);
-//   console.log("createFooWidget() nodeAtPos=" + JSON.stringify(nodeAtPos, null, 2));
-//   if (nodeAtPos.type.name !== "paragraph") return;
-//   const textContent = nodeAtPos.textContent;
-//   console.log("createFooWidget() textContent=" + textContent);
-//   const span = document.createElement("span");
-//   span.textContent = `eval(${textContent})`;
-//   span.style.display = "none";
-//   return span;
-// };
-
-// const fooDecoration = (pos) => {
-//   return Decoration.widget(pos, createFooWidget, { side: 1 });
-//   // side: 1 places the widget after the position
-// };
-
 const applyDecoration = ({ doc, cells }) => {
   const decorations = [];
   cells.forEach(({ from, to, color, border }) => {
+    console.log("applyDecoration() from=" + from);
     decorations.push(Decoration.node(from, to, {
       style: `
         background-color: ${color};
@@ -124,18 +104,13 @@ const applyDecoration = ({ doc, cells }) => {
       `
     }));
   });
-  // doc.descendants((node, pos) => {
-  //   if (node.isBlock && node.type.name === "paragraph") {
-  //     decorations.push(fooDecoration(pos + node.nodeSize - 1)); // Append at the end of the paragraph
-  //   }
-  // });
   return DecorationSet.create(doc, decorations);
 };
 
 const applyModelRules = (state) => {
   const { doc, selection } = state;
   // Multiply first row and first column values and compare to body values.
-  const cells = getCells(doc);
+  const cells = getCells(state);
   let rowVals = [];
   let colVals = [];
   let rowSums = [];
@@ -204,7 +179,41 @@ const modelBackgroundPlugin = () => new Plugin({
   }
 });
 
-const getCells = doc => {
+const evaluateCells = (state) => {
+  const { doc } = state;
+  // Multiply first row and first column values and compare to body values.
+  const cells = getCells(state);
+  console.log("evaluateCells() cells=" + JSON.stringify(cells, null, 2));
+  const evaluatedCells = cells.map(cell => (
+    {
+      ...cell,
+    }
+  ));
+  return applyDecoration({doc, cells: evaluatedCells});
+}
+
+const cellEvaluatorPlugin = new Plugin({
+  state: {
+    init(_, state) {
+      return evaluateCells(state);
+    },
+    apply(tr, decorationSet, oldState, newState) {
+      tr = tr;
+      oldState = oldState;
+      newState = newState;
+      decorationSet = decorationSet;
+      return evaluateCells(newState);
+    },
+  },
+  props: {
+    decorations(state) {
+      return this.getState(state);
+    }
+  }
+});
+
+const getCells = (state) => {
+  const { doc } = state;
   const cells = [];
   let row = 0, col = 0;
   doc.descendants((node, pos) => {
@@ -214,7 +223,10 @@ const getCells = doc => {
     }
     if (node.type.name === "table_cell") {
       col++;
-      const val = node.textContent;
+      const cellExprs = cellExprsPlugin.getState(state);
+      const name = node.attrs.name;
+      const src = cellExprs && name && cellExprs[name]?.src || node.textContent;
+      const val = src.indexOf("sum") > 0 && "300" || node.textContent;
       let ast;
       try {
         ast = Parser.create({allowThousandsSeparator: true}, val);
@@ -222,9 +234,10 @@ const getCells = doc => {
         console.log("parse error: " + x.stack);
       }
       cells.push({
-        name: node.attrs.name,
         row,
         col,
+        name,
+        src,
         val,
         ast,
         from: pos,
@@ -235,7 +248,7 @@ const getCells = doc => {
       });
     }
   });
-  console.log("getCells() cells=" + JSON.stringify(cells, null, 2));
+  // console.log("getCells() cells=" + JSON.stringify(cells, null, 2));
   return cells;
 };
 
@@ -309,6 +322,32 @@ const schema = new Schema({
   marks: baseSchema.spec.marks,
 });
 
+const tableCellSelectionPlugin = new Plugin({
+  state: {
+    init() {
+      return { lastFocusedCell: null };
+    },
+    apply(tr, value, oldState, newState) {
+      tr = tr;
+      oldState = oldState;
+      const { selection } = newState;
+      const $anchor = selection.$anchor;
+      const tableCellNode = $anchor.node(-1);
+      console.log("tableCellSelectionPlugin value=" + JSON.stringify(value, null, 2));
+      if (tableCellNode && tableCellNode.type.name === "table_cell") {
+        if (value.lastFocusedCell !== $anchor.pos) {
+          console.log("Focused on new cell:", $anchor.pos);
+          return { lastFocusedCell: $anchor.pos };
+        }
+      } else if (value.lastFocusedCell) {
+        console.log("Blurred cell at position:", value.lastFocusedCell);
+        return { lastFocusedCell: null };
+      }
+      return value;
+    }
+  }
+});
+
 const plugins = [
   columnResizing(),
   tableEditing(),
@@ -322,6 +361,8 @@ const plugins = [
   menuPlugin,
   modelBackgroundPlugin(),
   cellExprsPlugin,
+  tableCellSelectionPlugin,
+  cellEvaluatorPlugin,
 ];
 
 let initEditorState = EditorState.create({
@@ -335,50 +376,30 @@ if (fix) initEditorState = initEditorState.apply(fix.setMeta('addToHistory', fal
 class ParagraphView {
   public dom;
   public contentDOM;
-  private focus;
-  private blur;
+//  private focus;
+//  private blur;
   private value = "";
   private textContent = "";
   private hasFocus = false;
-  private view;
-  constructor(node, view, getPos) {
-    this.view = view;
+//  private view;
+  constructor(node/*, view, getPos*/) {
+//    this.view = view;
     this.dom = document.createElement("div");
     this.dom.className = "custom-paragraph";
     this.contentDOM = document.createElement("p");
     this.dom.appendChild(this.contentDOM);
     if (node.content.size == 0) this.dom.classList.add("empty")
-    setInterval(() => {
-      const selection = view.state.selection;
-      const pos = getPos();
-      if (!pos) return;
-      const resolvedPos = view.state.doc.resolve(pos);
-      const start = resolvedPos.start();
-      const end = resolvedPos.end();
-      const inside = selection.head >= start && selection.head <= end;
-      if (!inside && this.hasFocus) {
-        this.hasFocus = false;
-        this.blur = true;
-        this.update(resolvedPos.node(resolvedPos.depth).child(0));
-      } else if (inside && !this.hasFocus) {
-        this.hasFocus = true;
-        this.focus = true;
-//        this.update(resolvedPos.node(resolvedPos.depth).child(0));
-      } else {
-        this.blur = false;
-        this.focus = false;
-      }
-    }, 1000);
   }
   update(node) {
+    console.log("ParagraphView() node=" + JSON.stringify(node, null, 2));
     if (node.type.name !== "paragraph") {
       return false
     }
     this.dom.classList.remove("empty");
-    console.log("update() node=" + JSON.stringify(node, null, 2) + " hasFocus=" + this.hasFocus + " focus=" + this.focus + " blur=" + this.blur);
+//    console.log("update() node=" + JSON.stringify(node, null, 2) + " hasFocus=" + this.hasFocus + " focus=" + this.focus + " blur=" + this.blur);
     if (this.hasFocus) {
-      const cellExprs = cellExprsPlugin.getState(this.view.state);
-      console.log("cellExprs=", JSON.stringify(cellExprs, null, 2));
+      // const cellExprs = cellExprsPlugin.getState(this.view.state);
+      // console.log("cellExprs=", JSON.stringify(cellExprs, null, 2));
       if (node.content.size > 0) {
         this.textContent = node.textContent;
         this.value = this.hasFocus && this.textContent.indexOf("sum") > 0 && "300" || this.textContent;
@@ -391,7 +412,7 @@ class ParagraphView {
     }
     return true
   }
-  stopEvent() { return true }
+//  stopEvent() { return true }
 }
 
 export const TableEditor = ({ state }) => {
@@ -412,7 +433,7 @@ export const TableEditor = ({ state }) => {
         });
       },
       nodeViews: {
-        paragraph(node, view, getPos) { return new ParagraphView(node, view, getPos) }
+        paragraph(node/*, view, getPos*/) { return new ParagraphView(node/*, view, getPos*/) }
       }
     });
     setEditorView(editorView);
@@ -430,7 +451,7 @@ export const TableEditor = ({ state }) => {
         plugins,
       }, editorState);
       editorView.updateState(newEditorState);
-      const cells = getCells(newEditorState.doc);
+      const cells = getCells(newEditorState);
       const firstCell = cells.find(cell => cell.col === 2 && cell.row === 2);
       const pos = firstCell && firstCell.from + 1 || 0;
       if (!pos) return;
