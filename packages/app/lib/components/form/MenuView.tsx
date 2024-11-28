@@ -31,10 +31,10 @@ const isMarkActive = ({ state, mark }) => {
 }
 
 export const MenuView = ({ className, editorView }) => {
-  const toggle = item => {
-    item.selected = !item.selected;
-    item.command(editorView.state.schema)(editorView.state, editorView.dispatch);
-  };
+  // const toggle = item => {
+  //   item.selected = !item.selected;
+  //   item.command(editorView.state.schema)(editorView.state, editorView.dispatch);
+  // };
   editorView && items.forEach(item =>
     item.selected = isMarkActive({
       state: editorView.state,
@@ -48,6 +48,7 @@ export const MenuView = ({ className, editorView }) => {
         className
       )}
     >
+      {/*
       <div
         className={classNames(
           "flex flex-row gap-1 mb-2 text-sm font-sans"
@@ -75,7 +76,8 @@ export const MenuView = ({ className, editorView }) => {
             </button>
           ))
         }
-      </div>
+        </div>
+       */}
       <FormulaBar editorView={editorView} />
     </div>
   );
