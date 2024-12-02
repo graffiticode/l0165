@@ -30,6 +30,7 @@ import {
 //   toggleHeaderCell,
   goToNextCell,
   //   deleteTable,
+  //findCell,
 } from "prosemirror-tables";
 import { tableEditing, columnResizing, tableNodes, fixTables } from "prosemirror-tables";
 
@@ -47,7 +48,7 @@ const cellExprsPlugin = new Plugin({
   // Capture the src code of a cell when it is being edited.
   state: {
     init(/*config, instance*/) {
-      return { cellExprs: {} };
+      return {};
     },
     apply(tr, value, oldState, newState) {
       tr = tr;
@@ -63,7 +64,6 @@ const cellExprsPlugin = new Plugin({
           ...value,
           [name]: {src},
         };
-        console.log("cellExprsPlugin() value=" + JSON.stringify(value, null, 2));
       }
       return value;
     }
@@ -96,7 +96,6 @@ const menuPlugin = new Plugin({
 const applyDecoration = ({ doc, cells }) => {
   const decorations = [];
   cells.forEach(({ from, to, color, border }) => {
-    console.log("applyDecoration() from=" + from);
     decorations.push(Decoration.node(from, to, {
       style: `
         background-color: ${color};
@@ -179,38 +178,43 @@ const modelBackgroundPlugin = () => new Plugin({
   }
 });
 
-const evaluateCells = (state) => {
-  const { doc } = state;
-  // Multiply first row and first column values and compare to body values.
-  const cells = getCells(state);
-  console.log("evaluateCells() cells=" + JSON.stringify(cells, null, 2));
-  const evaluatedCells = cells.map(cell => (
-    {
-      ...cell,
-    }
-  ));
-  return applyDecoration({doc, cells: evaluatedCells});
-}
+// On blur of a cell, evaluate all the cells that depend on that cell including
+// itself.
+//
+// On focus of a cell, update the textContent to the `src` value of the cell.
 
-const cellEvaluatorPlugin = new Plugin({
-  state: {
-    init(_, state) {
-      return evaluateCells(state);
-    },
-    apply(tr, decorationSet, oldState, newState) {
-      tr = tr;
-      oldState = oldState;
-      newState = newState;
-      decorationSet = decorationSet;
-      return evaluateCells(newState);
-    },
-  },
-  props: {
-    decorations(state) {
-      return this.getState(state);
-    }
-  }
-});
+// const evaluateCells = (state) => {
+//   // const { doc } = state;
+//   const cells = getCells(state);
+//   //console.log("evaluateCells() cells=" + JSON.stringify(cells, null, 2));
+//   const evaluatedCells = cells.map(cell => (
+//     {
+//       ...cell,
+//       val: `eval(${cell.src})`,
+//     }
+//   ));
+//   return evaluatedCells; //applyDecoration({doc, cells: evaluatedCells});
+// }
+
+// const cellEvaluatorPlugin = new Plugin({
+//   state: {
+//     init(_, state) {
+//       return evaluateCells(state);
+//     },
+//     apply(tr, decorationSet, oldState, newState) {
+//       tr = tr;
+//       oldState = oldState;
+//       newState = newState;
+//       decorationSet = decorationSet;
+//       return evaluateCells(newState);
+//     },
+//   },
+//   // props: {
+//   //   decorations(state) {
+//   //     return this.getState(state);
+//   //   }
+//   // }
+// });
 
 const getCells = (state) => {
   const { doc } = state;
@@ -248,7 +252,6 @@ const getCells = (state) => {
       });
     }
   });
-  // console.log("getCells() cells=" + JSON.stringify(cells, null, 2));
   return cells;
 };
 
@@ -322,26 +325,128 @@ const schema = new Schema({
   marks: baseSchema.spec.marks,
 });
 
-const tableCellSelectionPlugin = new Plugin({
+const getCellNodeByName = ({doc, name}) => {
+  let result;
+  doc.descendants((node, pos) => {
+    if (result !== undefined) {
+      return false;
+    }
+    if (node.type.name === "table_cell" && node.attrs.name === name) {
+      result = {node, pos};
+    }
+  });
+  return result;
+};
+
+const replaceCellContent = (editorView, cellPos, newContent, doMoveCursor = false) => {
+  const { state, dispatch } = editorView;
+  const cellNode = state.doc.nodeAt(cellPos);
+  if (!cellNode || cellNode.type.name !== "table_cell") {
+    console.error("Invalid cell position or node type: " + JSON.stringify(cellNode, null, 2));
+    return;
+  }
+  const contentStart = cellPos + 1;
+  const contentEnd = cellPos + cellNode.nodeSize - 1;
+  const tr = state.tr;
+  tr.replaceWith(
+    contentStart,
+    contentEnd,
+    state.schema.node("paragraph", null, state.schema.text(newContent))
+  );
+  if (doMoveCursor) {
+    const selectionPos = Math.min(contentStart + newContent.length, contentEnd - 1);
+    tr.setSelection(TextSelection.create(tr.doc, selectionPos));
+  }
+  dispatch(tr);
+}
+
+const tableCellFocusPlugin = new Plugin({
+  view(editorView) {
+    editorView = editorView;
+    return {
+      update(view) {
+        const { state, dispatch } = view;
+        const pluginState = tableCellFocusPlugin.getState(state);
+        if (pluginState.dirtyCells.length > 0) {
+          const tr = state.tr;
+          tr.setMeta("updated", true);
+          dispatch(tr);
+        }
+        if (pluginState.focusedCell) {
+          const {/*node,*/ pos} = getCellNodeByName({doc: view.state.doc, name: pluginState.focusedCell});
+          replaceCellContent(view, pos, "src", true);
+        }
+        pluginState.dirtyCells.forEach(name => {
+          const { pos } = getCellNodeByName({doc: view.state.doc, name});
+          replaceCellContent(view, pos, "eval(src)");
+        });
+      }
+    };
+  },
   state: {
     init() {
-      return { lastFocusedCell: null };
+      return {
+        lastFocusedCell: null,
+        blurredCell: null,
+        focusedCell: null,
+        dirtyCells: []
+      };
     },
     apply(tr, value, oldState, newState) {
       tr = tr;
       oldState = oldState;
+      newState = newState;
       const { selection } = newState;
       const $anchor = selection.$anchor;
-      const tableCellNode = $anchor.node(-1);
-      console.log("tableCellSelectionPlugin value=" + JSON.stringify(value, null, 2));
-      if (tableCellNode && tableCellNode.type.name === "table_cell") {
-        if (value.lastFocusedCell !== $anchor.pos) {
-          console.log("Focused on new cell:", $anchor.pos);
-          return { lastFocusedCell: $anchor.pos };
+      let node = $anchor.node(-1);
+      if (node.type.name !== "table_cell") {
+        // Selection outside of cell, so use A1.
+        const { doc } = newState;
+        ({ node } = getCellNodeByName({doc, name: "A1"}));
+      }
+      if (tr.getMeta("updated")) {
+        value = {
+          ...value,
+          focusedCell: null,
+          dirtyCells: [],
+        };
+      }
+      if (node && node.type.name === "table_cell") {
+        const name = node.attrs.name;
+        if (value.lastFocusedCell !== name) {
+          if (value.lastFocusedCell) {
+            const newValue = `eval(${value.lastFocusedCell})`;
+            value = {
+              ...value,
+              blurredCell: value.lastFocusedCell,
+              dirtyCells: [
+                ...value.dirtyCells,
+                value.lastFocusedCell,
+              ],
+              [value.lastFocusedCell]: {
+                ...value[value.lastFocusedCell],
+                val: newValue,
+              },
+            };
+          }
+          value = {
+            ...value,
+            lastFocusedCell: node.attrs.name,
+            focusedCell: node.attrs.name,
+          };
+        } else if (node.attrs.name) {
+          const src = node.textContent;
+          value = {
+            ...value,
+            blurredCell: null,
+            focusedCell: null,
+            dirtyCells: [],
+            [name]: {
+              ...value[name],
+              src,
+            },
+          };
         }
-      } else if (value.lastFocusedCell) {
-        console.log("Blurred cell at position:", value.lastFocusedCell);
-        return { lastFocusedCell: null };
       }
       return value;
     }
@@ -361,15 +466,14 @@ const plugins = [
   menuPlugin,
   modelBackgroundPlugin(),
   cellExprsPlugin,
-  tableCellSelectionPlugin,
-  cellEvaluatorPlugin,
+  tableCellFocusPlugin,
+//  cellEvaluatorPlugin,
 ];
 
 let initEditorState = EditorState.create({
   schema,
   plugins,
 });
-
 const fix = fixTables(initEditorState);
 if (fix) initEditorState = initEditorState.apply(fix.setMeta('addToHistory', false));
 
@@ -382,8 +486,10 @@ class ParagraphView {
   private textContent = "";
   private hasFocus = false;
 //  private view;
-  constructor(node/*, view, getPos*/) {
-//    this.view = view;
+//  private getPos;
+  constructor(node, view) {
+    view = view;
+//    this.getPos = getPos;
     this.dom = document.createElement("div");
     this.dom.className = "custom-paragraph";
     this.contentDOM = document.createElement("p");
@@ -391,15 +497,12 @@ class ParagraphView {
     if (node.content.size == 0) this.dom.classList.add("empty")
   }
   update(node) {
-    console.log("ParagraphView() node=" + JSON.stringify(node, null, 2));
     if (node.type.name !== "paragraph") {
       return false
     }
     this.dom.classList.remove("empty");
-//    console.log("update() node=" + JSON.stringify(node, null, 2) + " hasFocus=" + this.hasFocus + " focus=" + this.focus + " blur=" + this.blur);
     if (this.hasFocus) {
       // const cellExprs = cellExprsPlugin.getState(this.view.state);
-      // console.log("cellExprs=", JSON.stringify(cellExprs, null, 2));
       if (node.content.size > 0) {
         this.textContent = node.textContent;
         this.value = this.hasFocus && this.textContent.indexOf("sum") > 0 && "300" || this.textContent;
@@ -433,7 +536,7 @@ export const TableEditor = ({ state }) => {
         });
       },
       nodeViews: {
-        paragraph(node/*, view, getPos*/) { return new ParagraphView(node/*, view, getPos*/) }
+        paragraph(node, view) { return new ParagraphView(node, view) }
       }
     });
     setEditorView(editorView);
