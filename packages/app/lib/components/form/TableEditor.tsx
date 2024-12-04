@@ -44,34 +44,6 @@ import { debounce } from "lodash";
 
 import { Parser } from "@artcompiler/parselatex";
 
-const cellExprsPlugin = new Plugin({
-  // Capture the src code of a cell when it is being edited.
-  state: {
-    init(/*config, instance*/) {
-      return {};
-    },
-    apply(tr, value, oldState, newState) {
-      tr = tr;
-      oldState = oldState;
-      newState = newState;
-      const pos = newState.selection.anchor;
-      const resolvedPos = newState.doc.resolve(pos);
-      const node = resolvedPos.node(resolvedPos.depth - 1);
-      if (node.attrs.name) {
-        const name = node.attrs.name;
-        const src = node.textContent;
-        value = {
-          ...value,
-          [name]: {src},
-        };
-      }
-      return value;
-    }
-  },
-  props: {
-  }
-});
-
 const menuPlugin = new Plugin({
   view(editorView) {
     let menuDiv = document.createElement('div');
@@ -178,44 +150,6 @@ const modelBackgroundPlugin = () => new Plugin({
   }
 });
 
-// On blur of a cell, evaluate all the cells that depend on that cell including
-// itself.
-//
-// On focus of a cell, update the textContent to the `src` value of the cell.
-
-// const evaluateCells = (state) => {
-//   // const { doc } = state;
-//   const cells = getCells(state);
-//   //console.log("evaluateCells() cells=" + JSON.stringify(cells, null, 2));
-//   const evaluatedCells = cells.map(cell => (
-//     {
-//       ...cell,
-//       val: `eval(${cell.src})`,
-//     }
-//   ));
-//   return evaluatedCells; //applyDecoration({doc, cells: evaluatedCells});
-// }
-
-// const cellEvaluatorPlugin = new Plugin({
-//   state: {
-//     init(_, state) {
-//       return evaluateCells(state);
-//     },
-//     apply(tr, decorationSet, oldState, newState) {
-//       tr = tr;
-//       oldState = oldState;
-//       newState = newState;
-//       decorationSet = decorationSet;
-//       return evaluateCells(newState);
-//     },
-//   },
-//   // props: {
-//   //   decorations(state) {
-//   //     return this.getState(state);
-//   //   }
-//   // }
-// });
-
 const getCells = (state) => {
   const { doc } = state;
   const cells = [];
@@ -227,7 +161,7 @@ const getCells = (state) => {
     }
     if (node.type.name === "table_cell") {
       col++;
-      const cellExprs = cellExprsPlugin.getState(state);
+      const cellExprs = cellPlugin.getState(state);
       const name = node.attrs.name;
       const src = cellExprs && name && cellExprs[name]?.src || node.textContent;
       const val = src.indexOf("sum") > 0 && "300" || node.textContent;
@@ -338,6 +272,28 @@ const getCellNodeByName = ({doc, name}) => {
   return result;
 };
 
+// function clearCellContent(editorView, cellPos) {
+//   const { state, dispatch } = editorView;
+//   const cellNode = state.doc.nodeAt(cellPos);
+//   if (!cellNode || cellNode.type.name !== "table_cell") {
+//     console.error("Invalid cell position or node type: " + JSON.stringify(cellNode, null, 2));
+//     return;
+//   }
+//   const contentStart = cellPos + 1;
+//   const contentEnd = cellPos + cellNode.nodeSize - 1;
+//   const tr = state.tr;
+
+//   // Create a transaction to replace the paragraph's content with an empty content
+//   const tr = state.tr.replaceWith(
+//     paragraphPos + 1, // Start position of the paragraph's content
+//     paragraphPos + paragraphNode.nodeSize - 1, // End position of the paragraph's content
+//     state.schema.text("") // Replace with an empty text node
+//   );
+
+//   dispatch(tr);
+//   console.log("Paragraph content cleared.");
+// }
+
 const replaceCellContent = (editorView, cellPos, newContent, doMoveCursor = false) => {
   const { state, dispatch } = editorView;
   const cellNode = state.doc.nodeAt(cellPos);
@@ -359,26 +315,39 @@ const replaceCellContent = (editorView, cellPos, newContent, doMoveCursor = fals
   }
   dispatch(tr);
 }
+const evalCell = ({ env, name }) => {
+  env = env;
+  const src = env[name]?.src || "";
+  return src && name.indexOf("_") !== 0 && name.indexOf("undefined") !== 1 && `eval(${src})` || src;
+}
 
-const tableCellFocusPlugin = new Plugin({
+const cellPlugin = new Plugin({
   view(editorView) {
     editorView = editorView;
     return {
       update(view) {
         const { state, dispatch } = view;
-        const pluginState = tableCellFocusPlugin.getState(state);
+        const pluginState = cellPlugin.getState(state);
+        // console.log("cellPlugin/view/update() pluginState=" + JSON.stringify(pluginState, null, 2));
         if (pluginState.dirtyCells.length > 0) {
           const tr = state.tr;
           tr.setMeta("updated", true);
           dispatch(tr);
         }
         if (pluginState.focusedCell) {
-          const {/*node,*/ pos} = getCellNodeByName({doc: view.state.doc, name: pluginState.focusedCell});
-          replaceCellContent(view, pos, "src", true);
+          const name = pluginState.focusedCell;
+          const { pos } = getCellNodeByName({doc: view.state.doc, name});
+          const src = pluginState[name]?.src || "";
+          if (src) {
+            replaceCellContent(view, pos, src, true);
+          }
         }
         pluginState.dirtyCells.forEach(name => {
           const { pos } = getCellNodeByName({doc: view.state.doc, name});
-          replaceCellContent(view, pos, "eval(src)");
+          const val = evalCell({ env: pluginState, name });
+          if (val) {
+            replaceCellContent(view, pos, val);
+          }
         });
       }
     };
@@ -465,9 +434,7 @@ const plugins = [
   }),
   menuPlugin,
   modelBackgroundPlugin(),
-  cellExprsPlugin,
-  tableCellFocusPlugin,
-//  cellEvaluatorPlugin,
+  cellPlugin,
 ];
 
 let initEditorState = EditorState.create({
@@ -480,16 +447,11 @@ if (fix) initEditorState = initEditorState.apply(fix.setMeta('addToHistory', fal
 class ParagraphView {
   public dom;
   public contentDOM;
-//  private focus;
-//  private blur;
   private value = "";
   private textContent = "";
   private hasFocus = false;
-//  private view;
-//  private getPos;
   constructor(node, view) {
     view = view;
-//    this.getPos = getPos;
     this.dom = document.createElement("div");
     this.dom.className = "custom-paragraph";
     this.contentDOM = document.createElement("p");
@@ -502,7 +464,6 @@ class ParagraphView {
     }
     this.dom.classList.remove("empty");
     if (this.hasFocus) {
-      // const cellExprs = cellExprsPlugin.getState(this.view.state);
       if (node.content.size > 0) {
         this.textContent = node.textContent;
         this.value = this.hasFocus && this.textContent.indexOf("sum") > 0 && "300" || this.textContent;
@@ -515,7 +476,6 @@ class ParagraphView {
     }
     return true
   }
-//  stopEvent() { return true }
 }
 
 export const TableEditor = ({ state }) => {
@@ -554,9 +514,7 @@ export const TableEditor = ({ state }) => {
         plugins,
       }, editorState);
       editorView.updateState(newEditorState);
-      const cells = getCells(newEditorState);
-      const firstCell = cells.find(cell => cell.col === 2 && cell.row === 2);
-      const pos = firstCell && firstCell.from + 1 || 0;
+      const { pos } = getCellNodeByName({doc: newEditorState.doc, name: "A1"});
       if (!pos) return;
       const resolvedPos = newEditorState.doc.resolve(pos);
       editorView.dispatch(editorView.state.tr.setSelection(new TextSelection(resolvedPos)));
