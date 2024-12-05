@@ -165,19 +165,13 @@ const getCells = (state) => {
       const name = node.attrs.name;
       const src = cellExprs && name && cellExprs[name]?.src || node.textContent;
       const val = src.indexOf("sum") > 0 && "300" || node.textContent;
-      let ast;
-      try {
-        ast = Parser.create({allowThousandsSeparator: true}, val);
-      } catch (x) {
-        console.log("parse error: " + x.stack);
-      }
       cells.push({
         row,
         col,
         name,
         src,
         val,
-        ast,
+//        ast,
         from: pos,
         to: pos + node.nodeSize,
         justify: node.attrs.justify,
@@ -318,7 +312,14 @@ const replaceCellContent = (editorView, cellPos, newContent, doMoveCursor = fals
 const evalCell = ({ env, name }) => {
   env = env;
   const src = env[name]?.src || "";
-  return src && name.indexOf("_") !== 0 && name.indexOf("undefined") !== 1 && `eval(${src})` || src;
+  let ast;
+  try {
+    ast = Parser.create({allowThousandsSeparator: true}, src);
+    console.log("evalCell() ast=" + JSON.stringify(ast, null, 2));
+  } catch (x) {
+    console.log("parse error: " + x.stack);
+  }
+  return src && src.indexOf("=") === 0 && `eval(${src})` || src;
 }
 
 const cellPlugin = new Plugin({
