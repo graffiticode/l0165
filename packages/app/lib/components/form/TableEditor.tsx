@@ -42,7 +42,8 @@ import ReactDOM from 'react-dom';
 import { MenuView } from './MenuView';
 import { debounce } from "lodash";
 
-import { Parser } from "@artcompiler/parselatex";
+import { TransLaTeX } from "@artcompiler/translatex";
+import { rules } from './translatex-rules.js';
 
 const menuPlugin = new Plugin({
   view(editorView) {
@@ -312,14 +313,26 @@ const replaceCellContent = (editorView, cellPos, newContent, doMoveCursor = fals
 const evalCell = ({ env, name }) => {
   env = env;
   const src = env[name]?.src || "";
-  let ast;
+  let result = src;
   try {
-    ast = Parser.create({allowThousandsSeparator: true}, src);
-    console.log("evalCell() ast=" + JSON.stringify(ast, null, 2));
+    const options = {
+      allowThousandsSeparator: true,
+      rules: rules.rules,
+    };
+    console.log("translate() src=" + src);
+    TransLaTeX.translate(options, src, function (err, val) {
+      if (err && err.length) {
+        console.error(err);
+      }
+      console.log("translate() val=" + val);
+      result = val;
+    });
+    // ast = Parser.create({allowThousandsSeparator: true}, src);
+    // console.log("evalCell() ast=" + JSON.stringify(ast, null, 2));
   } catch (x) {
     console.log("parse error: " + x.stack);
   }
-  return src && src.indexOf("=") === 0 && `eval(${src})` || src;
+  return result;
 }
 
 const cellPlugin = new Plugin({
@@ -346,6 +359,7 @@ const cellPlugin = new Plugin({
         pluginState.dirtyCells.forEach(name => {
           const { pos } = getCellNodeByName({doc: view.state.doc, name});
           const val = evalCell({ env: pluginState, name });
+          console.log("update() val=" + val);
           if (val) {
             replaceCellContent(view, pos, val);
           }
