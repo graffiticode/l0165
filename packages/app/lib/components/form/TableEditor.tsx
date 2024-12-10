@@ -1,3 +1,12 @@
+/*
+  TODO
+  [ ] TransLaTeX rules for translating ranges into lists of values
+  [ ] Format numbers and dates using format patterns
+  [ ] Make expanderBuilders a module parameter
+  [x] Wrap unevaluated src in \text{} before translating. Unwrap when editing
+  [x] Pass cell values in the TL environment
+*/
+
 import React, { useState, useEffect, useRef } from 'react'; React;
 
 import 'prosemirror-view/style/prosemirror.css';
@@ -305,30 +314,34 @@ const replaceCellContent = (editorView, cellPos, newContent, doMoveCursor = fals
     state.schema.node("paragraph", null, state.schema.text(newContent))
   );
   if (doMoveCursor) {
-    const selectionPos = Math.min(contentStart + newContent.length, contentEnd - 1);
+    const selectionPos = Math.min(contentStart + newContent.length + 1, contentEnd - 1);
+    console.log("replaceCellContent() selectionPos=" + selectionPos + " contentStart=" + contentStart + " content.length=" + newContent.length + " contentEnd=" + contentEnd);
     tr.setSelection(TextSelection.create(tr.doc, selectionPos));
   }
   dispatch(tr);
 }
 const evalCell = ({ env, name }) => {
-  env = env;
-  const src = env[name]?.src || "";
+  const src = env.cells[name] || "";
   let result = src;
   try {
     const options = {
       allowThousandsSeparator: true,
       rules: rules.rules,
+      env: env.cells,
     };
-    console.log("translate() src=" + src);
-    TransLaTeX.translate(options, src, function (err, val) {
-      if (err && err.length) {
-        console.error(err);
-      }
-      console.log("translate() val=" + val);
-      result = val;
-    });
-    // ast = Parser.create({allowThousandsSeparator: true}, src);
-    // console.log("evalCell() ast=" + JSON.stringify(ast, null, 2));
+    console.log("evalCell() src=" + src + " env=" + JSON.stringify(env, null, 2));
+    if (src.length > 0) {
+      TransLaTeX.translate(
+        options,
+        src.indexOf("=") === 0 && src || src && `\\text{${src}}`, (err, val) => {
+          if (err && err.length) {
+            console.error(err);
+          }
+          console.log("evalCell() val=" + val);
+          result = val;
+        }
+      );
+    }
   } catch (x) {
     console.log("parse error: " + x.stack);
   }
@@ -373,7 +386,8 @@ const cellPlugin = new Plugin({
         lastFocusedCell: null,
         blurredCell: null,
         focusedCell: null,
-        dirtyCells: []
+        dirtyCells: [],
+        cells: {},
       };
     },
     apply(tr, value, oldState, newState) {
@@ -398,8 +412,8 @@ const cellPlugin = new Plugin({
       if (node && node.type.name === "table_cell") {
         const name = node.attrs.name;
         if (value.lastFocusedCell !== name) {
+          console.log("[1] name=" + name);
           if (value.lastFocusedCell) {
-            const newValue = `eval(${value.lastFocusedCell})`;
             value = {
               ...value,
               blurredCell: value.lastFocusedCell,
@@ -407,10 +421,6 @@ const cellPlugin = new Plugin({
                 ...value.dirtyCells,
                 value.lastFocusedCell,
               ],
-              [value.lastFocusedCell]: {
-                ...value[value.lastFocusedCell],
-                val: newValue,
-              },
             };
           }
           value = {
@@ -418,16 +428,17 @@ const cellPlugin = new Plugin({
             lastFocusedCell: node.attrs.name,
             focusedCell: node.attrs.name,
           };
-        } else if (node.attrs.name) {
-          const src = node.textContent;
+        } else if (name) {
+          console.log("[2] name=" + name);
+          const src = node.textContent.trim();
           value = {
             ...value,
             blurredCell: null,
             focusedCell: null,
             dirtyCells: [],
-            [name]: {
-              ...value[name],
-              src,
+            cells: {
+              ...value.cells,
+              [name]: src || undefined,
             },
           };
         }
