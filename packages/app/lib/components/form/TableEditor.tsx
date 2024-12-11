@@ -1,10 +1,7 @@
 /*
   TODO
-  [ ] TransLaTeX rules for translating ranges into lists of values
   [ ] Format numbers and dates using format patterns
   [ ] Make expanderBuilders a module parameter
-  [x] Wrap unevaluated src in \text{} before translating. Unwrap when editing
-  [x] Pass cell values in the TL environment
 */
 
 import React, { useState, useEffect, useRef } from 'react'; React;
