@@ -1,22 +1,38 @@
 export const rules = {
-  "data": {},
+  "types": {
+    "cellName": [
+      "\\type{variable}\\type{integer}"
+    ],
+    "cellRange": [
+      "\\type{cellName}:\\type{cellName}"
+    ],
+    "fn": [
+      "sum",
+      "mul"
+    ]
+  },
   "rules": {
     "=?": [
       {
         "%2": {
-          "?+?": "$sum {}",
-          "?*?": "$mul {}"
+          "\\type{fn}(\\type{cellRange})": "$fn"
         }
       }
     ],
-    "?+?": [
-      "%1+%2"
+    "\\type{cellRange}": [
+      "$range"
     ],
-    "?*?": [
-      "%1*%2"
+    "\\type{cellName}": [
+      "$cell"
+    ],
+    "\\type{fn}(\\type{cellRange})": [
+      "%1(%2)"
+    ],
+    "??": [
+      "%1%2"
     ],
     "?": [
       "%1"
     ]
-  }
-}
+  },
+};

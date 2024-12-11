@@ -173,7 +173,7 @@ const getCells = (state) => {
       col++;
       const cellExprs = cellPlugin.getState(state);
       const name = node.attrs.name;
-      const src = cellExprs && name && cellExprs[name]?.src || node.textContent;
+      const src = cellExprs && name && cellExprs.cells[name] || node.textContent;
       const val = src.indexOf("sum") > 0 && "300" || node.textContent;
       cells.push({
         row,
@@ -315,7 +315,6 @@ const replaceCellContent = (editorView, cellPos, newContent, doMoveCursor = fals
   );
   if (doMoveCursor) {
     const selectionPos = Math.min(contentStart + newContent.length + 1, contentEnd - 1);
-    console.log("replaceCellContent() selectionPos=" + selectionPos + " contentStart=" + contentStart + " content.length=" + newContent.length + " contentEnd=" + contentEnd);
     tr.setSelection(TextSelection.create(tr.doc, selectionPos));
   }
   dispatch(tr);
@@ -326,18 +325,16 @@ const evalCell = ({ env, name }) => {
   try {
     const options = {
       allowThousandsSeparator: true,
-      rules: rules.rules,
       env: env.cells,
+      ...rules,
     };
-    console.log("evalCell() src=" + src + " env=" + JSON.stringify(env, null, 2));
     if (src.length > 0) {
       TransLaTeX.translate(
         options,
-        src.indexOf("=") === 0 && src || src && `\\text{${src}}`, (err, val) => {
+        src, (err, val) => {
           if (err && err.length) {
             console.error(err);
           }
-          console.log("evalCell() val=" + val);
           result = val;
         }
       );
@@ -355,7 +352,6 @@ const cellPlugin = new Plugin({
       update(view) {
         const { state, dispatch } = view;
         const pluginState = cellPlugin.getState(state);
-        // console.log("cellPlugin/view/update() pluginState=" + JSON.stringify(pluginState, null, 2));
         if (pluginState.dirtyCells.length > 0) {
           const tr = state.tr;
           tr.setMeta("updated", true);
@@ -364,7 +360,7 @@ const cellPlugin = new Plugin({
         if (pluginState.focusedCell) {
           const name = pluginState.focusedCell;
           const { pos } = getCellNodeByName({doc: view.state.doc, name});
-          const src = pluginState[name]?.src || "";
+          const src = pluginState.cells[name] || "";
           if (src) {
             replaceCellContent(view, pos, src, true);
           }
@@ -372,7 +368,6 @@ const cellPlugin = new Plugin({
         pluginState.dirtyCells.forEach(name => {
           const { pos } = getCellNodeByName({doc: view.state.doc, name});
           const val = evalCell({ env: pluginState, name });
-          console.log("update() val=" + val);
           if (val) {
             replaceCellContent(view, pos, val);
           }
@@ -412,7 +407,6 @@ const cellPlugin = new Plugin({
       if (node && node.type.name === "table_cell") {
         const name = node.attrs.name;
         if (value.lastFocusedCell !== name) {
-          console.log("[1] name=" + name);
           if (value.lastFocusedCell) {
             value = {
               ...value,
@@ -429,7 +423,6 @@ const cellPlugin = new Plugin({
             focusedCell: node.attrs.name,
           };
         } else if (name) {
-          console.log("[2] name=" + name);
           const src = node.textContent.trim();
           value = {
             ...value,
