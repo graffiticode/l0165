@@ -1,4 +1,4 @@
-export const rules = {
+export const evalRules = {
   "types": {
     "cellName": [
       "\\type{variable}\\type{integer}"
@@ -39,3 +39,39 @@ export const rules = {
     ]
   },
 };
+
+export const cellNameRules = {
+  "types": {
+    "cellName": [
+      "\\type{variable}\\type{integer}"
+    ],
+    "cellRange": [
+      "\\type{cellName}:\\type{cellName}"
+    ],
+    "fn": [
+      "sum",
+      "mul"
+    ]
+  },
+  "rules": {
+    "=?": [
+      {
+        "%2": {
+          "\\type{fn}(\\type{cellRange})": "%2"
+        }
+      }
+    ],
+    "\\type{cellRange}": [
+      "%1,%2"
+    ],
+    "\\type{cellName}": [
+      "%1%2"
+    ],
+    "??": [
+      "%1%2"
+    ],
+    "?": [
+      "%1"
+    ]
+  },
+}
