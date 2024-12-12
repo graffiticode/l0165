@@ -1,7 +1,11 @@
 /*
   TODO
+  [ ] Add dependencies of changed cells to dirty list
+  [ ] Sort dependency tree
   [ ] Format numbers and dates using format patterns
   [ ] Make expanderBuilders a module parameter
+  [x] Add all dependent cells to dirty list on init
+  [x] Handle $ sign
 */
 
 import React, { useState, useEffect, useRef } from 'react'; React;
@@ -310,8 +314,14 @@ const replaceCellContent = (editorView, cellPos, newContent, doMoveCursor = fals
     contentEnd,
     state.schema.node("paragraph", null, state.schema.text(newContent))
   );
+  console.log("replaceCellContent() doMoveCursor=" + doMoveCursor,
+              "newContent=" + newContent);
   if (doMoveCursor) {
-    const selectionPos = Math.min(contentStart + newContent.length + 1, contentEnd - 1);
+    const selectionPos = Math.max(contentStart + newContent.length + 1, contentEnd - 1);
+    console.log("replaceCellContent() selectionPos=" + selectionPos,
+                "contentStart=" + contentStart,
+                "newContent.length=" + newContent.length,
+                "contentEnd=" + contentEnd)
     tr.setSelection(TextSelection.create(tr.doc, selectionPos));
   }
   dispatch(tr);
@@ -349,6 +359,7 @@ const cellPlugin = new Plugin({
       update(view) {
         const { state, dispatch } = view;
         const pluginState = cellPlugin.getState(state);
+        console.log("cellPlugin/update() pluginState=" + JSON.stringify(pluginState, null, 2));
         if (pluginState.dirtyCells.length > 0) {
           const tr = state.tr;
           tr.setMeta("updated", true);
@@ -373,13 +384,24 @@ const cellPlugin = new Plugin({
     };
   },
   state: {
-    init() {
+    init(config, state) {
+      config = config;
+      const cells = getCells(state).reduce((cells, cell) => (
+        cell.row > 1 && cell.col > 1 && cell.src &&
+          { ...cells, [cell.name]: cell.src } || cells
+      ), {});
+      const dirtyCells = getCells(state).reduce((dirtyCells, cell) => (
+        cell.row > 1 && cell.col > 1 &&
+          cell.src && cell.src.indexOf("=") > -1 &&
+          [...dirtyCells, cell.name] || dirtyCells
+      ), []);
+      // console.log("cellPlugin/init() cells=" + JSON.stringify(cells, null, 2));
       return {
         lastFocusedCell: null,
         blurredCell: null,
         focusedCell: null,
-        dirtyCells: [],
-        cells: {},
+        dirtyCells,
+        cells,
       };
     },
     apply(tr, value, oldState, newState) {
