@@ -262,15 +262,8 @@ const schema = new Schema({
 });
 
 const getCellNodeByName = ({doc, name}) => {
-  console.log("getCellNodeByName() name=" + name);
   let result;
   doc.descendants((node, pos) => {
-    console.log(
-      "type=" + node.type.name,
-      "pos=" + pos,
-      "end=" + (pos + node.nodeSize),
-      "name=" + node.attrs?.name
-    );
     if (result !== undefined) {
       return false;
     }
@@ -279,11 +272,6 @@ const getCellNodeByName = ({doc, name}) => {
     }
   });
   result = result || {};
-  console.log(
-    "getCellNodeByName()",
-    "name=" + name,
-    "result=" + JSON.stringify(result, null, 2)
-  );
   return result;
 };
 
@@ -307,32 +295,23 @@ const replaceCellContent = (editorView, name, newText, doMoveCursor = false) => 
     contentEnd,
     state.schema.node("paragraph", null, state.schema.text(newText))
   );
-  console.log("replaceCellContent() doMoveCursor=" + doMoveCursor,
-              "newText=" + newText);
+  // console.log("replaceCellContent() doMoveCursor=" + doMoveCursor,
+  //             "newText=" + newText);
   if (doMoveCursor) {
     let cursorPos = Math.max(contentStart + newText.length + 1, contentEnd - 1);
-    console.log("replaceCellContent() cursorPos=" + cursorPos,
-                "contentStart=" + contentStart,
-                "newText.length=" + newText.length,
-                "contentEnd=" + contentEnd)
     tr.setSelection(TextSelection.create(tr.doc, cursorPos));
     setTimeout(() => {
       const doc = editorView.state.doc;
       const { pos: cellPos, node: updatedCellNode } = getCellNodeByName({doc, name});
-      // const resolvedPos = doc.resolve(cursorPos); // Recompute position
-      // cursorPos = resolvedPos.pos;
-      // const updatedCellNode = doc.nodeAt(resolvedPos.pos);
       const updatedContentStart = cellPos + 1;
       const updatedContentEnd = cellPos + updatedCellNode.nodeSize - 1;
-
       if (!isValidCursorPos(cursorPos, updatedContentStart, updatedContentEnd)) {
         cursorPos = Math.min(updatedContentStart + newText.length, updatedContentEnd - 1);
       }
-
       editorView.dispatch(
         editorView.state.tr.setSelection(TextSelection.create(doc, cursorPos))
       );
-    }, 100);
+    }, 0);
   }
   dispatch(tr);
 }
@@ -399,7 +378,6 @@ const cellPlugin = new Plugin({
       update(view) {
         const { state, dispatch } = view;
         const pluginState = cellPlugin.getState(state);
-//        console.log("cellPlugin/update() pluginState=" + JSON.stringify(pluginState, null, 2));
         if (pluginState.dirtyCells.length > 0) {
           const tr = state.tr;
           tr.setMeta("updated", true);
@@ -407,16 +385,26 @@ const cellPlugin = new Plugin({
         }
         if (pluginState.focusedCell) {
           const name = pluginState.focusedCell;
-//          const { pos } = getCellNodeByName({doc: view.state.doc, name});
           const text = pluginState.cells[name]?.text || "";
-          if (text) {
+          const { node } = getCellNodeByName({doc: view.state.doc, name});
+          // console.log(
+          //   "[1] cellPlugin/update()",
+          //   "text=" + text,
+          //   "textContent=" + node.textContent
+          // );
+          if (text !== node.textContent) {
             replaceCellContent(view, name, text, true);
           }
         }
         pluginState.dirtyCells.forEach(name => {
-//          const { pos } = getCellNodeByName({doc: view.state.doc, name});
           const val = evalCell({ env: pluginState, name });
-          if (val) {
+          const { node } = getCellNodeByName({doc: view.state.doc, name});
+          // console.log(
+          //   "[2] cellPlugin/update()",
+          //   "val=" + val,
+          //   "textContent=" + node.textContent
+          // );
+          if (val !== node.textContent) {
             replaceCellContent(view, name, val);
           }
         });
@@ -440,7 +428,6 @@ const cellPlugin = new Plugin({
           cell.text && cell.text.indexOf("=") > -1 &&
           [...dirtyCells, cell.name] || dirtyCells
       ), []);
-      // console.log("cellPlugin/init() cells=" + JSON.stringify(cells, null, 2));
       return {
         lastFocusedCell: null,
         blurredCell: null,
@@ -472,9 +459,6 @@ const cellPlugin = new Plugin({
         const name = node.attrs.name;
         if (value.lastFocusedCell !== name) {
           if (value.lastFocusedCell) {
-//            console.log(
-//              "value=" + JSON.stringify(value, null, 2)
-//            );
             value = {
               ...value,
               blurredCell: value.lastFocusedCell,
