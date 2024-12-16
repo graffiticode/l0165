@@ -509,6 +509,9 @@ const cellPlugin = new Plugin({
           };
         }
       }
+      console.log(
+        "cellPlugin/apply() value=" + JSON.stringify(value, null, 2)
+      );
       return value;
     }
   }
