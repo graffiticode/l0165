@@ -1,9 +1,11 @@
 /*
   TODO
+  [ ] Add dependencies on init
+  [ ] Expand cell names using translatex to get dependencies
   [ ] Sort dependency tree
   [ ] Format numbers and dates using format patterns
   [ ] Make expanderBuilders a module parameter
-  [x] Add all dependent cells to dirty list on init
+  [ ] Make headings read only
   [x] Handle $ sign
   [x] Add dependencies of changed cells to dirty list
 */
@@ -318,7 +320,11 @@ const replaceCellContent = (editorView, name, newText, doMoveCursor = false) => 
 
 
 const evalCell = ({ env, name }) => {
-  const text = env.cells[name].text || "";
+  console.log(
+    "evalCell",
+    "name=" + name
+  );
+  const text = env.cells[name]?.text || "";
   let result = text;
   try {
     const options = {
@@ -336,6 +342,8 @@ const evalCell = ({ env, name }) => {
           result = val;
         }
       );
+    } else {
+      result = text;
     }
   } catch (x) {
     console.log("parse error: " + x.stack);
@@ -344,7 +352,7 @@ const evalCell = ({ env, name }) => {
 }
 
 const getCellDependencies = ({ env, name }) => {
-  const text = env.cells[name].text || "";
+  const text = env.cells[name]?.text || "";
   let result = text;
   try {
     const options = {
@@ -370,6 +378,21 @@ const getCellDependencies = ({ env, name }) => {
   }
   return result;
 }
+
+const getDeps = ({ env, names }) => (
+  // console.log(
+  //   "getDeps()",
+  //   "env=" + JSON.stringify(env, null, 2),
+  //   "names=" + JSON.stringify(names)
+  // ),
+  names.reduce((deps, name) => (
+    console.log(
+      "getDeps()",
+      "name=" + name
+    ),
+    [...deps, name, ...getCellDependencies({env, name}), ...getDeps({env, names: env.cells[name.toUpperCase()]?.deps || []})]
+  ), names) || names
+);
 
 const cellPlugin = new Plugin({
   view(editorView) {
@@ -428,12 +451,45 @@ const cellPlugin = new Plugin({
           cell.text && cell.text.indexOf("=") > -1 &&
           [...dirtyCells, cell.name] || dirtyCells
       ), []);
+
+      const cellsWithDeps = getCells(state).reduce((cells, cell) => {
+        if (cell.row > 1 && cell.col > 1 && cell.text)  {
+          const deps = getCellDependencies({env: {cells}, name: cell.name});
+          console.log(
+            "cellPlugin/init()",
+            "cell=" + JSON.stringify(cell, null, 2),
+            "deps=" + JSON.stringify(deps)
+          );
+          const cellName = cell.name;
+          return deps.reduce((cells, name) => {
+            // Add current cell as dependency of independent cells.
+            name = name.toUpperCase();
+            const cell = cells[name];
+            return cell && {
+              ...cells,
+              [name]: {
+                ...cell,
+                deps: [
+                  ...cell?.deps,
+                  cellName,
+                ],
+              },
+            } || cells;
+          }, cells);
+        } else {
+          return cells;
+        }
+      }, cells);
+      console.log(
+        "cellPlugin/init()",
+        "cellsWithDeps=" + JSON.stringify(cellsWithDeps, null, 2)
+      );
       return {
         lastFocusedCell: null,
         blurredCell: null,
         focusedCell: null,
         dirtyCells,
-        cells,
+        cells: cellsWithDeps,
       };
     },
     apply(tr, value, oldState, newState) {
@@ -469,8 +525,14 @@ const cellPlugin = new Plugin({
               ],
             };
             const deps = getCellDependencies({env: value, name: value.lastFocusedCell});
+            const transitiveDeps = getDeps({env: value, names: deps});
+            console.log(
+              "cellPlugin/apply()",
+              "transitiveDeps=" + JSON.stringify(transitiveDeps)
+            );
             value = deps.reduce((value, name) => {
-              name = name.toUpperCase();  // FIXME handle upper casing more centrally. 
+              // Add current cell as dependency of independent cells.
+              name = name.toUpperCase();  // FIXME handle upper casing more centrally.
               const cell = value.cells[name];
               return cell && {
                 ...value,
@@ -509,9 +571,9 @@ const cellPlugin = new Plugin({
           };
         }
       }
-      console.log(
-        "cellPlugin/apply() value=" + JSON.stringify(value, null, 2)
-      );
+      // console.log(
+      //   "cellPlugin/apply() value=" + JSON.stringify(value, null, 2)
+      // );
       return value;
     }
   }
