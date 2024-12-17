@@ -65,7 +65,14 @@ export const cellNameRules = {
       "%1,%2"
     ],
     "\\type{cellName}": [
-      "%1%2"
+      {
+        "%1%2": {
+          "\\type{integer}": "%1"
+        }
+      }
+    ],
+    "\\type{number}": [
+      " "
     ],
     "??": [
       "%1%2"
