@@ -1,14 +1,14 @@
 /*
   TODO
-  [ ] Cache cell value when computing functions
   [ ] Expand cell names using translatex to get dependencies
+  [ ] Make headings and protected cells read only
   [ ] Sort dependency tree
   [ ] Format numbers and dates using format patterns
   [ ] Make expanderBuilders a module parameter
-  [ ] Make headings read only
   [x] Handle $ sign
   [x] Add dependencies of changed cells to dirty list
   [x] Add dependencies on init
+  [x] Cache cell value when computing functions
 */
 
 import React, { useState, useEffect, useRef } from 'react'; React;
