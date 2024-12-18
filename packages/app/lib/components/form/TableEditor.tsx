@@ -1,9 +1,9 @@
 /*
   TODO
   [ ] Expand cell names using translatex to get dependencies
+  [ ] Format numbers and dates using format patterns
   [ ] Make headings and protected cells read only
   [ ] Sort dependency tree
-  [ ] Format numbers and dates using format patterns
   [ ] Make expanderBuilders a module parameter
   [x] Handle $ sign
   [x] Add dependencies of changed cells to dirty list
@@ -525,10 +525,6 @@ const cellPlugin = new Plugin({
                 [lastFocusedCell]: {
                   ...cell,
                   val: evalCell({env: value, name: lastFocusedCell}),
-                  deps: [
-                    ...cell?.deps,
-                    ...!cell.deps.includes(lastFocusedCell) && [lastFocusedCell] || [],
-                  ],
                 },
               },
               dirtyCells: [
@@ -603,10 +599,10 @@ const cellPlugin = new Plugin({
           };
         }
       }
-      // console.log(
-      //   "cellPlugin/apply()",
-      //   "value=" + JSON.stringify(value, null, 2)
-      // );
+      console.log(
+        "cellPlugin/apply()",
+        "value=" + JSON.stringify(value, null, 2)
+      );
       return value;
     }
   }
