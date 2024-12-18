@@ -292,12 +292,11 @@ const replaceCellContent = (editorView, name, newText, doMoveCursor = false) => 
   }
   const contentStart = cellPos + 1;
   const contentEnd = cellPos + cellNode.nodeSize - 1;
+  const paragraphNode = newText &&
+        state.schema.node("paragraph", null, state.schema.text(newText)) ||
+        state.schema.node("paragraph");
   const tr = state.tr;
-  tr.replaceWith(
-    contentStart,
-    contentEnd,
-    state.schema.node("paragraph", null, state.schema.text(newText))
-  );
+  tr.replaceWith(contentStart, contentEnd, paragraphNode);
   // console.log("replaceCellContent() doMoveCursor=" + doMoveCursor,
   //             "newText=" + newText);
   if (doMoveCursor) {
@@ -420,7 +419,7 @@ const cellPlugin = new Plugin({
           //   "val=" + val,
           //   "textContent=" + node.textContent
           // );
-          if (val !== node.textContent) {
+          if (name !== pluginState.focusedCell && val !== node.textContent) {
             replaceCellContent(view, name, val);
           }
         });
@@ -465,11 +464,13 @@ const cellPlugin = new Plugin({
           const cellName = cell.name;
           return deps.reduce((cells, name) => {
             // Add current cell as dependency of independent cells.
+            const val = evalCell({env: {cells}, name});
             const cell = cells[name];
             return cell && {
               ...cells,
               [name]: {
                 ...cell,
+                val,
                 deps: [
                   ...cell?.deps,
                   cellName,
@@ -511,17 +512,33 @@ const cellPlugin = new Plugin({
       if (node && node.type.name === "table_cell") {
         const name = node.attrs.name;
         if (value.lastFocusedCell !== name) {
+          // We just left a cell, so recompute its value and the values of its
+          // dependencies.
           if (value.lastFocusedCell) {
+            const { lastFocusedCell } = value;
+            const cell = value.cells[lastFocusedCell];
             value = {
               ...value,
-              blurredCell: value.lastFocusedCell,
+              blurredCell: lastFocusedCell,
+              cells: {
+                ...value.cells,
+                [lastFocusedCell]: {
+                  ...cell,
+                  val: evalCell({env: value, name: lastFocusedCell}),
+                  deps: [
+                    ...cell?.deps,
+                    ...!cell.deps.includes(lastFocusedCell) && [lastFocusedCell] || [],
+                  ],
+                },
+              },
               dirtyCells: [
+                // FIXME if the text hasn't changed then don't amend dirtyCells.
                 ...value?.dirtyCells,
-                ...(value.cells[value.lastFocusedCell]?.deps || []),
-                value.lastFocusedCell,
+                lastFocusedCell,  // Order matters.
+                ...(cell.deps || []),
               ],
             };
-            const deps = getCellDependencies({env: value, names: [value.lastFocusedCell]});
+            const deps = getCellDependencies({env: value, names: [lastFocusedCell]});
             value = deps.reduce((value, name) => {
               // Add current cell as dependency of independent cells.
               const cell = value.cells[name];
@@ -531,14 +548,30 @@ const cellPlugin = new Plugin({
                   ...value.cells,
                   [name]: {
                     ...cell,
+                    val: evalCell({env: value, name}),
                     deps: [
                       ...cell?.deps,
-                      ...!cell.deps.includes(value.lastFocusedCell) && [value.lastFocusedCell] || [],
+                      ...!cell.deps.includes(lastFocusedCell) && [lastFocusedCell] || [],
                     ],
                   },
                 },
               } || value;
             }, value);
+            if (cell.deps.includes(name)) {
+              // If the focusedCell depends on the lastFocusedCell, update its
+              // its so its dependents are updated.
+              const val = evalCell({ env: value, name });
+              value = {
+                ...value,
+                cells: {
+                  ...value.cells,
+                  [name]: {
+                    ...value.cells[name],
+                    val: val || undefined,
+                  },
+                },
+              };
+            }
           }
           value = {
             ...value,
@@ -547,10 +580,12 @@ const cellPlugin = new Plugin({
           };
         } else if (name) {
           const text = node.textContent.trim();
+          const val = evalCell({ env: value, name });
           // console.log(
           //   "cellPlugin/apply()",
           //   "name=" + name,
-          //   "text=" + text
+          //   "text=" + text,
+          //   "val=" + val
           // );
           value = {
             ...value,
@@ -562,15 +597,16 @@ const cellPlugin = new Plugin({
               [name]: {
                 ...value.cells[name],
                 text: text || undefined,
+                val: val || undefined,
               },
             },
           };
         }
       }
-      console.log(
-        "cellPlugin/apply()",
-        "value=" + JSON.stringify(value, null, 2)
-      );
+      // console.log(
+      //   "cellPlugin/apply()",
+      //   "value=" + JSON.stringify(value, null, 2)
+      // );
       return value;
     }
   }
