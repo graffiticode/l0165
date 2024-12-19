@@ -1,6 +1,6 @@
 /*
   TODO
-  [ ] Expand cell names using translatex to get dependencies
+  [ ] Parse cell names
   [ ] Format numbers and dates using format patterns
   [ ] Make headings and protected cells read only
   [ ] Sort dependency tree
@@ -9,6 +9,8 @@
   [x] Add dependencies of changed cells to dirty list
   [x] Add dependencies on init
   [x] Cache cell value when computing functions
+  [x] Expand cell names using translatex to get dependencies
+  [x] Support '=a1' and '=a1+b2' syntax
 */
 
 import React, { useState, useEffect, useRef } from 'react'; React;

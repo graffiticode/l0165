@@ -12,10 +12,17 @@ export const evalRules = {
     ]
   },
   "rules": {
+    "=\\type{cellName}": [
+      "$cell"
+    ],
     "=?": [
       {
         "%2": {
-          "\\type{fn}(\\type{cellRange})": "$fn"
+          "\\type{fn}(\\type{cellRange})": "$fn",
+          "?+?": "$add",
+          "?-?": "$minus",
+          "?*?": "$multiply",
+          "?/?": "$divide"
         }
       }
     ],
@@ -51,15 +58,20 @@ export const cellNameRules = {
     ]
   },
   "rules": {
+    "\\type{cellName}": [
+      "%1%2"
+    ],
     "=?": [
       {
         "%2": {
-          "\\type{fn}(\\type{cellRange})": "%2"
+          "\\type{fn}(\\type{cellRange})": "%2",
+          "?+?": "%1,%2",
+          "?-?": "%1,%2",
+          "?*?": "%1,%2",
+          "?/?": "%1,%2",
+          "\\type{cellName}": "%1%2"
         }
       }
-    ],
-    "\\type{cellName}": [
-      "%1%2"
     ],
     "\\type{cellRange}": [
       "$range"
