@@ -12,9 +12,6 @@ export const evalRules = {
     ]
   },
   "rules": {
-    "$?": [
-      "%2"
-    ],
     "=?": [
       {
         "%2": {
@@ -26,7 +23,7 @@ export const evalRules = {
       "$range"
     ],
     "\\type{cellName}": [
-      "$cell"
+      "%1%2"
     ],
     "\\type{fn}(\\type{cellRange})": [
       "%1(%2)"
@@ -61,18 +58,11 @@ export const cellNameRules = {
         }
       }
     ],
-    "\\type{cellRange}": [
-      "%1,%2"
-    ],
     "\\type{cellName}": [
-      {
-        "%1%2": {
-          "\\type{integer}": "%1"
-        }
-      }
+      "%1%2"
     ],
-    "\\type{number}": [
-      " "
+    "\\type{cellRange}": [
+      "$range"
     ],
     "??": [
       "%1%2"

@@ -553,7 +553,7 @@ const cellPlugin = new Plugin({
                 },
               } || value;
             }, value);
-            if (cell.deps.includes(name)) {
+            if (cell.deps?.includes(name)) {
               // If the focusedCell depends on the lastFocusedCell, update its
               // its so its dependents are updated.
               const val = evalCell({ env: value, name });
@@ -599,10 +599,10 @@ const cellPlugin = new Plugin({
           };
         }
       }
-      console.log(
-        "cellPlugin/apply()",
-        "value=" + JSON.stringify(value, null, 2)
-      );
+      // console.log(
+      //   "cellPlugin/apply()",
+      //   "value=" + JSON.stringify(value, null, 2)
+      // );
       return value;
     }
   }
