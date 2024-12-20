@@ -1,9 +1,8 @@
 /*
   TODO
-  [ ] Parse cell names
   [ ] Format numbers and dates using format patterns
-  [ ] Make headings and protected cells read only
-  [ ] Sort dependency tree
+  [ ] Make row and column headings read only
+  [ ] Sort dependency tree & check for cycles
   [ ] Make expanderBuilders a module parameter
   [x] Handle $ sign
   [x] Add dependencies of changed cells to dirty list
@@ -11,6 +10,7 @@
   [x] Cache cell value when computing functions
   [x] Expand cell names using translatex to get dependencies
   [x] Support '=a1' and '=a1+b2' syntax
+  [x] Fix bug focusing cell with text shorter than value
 */
 
 import React, { useState, useEffect, useRef } from 'react'; React;
@@ -280,9 +280,9 @@ const getCellNodeByName = ({doc, name}) => {
   return result;
 };
 
-const isValidCursorPos = (pos, contentStart, contentEnd) => {
-  return pos >= contentStart && pos <= contentEnd;
-};
+// const isValidCursorPos = (pos, contentStart, contentEnd) => {
+//   return pos >= contentStart && pos <= contentEnd;
+// };
 
 const replaceCellContent = (editorView, name, newText, doMoveCursor = false) => {
   const { state, dispatch } = editorView;
@@ -302,20 +302,38 @@ const replaceCellContent = (editorView, name, newText, doMoveCursor = false) => 
   // console.log("replaceCellContent() doMoveCursor=" + doMoveCursor,
   //             "newText=" + newText);
   if (doMoveCursor) {
-    let cursorPos = Math.max(contentStart + newText.length + 1, contentEnd - 1);
-    tr.setSelection(TextSelection.create(tr.doc, cursorPos));
-    setTimeout(() => {
-      const doc = editorView.state.doc;
-      const { pos: cellPos, node: updatedCellNode } = getCellNodeByName({doc, name});
-      const updatedContentStart = cellPos + 1;
-      const updatedContentEnd = cellPos + updatedCellNode.nodeSize - 1;
-      if (!isValidCursorPos(cursorPos, updatedContentStart, updatedContentEnd)) {
-        cursorPos = Math.min(updatedContentStart + newText.length, updatedContentEnd - 1);
-      }
-      editorView.dispatch(
-        editorView.state.tr.setSelection(TextSelection.create(doc, cursorPos))
-      );
-    }, 0);
+    let cursorPos = contentStart + 1;
+    tr.setSelection(TextSelection.create(tr.doc, cursorPos + newText.length));
+//     setTimeout(() => {
+//       const doc = editorView.state.doc;
+//       const { pos: cellPos } = getCellNodeByName({doc, name});
+//       // const updatedContentStart = cellPos + 1;
+//       // const updatedContentEnd = contentStart + Math.min(newText.length, updatedCellNode.nodeSize) - 1;
+// //      cursorPos = updatedContentEnd;
+//       const resolvedPos = editorView.state.doc.resolve(cellPos + 1);
+//       cursorPos = resolvedPos.pos + newText.length - 1;
+//       console.log(
+//         "[1] replaceCellContent()",
+//         "name=" + name,
+//         "newText=" + newText,
+//         // "updatedContentStart=" + updatedContentStart,
+//         // "updatedContentEnd=" + updatedContentEnd,
+//         "resolvedPos=" + resolvedPos.pos
+//       );
+//       //if (!isValidCursorPos(cursorPos, updatedContentStart, updatedContentEnd)) {
+//       //   cursorPos = Math.min(updatedContentStart + newText.length, updatedContentEnd - 1);
+//       //}
+//       // console.log(
+//       //   "[2] replaceCellContent()",
+//       //   "name=" + name,
+//       //   "contentStart=" + contentStart,
+//       //   "contentEnd=" + contentEnd,
+//       //   "cursorPos=" + cursorPos
+//       // );
+//       editorView.dispatch(
+//         editorView.state.tr.setSelection(new TextSelection(resolvedPos))
+//       );
+//     }, 0);
   }
   dispatch(tr);
 }
