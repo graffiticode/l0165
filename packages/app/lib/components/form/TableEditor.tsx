@@ -320,9 +320,13 @@ const replaceCellContent = (editorView, name, newText, doMoveCursor = false) => 
   dispatch(tr);
 }
 
-
 const evalCell = ({ env, name }) => {
   const text = env.cells[name]?.text || "";
+  // console.log(
+  //   "evalCell()",
+  //   "name=" + name,
+  //   "text=" + text
+  // );
   let result = text;
   try {
     const options = {
@@ -340,8 +344,6 @@ const evalCell = ({ env, name }) => {
           result = val;
         }
       );
-    } else {
-      result = text;
     }
   } catch (x) {
     console.log("parse error: " + x.stack);
@@ -358,7 +360,8 @@ const getSingleCellDependencies = ({ env, name }) => {
       env: env.cells,
       ...cellNameRules,
     };
-    if (text.length > 0) {
+    if (text.length > 0 && text.indexOf("=") === 0) {
+      // FIXME this condition is brittle.
       TransLaTeX.translate(
         options,
         text, (err, val) => {
@@ -382,20 +385,25 @@ const getSingleCellDependencies = ({ env, name }) => {
   return result;
 };
 
-const getCellDependencies = ({ env, names }) => (
+const getCellDependencies = ({ env, names }) => {
   // console.log(
-  //   "getCellDependencies()",
-  //   "names=" + names
-  // ),
-  names.reduce((deps, name) => {
+  //   "[1] getCellDependencies()",
+  //   "names=" + names,
+  // );
+  const deps = names.reduce((deps, name) => {
     const names = getSingleCellDependencies({env, name});
     return [...new Set([
       ...deps,
       ...names,
       ...getCellDependencies({env, names})
     ])];
-  }, [])
-);
+  }, []);
+  // console.log(
+  //   "[2] getCellDependencies()",
+  //   "deps=" + deps
+  // );
+  return deps;
+};
 
 const cellPlugin = new Plugin({
   view(editorView) {
@@ -409,17 +417,23 @@ const cellPlugin = new Plugin({
           tr.setMeta("updated", true);
           dispatch(tr);
         }
+        const cells = {...pluginState.cells};
         pluginState.dirtyCells.forEach(name => {
           // if (name === pluginState.focusedCell) {
           //   return;
           // }
-          const val = evalCell({ env: pluginState, name });
+          const val = evalCell({ env: {cells}, name });
+          cells[name] = {
+            ...cells[name],
+            val,
+          };
           const { node } = getCellNodeByName({doc: view.state.doc, name});
           // console.log(
-          //   "[1] cellPlugin/update()",
+          //   "[1] cellPlugin/update() dirtyCells",
+          //   "cells=" + JSON.stringify(cells, null, 2),
           //   "name=" + name,
-          //   "val=" + val,
-          //   "textContent=" + node.textContent
+          //   "textContent=" + node.textContent,
+          //   "val=" + val
           // );
           if (name !== pluginState.focusedCell && val !== node.textContent) {
             replaceCellContent(view, name, val);
@@ -459,7 +473,6 @@ const cellPlugin = new Plugin({
           cell.text && cell.text.indexOf("=") > -1 &&
           [...dirtyCells, cell.name] || dirtyCells
       ), []);
-
       const cellsWithDeps = getCells(state).reduce((cells, cell) => {
         if (cell.row > 1 && cell.col > 1 && cell.text)  {
           const deps = getCellDependencies({env: {cells}, names: [cell.name]});
@@ -578,7 +591,20 @@ const cellPlugin = new Plugin({
           };
         } else if (name) {
           const text = node.textContent.trim();
-          const val = evalCell({ env: value, name });
+          value = {
+            ...value,
+            blurredCell: null,
+            focusedCell: null,
+            dirtyCells: [],
+            cells: {
+              ...value.cells,
+              [name]: {
+                ...value.cells[name],
+                text: text || undefined,
+              },
+            },
+          };
+          const val = evalCell({env: value, name});
           // console.log(
           //   "cellPlugin/apply()",
           //   "name=" + name,
