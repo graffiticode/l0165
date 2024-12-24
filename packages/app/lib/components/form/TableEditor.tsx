@@ -2,6 +2,7 @@
   TODO
   [ ] Format numbers and dates using format patterns
   [ ] Make row and column headings read only
+  [ ] Parse cell names in parselatex to fix '=a1*a2' and '=a1/a2'
   [ ] Sort dependency tree & check for cycles
   [ ] Make expanderBuilders a module parameter
   [x] Handle $ sign
@@ -11,6 +12,7 @@
   [x] Expand cell names using translatex to get dependencies
   [x] Support '=a1' and '=a1+b2' syntax
   [x] Fix bug focusing cell with text shorter than value
+  [x] Support literals in expressions. E.g. =b2*0.14
 */
 
 import React, { useState, useEffect, useRef } from 'react'; React;
@@ -58,7 +60,7 @@ import { MenuView } from './MenuView';
 import { debounce } from "lodash";
 
 import { TransLaTeX } from "@artcompiler/translatex";
-import { evalRules, cellNameRules } from './translatex-rules.js';
+import { evalRules, cellNameRules, formatRules } from './translatex-rules.js';
 
 const menuPlugin = new Plugin({
   view(editorView) {
@@ -190,6 +192,7 @@ const getCells = (state) => {
         justify: node.attrs.justify,
         background: node.attrs.background,
         fontWeight: node.attrs.fontWeight,
+        format: node.attrs.format,
       });
     }
   });
@@ -217,6 +220,17 @@ const schema = new Schema({
           setDOMAttr(value, attrs) {
             if (value) {
               attrs.dataset = `data-name: ${value};`;
+            }
+          },
+        },
+        format: {
+          default: null,
+          getFromDOM(dom) {
+            return dom.dataset.format || null;
+          },
+          setDOMAttr(value, attrs) {
+            if (value) {
+              attrs.dataset = `data-format: ${value};`;
             }
           },
         },
@@ -280,10 +294,6 @@ const getCellNodeByName = ({doc, name}) => {
   return result;
 };
 
-// const isValidCursorPos = (pos, contentStart, contentEnd) => {
-//   return pos >= contentStart && pos <= contentEnd;
-// };
-
 const replaceCellContent = (editorView, name, newText, doMoveCursor = false) => {
   const { state, dispatch } = editorView;
   const { pos: cellPos } = getCellNodeByName({doc: state.doc, name});
@@ -299,52 +309,15 @@ const replaceCellContent = (editorView, name, newText, doMoveCursor = false) => 
         state.schema.node("paragraph");
   const tr = state.tr;
   tr.replaceWith(contentStart, contentEnd, paragraphNode);
-  // console.log("replaceCellContent() doMoveCursor=" + doMoveCursor,
-  //             "newText=" + newText);
   if (doMoveCursor) {
     let cursorPos = contentStart + 1;
     tr.setSelection(TextSelection.create(tr.doc, cursorPos + newText.length));
-//     setTimeout(() => {
-//       const doc = editorView.state.doc;
-//       const { pos: cellPos } = getCellNodeByName({doc, name});
-//       // const updatedContentStart = cellPos + 1;
-//       // const updatedContentEnd = contentStart + Math.min(newText.length, updatedCellNode.nodeSize) - 1;
-// //      cursorPos = updatedContentEnd;
-//       const resolvedPos = editorView.state.doc.resolve(cellPos + 1);
-//       cursorPos = resolvedPos.pos + newText.length - 1;
-//       console.log(
-//         "[1] replaceCellContent()",
-//         "name=" + name,
-//         "newText=" + newText,
-//         // "updatedContentStart=" + updatedContentStart,
-//         // "updatedContentEnd=" + updatedContentEnd,
-//         "resolvedPos=" + resolvedPos.pos
-//       );
-//       //if (!isValidCursorPos(cursorPos, updatedContentStart, updatedContentEnd)) {
-//       //   cursorPos = Math.min(updatedContentStart + newText.length, updatedContentEnd - 1);
-//       //}
-//       // console.log(
-//       //   "[2] replaceCellContent()",
-//       //   "name=" + name,
-//       //   "contentStart=" + contentStart,
-//       //   "contentEnd=" + contentEnd,
-//       //   "cursorPos=" + cursorPos
-//       // );
-//       editorView.dispatch(
-//         editorView.state.tr.setSelection(new TextSelection(resolvedPos))
-//       );
-//     }, 0);
   }
   dispatch(tr);
 }
 
 const evalCell = ({ env, name }) => {
   const text = env.cells[name]?.text || "";
-  // console.log(
-  //   "evalCell()",
-  //   "name=" + name,
-  //   "text=" + text
-  // );
   let result = text;
   try {
     const options = {
@@ -356,6 +329,31 @@ const evalCell = ({ env, name }) => {
       TransLaTeX.translate(
         options,
         text, (err, val) => {
+          if (err && err.length) {
+            console.error(err);
+          }
+          result = val;
+        }
+      );
+    }
+  } catch (x) {
+    console.log("parse error: " + x.stack);
+  }
+  return result;
+}
+
+const formatCellValue = ({ env, name }) => {
+  const { val, format } = env.cells[name] || {};
+  let result = val;
+  try {
+    const options = {
+      env: {format},
+      ...formatRules,
+    };
+    if (val.length > 0) {
+      TransLaTeX.translate(
+        options,
+        val, (err, val) => {
           if (err && err.length) {
             console.error(err);
           }
@@ -386,11 +384,6 @@ const getSingleCellDependencies = ({ env, name }) => {
           if (err && err.length) {
             console.error(err);
           }
-          // console.log(
-          //   "getSingleCellDependencies()",
-          //   "name=" + name,
-          //   "val=" + val
-          // ),
           result = val.split(",").map(name => name.toUpperCase());
         }
       );
@@ -404,10 +397,6 @@ const getSingleCellDependencies = ({ env, name }) => {
 };
 
 const getCellDependencies = ({ env, names }) => {
-  // console.log(
-  //   "[1] getCellDependencies()",
-  //   "names=" + names,
-  // );
   const deps = names.reduce((deps, name) => {
     const names = getSingleCellDependencies({env, name});
     return [...new Set([
@@ -416,10 +405,6 @@ const getCellDependencies = ({ env, names }) => {
       ...getCellDependencies({env, names})
     ])];
   }, []);
-  // console.log(
-  //   "[2] getCellDependencies()",
-  //   "deps=" + deps
-  // );
   return deps;
 };
 
@@ -445,6 +430,7 @@ const cellPlugin = new Plugin({
             ...cells[name],
             val,
           };
+          const formattedVal = formatCellValue({env: {cells}, name});
           const { node } = getCellNodeByName({doc: view.state.doc, name});
           // console.log(
           //   "[1] cellPlugin/update() dirtyCells",
@@ -453,8 +439,8 @@ const cellPlugin = new Plugin({
           //   "textContent=" + node.textContent,
           //   "val=" + val
           // );
-          if (name !== pluginState.focusedCell && val !== node.textContent) {
-            replaceCellContent(view, name, val);
+          if (name !== pluginState.focusedCell && formattedVal !== node.textContent) {
+            replaceCellContent(view, name, formattedVal);
           }
         });
         if (pluginState.focusedCell) {
@@ -483,13 +469,14 @@ const cellPlugin = new Plugin({
           [cell.name]: {
             text: cell.text,
             deps: [],
+            format: cell.format,
           }
         } || cells
       ), {});
       const dirtyCells = getCells(state).reduce((dirtyCells, cell) => (
-        cell.row > 1 && cell.col > 1 &&
-          cell.text && cell.text.indexOf("=") > -1 &&
-          [...dirtyCells, cell.name] || dirtyCells
+        cell.row > 1 && cell.col > 1 && cell.text &&
+          [...dirtyCells, cell.name] ||
+          dirtyCells
       ), []);
       const cellsWithDeps = getCells(state).reduce((cells, cell) => {
         if (cell.row > 1 && cell.col > 1 && cell.text)  {
@@ -508,6 +495,7 @@ const cellPlugin = new Plugin({
                   ...cell?.deps,
                   cellName,
                 ],
+                format: cell.format,
               },
             } || cells;
           }, cells);
@@ -623,12 +611,6 @@ const cellPlugin = new Plugin({
             },
           };
           const val = evalCell({env: value, name});
-          // console.log(
-          //   "cellPlugin/apply()",
-          //   "name=" + name,
-          //   "text=" + text,
-          //   "val=" + val
-          // );
           value = {
             ...value,
             blurredCell: null,

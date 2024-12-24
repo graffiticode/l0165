@@ -84,3 +84,14 @@ export const cellNameRules = {
     ]
   },
 }
+
+export const formatRules = {
+  "rules": {
+    "\\type{number}": [
+      "$fmt"
+    ],
+    "?": [
+      "%1"
+    ]
+  },
+}

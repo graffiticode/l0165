@@ -35,8 +35,6 @@ const buildCell = ({ col, row, attrs, colsAttrs }) => {
       ]
     }
   ];
-  console.log("buildCell() row=" + JSON.stringify(row));
-  console.log("buildCell() row._.text=" + row._.text);
   const isHeader = false;  // TODO col === "_";
   return ({
     "type": isHeader && "table_header" || "table_cell",
