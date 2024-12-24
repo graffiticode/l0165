@@ -325,7 +325,7 @@ const evalCell = ({ env, name }) => {
       env: env.cells,
       ...evalRules,
     };
-    if (text.length > 0) {
+    if (text.length > 0 && text.indexOf("=") === 0) {
       TransLaTeX.translate(
         options,
         text, (err, val) => {
@@ -345,12 +345,17 @@ const evalCell = ({ env, name }) => {
 const formatCellValue = ({ env, name }) => {
   const { val, format } = env.cells[name] || {};
   let result = val;
+  // console.log(
+  //   "[1] formatCellValue()",
+  //   "name=" + name,
+  //   "result=" + result
+  // );
   try {
-    const options = {
-      env: {format},
-      ...formatRules,
-    };
-    if (val.length > 0) {
+    if (format && val.length > 0) {
+      const options = {
+        env: {format},
+        ...formatRules,
+      };
       TransLaTeX.translate(
         options,
         val, (err, val) => {
@@ -364,6 +369,11 @@ const formatCellValue = ({ env, name }) => {
   } catch (x) {
     console.log("parse error: " + x.stack);
   }
+  // console.log(
+  //   "[2] formatCellValue()",
+  //   "name=" + name,
+  //   "result=" + result
+  // );
   return result;
 }
 
@@ -434,10 +444,10 @@ const cellPlugin = new Plugin({
           const { node } = getCellNodeByName({doc: view.state.doc, name});
           // console.log(
           //   "[1] cellPlugin/update() dirtyCells",
-          //   "cells=" + JSON.stringify(cells, null, 2),
           //   "name=" + name,
           //   "textContent=" + node.textContent,
-          //   "val=" + val
+          //   "val=" + val,
+          //   "formattedVal=" + formattedVal
           // );
           if (name !== pluginState.focusedCell && formattedVal !== node.textContent) {
             replaceCellContent(view, name, formattedVal);

@@ -41,11 +41,11 @@ export const View = () => {
   const [ doInit, setDoInit ] = useState(true);
   const [ doRecompile, setDoRecompile ] = useState(false);
   const [ state ] = useState(createState({}, (data, { type, args }) => {
-    console.log(
-      "L0151 state.apply()",
-      "type=" + type,
-      "args=" + JSON.stringify(args, null, 2)
-    );
+    // console.log(
+    //   "L0151 state.apply()",
+    //   "type=" + type,
+    //   "args=" + JSON.stringify(args, null, 2)
+    // );
     switch (type) {
     case "init":
       return {
