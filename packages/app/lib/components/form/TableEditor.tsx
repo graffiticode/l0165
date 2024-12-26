@@ -2,7 +2,6 @@
   TODO
   [ ] Format numbers and dates using format patterns. Skip if incompatible value
   [ ] Make row and column headings read only
-  [ ] Parse cell names in parselatex to fix '=a1*a2' and '=a1/a2'
   [ ] Sort dependency tree & check for cycles
   [ ] Make expanderBuilders a module parameter
   [x] Handle $ sign
@@ -13,6 +12,7 @@
   [x] Support '=a1' and '=a1+b2' syntax
   [x] Fix bug focusing cell with text shorter than value
   [x] Support literals in expressions. E.g. =b2*0.14
+  [x] Parse cell names in parselatex to fix '=a1*a2' and '=a1/a2'
 */
 
 import React, { useState, useEffect, useRef } from 'react'; React;
