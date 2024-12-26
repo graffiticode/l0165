@@ -90,6 +90,9 @@ export const formatRules = {
     "\\type{number}": [
       "$fmt"
     ],
+    "??": [
+      "%1%2"
+    ],
     "?": [
       "%1"
     ]

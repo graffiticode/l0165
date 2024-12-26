@@ -1,6 +1,6 @@
 /*
   TODO
-  [ ] Format numbers and dates using format patterns
+  [ ] Format numbers and dates using format patterns. Skip if incompatible value
   [ ] Make row and column headings read only
   [ ] Parse cell names in parselatex to fix '=a1*a2' and '=a1/a2'
   [ ] Sort dependency tree & check for cycles
@@ -432,9 +432,6 @@ const cellPlugin = new Plugin({
         }
         const cells = {...pluginState.cells};
         pluginState.dirtyCells.forEach(name => {
-          // if (name === pluginState.focusedCell) {
-          //   return;
-          // }
           const val = evalCell({ env: {cells}, name });
           cells[name] = {
             ...cells[name],
