@@ -196,6 +196,10 @@ const getCells = (state) => {
       });
     }
   });
+  // console.log(
+  //   "getCells()",
+  //   "cells=" + JSON.stringify(cells, null, 2)
+  // );
   return cells;
 };
 
@@ -347,6 +351,7 @@ const formatCellValue = ({ env, name }) => {
   let result = val;
   // console.log(
   //   "[1] formatCellValue()",
+  //   "env=" + JSON.stringify(env, null, 2),
   //   "name=" + name,
   //   "format=" + format,
   //   "result=" + result
@@ -472,12 +477,11 @@ const cellPlugin = new Plugin({
     init(config, state) {
       config = config;
       const cells = getCells(state).reduce((cells, cell) => (
-        cell.row > 1 && cell.col > 1 && cell.text && {
+        cell.row > 1 && cell.col > 1 && {
           ...cells,
           [cell.name]: {
-            text: cell.text,
+            ...cell,
             deps: [],
-            format: cell.format,
           }
         } || cells
       ), {});
@@ -487,13 +491,18 @@ const cellPlugin = new Plugin({
           dirtyCells
       ), []);
       const cellsWithDeps = getCells(state).reduce((cells, cell) => {
-        if (cell.row > 1 && cell.col > 1 && cell.text)  {
+        if (cell.row > 1 && cell.col > 1)  {
           const deps = getCellDependencies({env: {cells}, names: [cell.name]});
           const cellName = cell.name;
           return deps.reduce((cells, name) => {
             // Add current cell as dependency of independent cells.
             const val = evalCell({env: {cells}, name});
             const cell = cells[name];
+            // console.log(
+            //   "cellsPugin/init()",
+            //   "name=" + name,
+            //   "cell=" + JSON.stringify(cell, null, 2)
+            // );
             return cell && {
               ...cells,
               [name]: {
@@ -511,6 +520,10 @@ const cellPlugin = new Plugin({
           return cells;
         }
       }, cells);
+      // console.log(
+      //   "cellsPugin/init()",
+      //   "cellsWithDeps=" + JSON.stringify(cellsWithDeps, null, 2)
+      // );
       return {
         lastFocusedCell: null,
         blurredCell: null,
