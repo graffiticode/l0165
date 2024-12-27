@@ -87,11 +87,11 @@ export const cellNameRules = {
 
 export const formatRules = {
   "rules": {
-    "\\type{number}": [
-      "$fmt"
-    ],
     "??": [
       "%1%2"
+    ],
+    "\\type{number}": [
+      "$fmt"
     ],
     "?": [
       "%1"
