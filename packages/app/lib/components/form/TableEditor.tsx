@@ -348,6 +348,7 @@ const formatCellValue = ({ env, name }) => {
   // console.log(
   //   "[1] formatCellValue()",
   //   "name=" + name,
+  //   "format=" + format,
   //   "result=" + result
   // );
   try {
