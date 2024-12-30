@@ -18,6 +18,12 @@ export class Checker extends BasisChecker {
 const buildCell = ({ col, row, attrs, colsAttrs }) => {
   colsAttrs = colsAttrs || {};
   const cell = row[col];
+  // console.log(
+  //   "buildCell()",
+  //   "col=" + col,
+  //   "row._.text=" + JSON.stringify(row._.text),
+  //   "cell=" + JSON.stringify(cell, null, 2)
+  // );
   let content;
   let colspan = 1;
   let rowspan = 1;
@@ -35,11 +41,11 @@ const buildCell = ({ col, row, attrs, colsAttrs }) => {
       ]
     }
   ];
-  const isHeader = false;  // TODO col === "_";
-  return ({
+  const isHeader = cell.type === "th";
+  return {
     "type": isHeader && "table_header" || "table_cell",
     "attrs": {
-      name: `${col}${row._.text}`,
+      name: `${col}${row._.text || 0}`,
       colspan,
       rowspan,
       colwidth,
@@ -50,7 +56,7 @@ const buildCell = ({ col, row, attrs, colsAttrs }) => {
       ...cell.attrs,
     },
     "content": content,
-  });
+  };
 };
 
 const buildRow = ({ cols, row, attrs, colsAttrs }) => {
@@ -138,12 +144,17 @@ const makeEditorState = ({ type, columns, cells }) => {
         }), {}
       )
     );
+    const doc = buildDocFromTable({
+      cols,
+      rows,
+      colsAttrs: columns,
+    });
+    // console.log(
+    //   "makeEditorState()",
+    //   "doc=" + JSON.stringify(doc, null, 2)
+    // );
     return {
-      doc: buildDocFromTable({
-        cols,
-        rows,
-        colsAttrs: columns,
-      }),
+      doc: doc,
       selection: {
         type: "text",
         anchor: 1,

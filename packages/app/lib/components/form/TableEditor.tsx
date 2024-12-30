@@ -1,7 +1,8 @@
 /*
   TODO
-  [ ] Format numbers and dates using format patterns. Skip if incompatible value
-  [ ] Make row and column headings read only
+  [ ] Make row and column headings read only. Focus on first cell
+  [ ] Format numbers and dates using format patterns
+  [ ] Handle single and double click and tab in cells
   [ ] Sort dependency tree & check for cycles
   [ ] Make expanderBuilders a module parameter
   [x] Handle $ sign
@@ -168,6 +169,10 @@ const modelBackgroundPlugin = () => new Plugin({
   }
 });
 
+const isTableCellOrHeader = node =>
+      node.type.name === "table_cell" ||
+      node.type.name === "table_header";
+
 const getCells = (state) => {
   const { doc } = state;
   const cells = [];
@@ -177,7 +182,7 @@ const getCells = (state) => {
       row++;
       col = 0;
     }
-    if (node.type.name === "table_cell") {
+    if (isTableCellOrHeader(node)) {
       col++;
       const cellExprs = cellPlugin.getState(state);
       const name = node.attrs.name;
@@ -290,7 +295,7 @@ const getCellNodeByName = ({doc, name}) => {
     if (result !== undefined) {
       return false;
     }
-    if (node.type.name === "table_cell" && node.attrs.name === name) {
+    if (isTableCellOrHeader(node) && node.attrs.name === name) {
       result = {node, pos};
     }
   });
@@ -302,7 +307,7 @@ const replaceCellContent = (editorView, name, newText, doMoveCursor = false) => 
   const { state, dispatch } = editorView;
   const { pos: cellPos } = getCellNodeByName({doc: state.doc, name});
   const cellNode = state.doc.nodeAt(cellPos);
-  if (!cellNode || cellNode.type.name !== "table_cell") {
+  if (!cellNode || !isTableCellOrHeader(cellNode)) {
     console.error("Invalid cell position or node type: " + JSON.stringify(cellNode, null, 2));
     return;
   }
@@ -464,9 +469,12 @@ const cellPlugin = new Plugin({
           //   "[2] cellPlugin/update()",
           //   "focusedCell=" + name,
           //   "text=" + text,
-          //   "textContent=" + node.textContent
+          //   "textContent=" + node.textContent,
+          //   "node.type.name=" + JSON.stringify(node.type.name),
+          //   "node=" + JSON.stringify(node, null, 2)
           // );
-          if (text !== node.textContent) {
+          if (node.type.name === "table_cell" && text !== node.textContent) {
+            console.log("replace");
             replaceCellContent(view, name, text, true);
           }
         }
@@ -539,7 +547,7 @@ const cellPlugin = new Plugin({
       const { selection } = newState;
       const $anchor = selection.$anchor;
       let node = $anchor.node(-1);
-      if (node.type.name !== "table_cell") {
+      if (!isTableCellOrHeader(node)) {
         // Selection outside of cell, so use A1.
         const { doc } = newState;
         ({ node } = getCellNodeByName({doc, name: "A1"}));
@@ -551,7 +559,7 @@ const cellPlugin = new Plugin({
           dirtyCells: [],
         };
       }
-      if (node && node.type.name === "table_cell") {
+      if (node && isTableCellOrHeader(node)) {
         const name = node.attrs.name;
         if (value.lastFocusedCell !== name) {
           // We just left a cell, so recompute its value and the values of its
