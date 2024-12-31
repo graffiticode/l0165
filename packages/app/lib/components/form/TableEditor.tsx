@@ -58,7 +58,7 @@ import {
   columnResizing,
   tableNodes,
   fixTables,
-  CellSelection,
+//  CellSelection,
 } from "prosemirror-tables";
 
 import { baseKeymap } from "prosemirror-commands"
@@ -342,8 +342,15 @@ const getAdjacentCellNodeByName = ({ state, name }) => {
   const { row, col } = getCellRowColFromName(name);
   const adjRow = row === 0 && row + 1 || row;
   const adjCol = col === 0 && col + 1 || col;
-  const name = `${letters[adjCol]}${adjRow}`;
-  return getCellNodeByName({state, name});
+  const adjName = `${letters[adjCol]}${adjRow}`;
+  // console.log(
+  //   "getAdjacentCellNodeByName()",
+  //   "name=" + name,
+  //   "row=" + row,
+  //   "col=" + col,
+  //   "adjName=" + adjName
+  // );
+  return getCellNodeByName({state, name: adjName});
 }
 
 // const getCellNodeByName = ({doc, name}) => {
@@ -367,7 +374,6 @@ const replaceCellContent = (editorView, name, newText, doMoveCursor = false) => 
     console.error("Invalid cell position or node type: " + JSON.stringify(cellNode, null, 2));
     return;
   }
-  // FIXME verify that this is the correct position.
   const contentStart = cellPos + 1;
   const contentEnd = cellPos + cellNode.nodeSize - 1;
   const paragraphNode = newText &&
@@ -377,8 +383,6 @@ const replaceCellContent = (editorView, name, newText, doMoveCursor = false) => 
   //   "replaceCellContent()",
   //   "name=" + name,
   //   "newText=" + newText,
-  //   "cellNode=" + JSON.stringify(cellNode, null, 2),
-  //   "paragraphNode=" + JSON.stringify(paragraphNode, null, 2)
   // );
   const tr = state.tr;
   tr.replaceWith(contentStart, contentEnd, paragraphNode);
@@ -497,6 +501,7 @@ const makeTableHeadersReadOnlyPlugin = new Plugin({
   props: {
     handleClickOn(view, pos, node, nodePos, event, direct) {
       pos = pos;
+      nodePos = nodePos;
       event = event;
       direct = direct;
       const { state, dispatch } = view;
@@ -504,8 +509,15 @@ const makeTableHeadersReadOnlyPlugin = new Plugin({
       // Check if the clicked node is a `table_header`
       if (node.type.name === "table_header") {
         // Create a CellSelection for the clicked cell
-        const { pos, node } = getAdjacentCellByName(name);
-        const selection = CellSelection.create(state.doc, nodePos);
+        const name = node.attrs.name || "_0";
+        const { pos: adjPos, node: adjNode } = getAdjacentCellNodeByName({state, name});
+        const cursorPos = adjPos + 2;
+        const newText = adjNode.textContent;
+        // console.log(
+        //   "makeTableHeaderReadOnlyPlugin()",
+        //   "newText=" + newText
+        // );
+        const selection = TextSelection.create(state.tr.doc, cursorPos + newText.length);
 
         // Dispatch the transaction to update the selection
         dispatch(state.tr.setSelection(selection));
@@ -577,6 +589,10 @@ const cellPlugin = new Plugin({
           dispatch(tr);
         }
         const cells = {...pluginState.cells};
+        // console.log(
+        //   "[1] cellPlugin/view/update()",
+        //   "dirtyCells=" + JSON.stringify(pluginState.dirtyCells, null, 2)
+        // );
         pluginState.dirtyCells.forEach(name => {
           const val = evalCell({ env: {cells}, name });
           cells[name] = {
@@ -585,15 +601,6 @@ const cellPlugin = new Plugin({
           };
           const formattedVal = formatCellValue({env: {cells}, name});
           const { node } = getCellNodeByName({state: view.state, name});
-          // console.log(
-          //   "[1] cellPlugin/view/update()",
-          //   "name=" + name,
-          //   "focusedCell=" + pluginState.focusedCell,
-          //   "textContent=" + node.textContent,
-          //   "formattedVal=" + formattedVal,
-          //   "name !== pluginState.focusedCell=" + (name !== pluginState.focusedCell),
-          //   "formattedVal !== node.textContent=" + (formattedVal !== node.textContent)
-          // );
           if (name !== pluginState.focusedCell && formattedVal !== node.textContent) {
             replaceCellContent(view, name, formattedVal);
           }
@@ -690,10 +697,16 @@ const cellPlugin = new Plugin({
       const node = $anchor.node(-1);
       const name = node.attrs?.name;
       const lastFocusedCell = value.lastFocusedCell;
+      // console.log(
+      //   "[1] cellPlugin/state/apply()",
+      //   "name=" + name,
+      //   "lastFocusedCell=" + lastFocusedCell,
+      //   "value=" + JSON.stringify(value, null, 2)
+      // );
       if (lastFocusedCell !== name) {
         // We just left a cell, so recompute its value and the values of its
         // dependencies.
-        if (lastFocusedCell) {
+        if (lastFocusedCell && value.cells[lastFocusedCell]) {
           //const { lastFocusedCell } = value;
           const cell = value.cells[lastFocusedCell];
           value = {
@@ -709,7 +722,7 @@ const cellPlugin = new Plugin({
             dirtyCells: [
               ...value?.dirtyCells,
               lastFocusedCell,  // Order matters.
-              ...(cell.deps || []),
+              ...(cell?.deps || []),
             ],
           };
           const deps = getCellDependencies({env: value, names: [lastFocusedCell]});
@@ -776,7 +789,7 @@ const cellPlugin = new Plugin({
         };
       }
       // console.log(
-      //   "cellPlugin/state/apply()",
+      //   "[3] cellPlugin/state/apply()",
       //   "value=" + JSON.stringify(value, null, 2)
       // );
       return value;
@@ -796,8 +809,8 @@ const plugins = [
   }),
   menuPlugin,
   modelBackgroundPlugin(),
-  cellPlugin,
   makeTableHeadersReadOnlyPlugin,
+  cellPlugin,
 ];
 
 let initEditorState = EditorState.create({
