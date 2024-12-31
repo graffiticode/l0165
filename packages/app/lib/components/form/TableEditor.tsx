@@ -50,7 +50,13 @@ import {
   //   deleteTable,
   //findCell,
 } from "prosemirror-tables";
-import { tableEditing, columnResizing, tableNodes, fixTables } from "prosemirror-tables";
+import {
+  tableEditing,
+  columnResizing,
+  tableNodes,
+  fixTables,
+  CellSelection,
+} from "prosemirror-tables";
 
 import { baseKeymap } from "prosemirror-commands"
 import { undo, redo, history } from "prosemirror-history";
@@ -172,6 +178,9 @@ const modelBackgroundPlugin = () => new Plugin({
 const isTableCellOrHeader = node =>
       node.type.name === "table_cell" ||
       node.type.name === "table_header";
+
+// const isTableCell = node =>
+//       node.type.name === "table_cell";
 
 const getCells = (state) => {
   const { doc } = state;
@@ -429,6 +438,76 @@ const getCellDependencies = ({ env, names }) => {
   return deps;
 };
 
+const makeTableHeadersReadOnlyPlugin = new Plugin({
+  props: {
+    handleClickOn(view, pos, node, nodePos, event, direct) {
+      pos = pos;
+      event = event;
+      direct = direct;
+      const { state, dispatch } = view;
+
+      // Check if the clicked node is a `table_header`
+      if (node.type.name === "table_header") {
+        // Create a CellSelection for the clicked cell
+        const selection = CellSelection.create(state.doc, nodePos);
+
+        // Dispatch the transaction to update the selection
+        dispatch(state.tr.setSelection(selection));
+        return true; // Prevent further handling
+      }
+
+      return false; // Allow other events to be handled normally
+    },
+
+    handleDOMEvents: {
+      beforeinput(view, event) {
+        const { state } = view;
+        const { selection } = state;
+        const $pos = selection.$anchor;
+
+        for (let depth = $pos.depth; depth > 0; depth--) {
+          const node = $pos.node(depth);
+          if (node.type.name === "table_header") {
+            event.preventDefault();
+            return true;
+          }
+        }
+        return false;
+      }
+    },
+
+    // handleKeyDown(view, event) {
+    //   const { state } = view;
+    //   const { selection } = state;
+    //   const $pos = selection.$anchor;
+
+    //   for (let depth = $pos.depth; depth > 0; depth--) {
+    //     const node = $pos.node(depth);
+    //     if (node.type.name === "table_header") {
+    //       event.preventDefault(); // Block key event
+    //       return true; // Stop further handling
+    //     }
+    //   }
+    //   return false; // Allow other key events
+    // }
+  },
+
+  filterTransaction(tr, state) {
+    const { selection } = state;
+    const $pos = selection.$anchor;
+
+    for (let depth = $pos.depth; depth > 0; depth--) {
+      const node = $pos.node(depth);
+      if (node.type.name === "table_header") {
+        if (tr.steps.length > 0) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+});
+
 const cellPlugin = new Plugin({
   view(editorView) {
     editorView = editorView;
@@ -450,13 +529,6 @@ const cellPlugin = new Plugin({
           };
           const formattedVal = formatCellValue({env: {cells}, name});
           const { node } = getCellNodeByName({doc: view.state.doc, name});
-          // console.log(
-          //   "[1] cellPlugin/update() dirtyCells",
-          //   "name=" + name,
-          //   "textContent=" + node.textContent,
-          //   "val=" + val,
-          //   "formattedVal=" + formattedVal
-          // );
           if (name !== pluginState.focusedCell && formattedVal !== node.textContent) {
             replaceCellContent(view, name, formattedVal);
           }
@@ -465,16 +537,7 @@ const cellPlugin = new Plugin({
           const name = pluginState.focusedCell;
           const text = pluginState.cells[name]?.text || "";
           const { node } = getCellNodeByName({doc: view.state.doc, name});
-          // console.log(
-          //   "[2] cellPlugin/update()",
-          //   "focusedCell=" + name,
-          //   "text=" + text,
-          //   "textContent=" + node.textContent,
-          //   "node.type.name=" + JSON.stringify(node.type.name),
-          //   "node=" + JSON.stringify(node, null, 2)
-          // );
           if (node.type.name === "table_cell" && text !== node.textContent) {
-            console.log("replace");
             replaceCellContent(view, name, text, true);
           }
         }
@@ -547,11 +610,6 @@ const cellPlugin = new Plugin({
       const { selection } = newState;
       const $anchor = selection.$anchor;
       let node = $anchor.node(-1);
-      if (!isTableCellOrHeader(node)) {
-        // Selection outside of cell, so use A1.
-        const { doc } = newState;
-        ({ node } = getCellNodeByName({doc, name: "A1"}));
-      }
       if (tr.getMeta("updated")) {
         value = {
           ...value,
@@ -626,6 +684,11 @@ const cellPlugin = new Plugin({
           };
         } else if (name) {
           const text = node.textContent.trim();
+          // console.log(
+          //   "cellPlugin/apply()",
+          //   "text=" + text,
+          //   "value=" + JSON.stringify(value, null, 2)
+          // );
           value = {
             ...value,
             blurredCell: null,
@@ -678,6 +741,7 @@ const plugins = [
   menuPlugin,
   modelBackgroundPlugin(),
   cellPlugin,
+  makeTableHeadersReadOnlyPlugin,
 ];
 
 let initEditorState = EditorState.create({
