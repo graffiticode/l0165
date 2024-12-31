@@ -1,5 +1,6 @@
 /*
   TODO
+  [ ] Select cell adjacent to selected header
   [ ] FIXME when no longer editing a cell, add it to the dirty list
   [ ] Make row and column headings read only. Focus on first cell
   [ ] Format numbers and dates using format patterns
@@ -337,6 +338,14 @@ const getCellNodeByName = ({ state, name }) => {
   return {node: cellNode, pos: cellPos};
 }
 
+const getAdjacentCellNodeByName = ({ state, name }) => {
+  const { row, col } = getCellRowColFromName(name);
+  const adjRow = row === 0 && row + 1 || row;
+  const adjCol = col === 0 && col + 1 || col;
+  const name = `${letters[adjCol]}${adjRow}`;
+  return getCellNodeByName({state, name});
+}
+
 // const getCellNodeByName = ({doc, name}) => {
 //   let result;
 //   doc.descendants((node, pos) => {
@@ -495,6 +504,7 @@ const makeTableHeadersReadOnlyPlugin = new Plugin({
       // Check if the clicked node is a `table_header`
       if (node.type.name === "table_header") {
         // Create a CellSelection for the clicked cell
+        const { pos, node } = getAdjacentCellByName(name);
         const selection = CellSelection.create(state.doc, nodePos);
 
         // Dispatch the transaction to update the selection
