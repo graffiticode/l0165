@@ -1,8 +1,6 @@
 /*
   TODO
-  [ ] Select cell adjacent to selected header
-  [ ] FIXME when no longer editing a cell, add it to the dirty list
-  [ ] Make row and column headings read only. Focus on first cell
+  [ ] BUG fix updating cells when clicking on headers
   [ ] Format numbers and dates using format patterns
   [ ] Handle single and double click and tab in cells
   [ ] Sort dependency tree & check for cycles
@@ -16,6 +14,9 @@
   [x] Fix bug focusing cell with text shorter than value
   [x] Support literals in expressions. E.g. =b2*0.14
   [x] Parse cell names in parselatex to fix '=a1*a2' and '=a1/a2'
+  [x] Make row and column headings read only
+  [x] Select cell adjacent to selected header
+  [x] Handle unary `-` and `%`
 */
 
 import React, { useState, useEffect, useRef } from 'react'; React;
@@ -379,11 +380,14 @@ const replaceCellContent = (editorView, name, newText, doMoveCursor = false) => 
   const paragraphNode = newText &&
         state.schema.node("paragraph", null, state.schema.text(newText)) ||
         state.schema.node("paragraph");
-  // console.log(
-  //   "replaceCellContent()",
-  //   "name=" + name,
-  //   "newText=" + newText,
-  // );
+  console.log(
+    "replaceCellContent()",
+    "name=" + name,
+    "newText=" + newText,
+    "contentStart=" + contentStart,
+    "contentEnd=" + contentEnd,
+    "cellNode=" + JSON.stringify(cellNode, null, 2),
+  );
   const tr = state.tr;
   tr.replaceWith(contentStart, contentEnd, paragraphNode);
   if (doMoveCursor) {
@@ -788,10 +792,10 @@ const cellPlugin = new Plugin({
           },
         };
       }
-      // console.log(
-      //   "[3] cellPlugin/state/apply()",
-      //   "value=" + JSON.stringify(value, null, 2)
-      // );
+      console.log(
+        "[3] cellPlugin/state/apply()",
+        "value=" + JSON.stringify(value, null, 2)
+      );
       return value;
     }
   }
