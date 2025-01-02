@@ -22,7 +22,9 @@ export const evalRules = {
           "?+?": "$add",
           "?-?": "$minus",
           "?*?": "$multiply",
-          "?/?": "$divide"
+          "?/?": "$divide",
+          "?%": "$percent",
+          "-?": "$minus"
         }
       }
     ],
@@ -92,6 +94,9 @@ export const formatRules = {
     ],
     "\\type{number}": [
       "$fmt"
+    ],
+    "-?": [
+      "-%1"
     ],
     "?": [
       "%1"
