@@ -1,5 +1,6 @@
 /*
   TODO
+  [ ] Mark and score cells
   [ ] BUG fix updating cells when clicking on headers
   [ ] Format numbers and dates using format patterns
   [ ] Handle single and double click and tab in cells
@@ -107,41 +108,58 @@ const applyDecoration = ({ doc, cells }) => {
   return DecorationSet.create(doc, decorations);
 };
 
-const applyModelRules = (state) => {
-  const { doc, selection } = state;
-  // Multiply first row and first column values and compare to body values.
+const getCellColor = (cell) => {
+  const { row, col, name, text, assess, val, lastFocusedCell } = cell;
+  console.log(
+    "getCellColor()",
+    "name=" + name,
+    "lastFocusedCell=" + lastFocusedCell,
+    "row=" + row,
+    "col=" + col,
+    "text=" + text,
+    "val=" + val,
+    "assess=" + JSON.stringify(assess, null, 2),
+  );
+  const { expected } = assess || {};
+  return row > 1 && col > 1 && expected && name !== lastFocusedCell && (
+    text !== expected &&
+      "#fee" ||
+      "#efe"
+  ) || null;
+};
+
+const applyModelRules = (state, value) => {
   const cells = getCells(state);
-  let rowVals = [];
-  let colVals = [];
-  let rowSums = [];
-  let colSums = [];
+  console.log(
+    "applyModelRules()",
+    "cells=" + JSON.stringify(cells, null, 2),
+    "value.cells=" + JSON.stringify(value.cells, null, 2),
+  );
+  const { doc, selection } = state;
+  const { lastFocusedCell } = value;
+  // Multiply first row and first column values and compare to body values.
+  // console.log(
+  //   "applyModelRules()",
+  //   "cells=" + JSON.stringify(cells, null, 2),
+  // );
   let cellColors = [];
-  cells.forEach(({ row, col, val }) => {
-    if (row === 1) {
-      colVals[col] = val;
-    } else {
-      if (colSums[col] === undefined) {
-        colSums[col] = val;
-      } else {
-        colSums[col] += val;
-      }
-    }
+  cells.forEach(cell => {
+    const color = getCellColor({
+      ...cell,
+      val: value.cells[cell.name]?.val,
+      lastFocusedCell
+    });
+    const { row, col } = cell;
     if (cellColors[row] === undefined) {
       cellColors[row] = [];
     }
-    if (col === 1) {
-      rowVals[row] = val;
-    } else {
-      if (rowSums[row] === undefined) {
-        rowSums[row] = val;
-      } else {
-        rowSums[row] += val;
-      }
-    }
-    // const shapedTerms = shapeGridTermsByValue({ cells, terms });
-    // const color = getGridCellColor({row, col, val, rowVals, colVals, terms: shapedTerms});
-    cellColors[row][col] = "#fff"; //color;
+    cellColors[row][col] = color;
   });
+  // console.log(
+  //   "applyModelRules()",
+  //   "cells=" + JSON.stringify(cells, null, 2),
+  //   "cellColors=" + JSON.stringify(cellColors, null, 2),
+  // );
   const coloredCells = cells.map(cell => (
     {
       ...cell,
@@ -153,31 +171,31 @@ const applyModelRules = (state) => {
         `font-weight: ${cell.fontWeight || "normal"}; text-align: ${cell.justify || "right"}; border: 2px solid royalblue;` ||
         `font-weight: ${cell.fontWeight || "normal"}; text-align: ${cell.justify || "right"}; border: 1px solid #ddd;`,
       color: (cell.col === 1 || cell.row === 1) && "#fff" ||
-        cell.background || "#fff"
+        cellColors[cell.row][cell.col] || "#fff"
     }
   ));
   return applyDecoration({doc, cells: coloredCells});
 }
 
-const modelBackgroundPlugin = () => new Plugin({
-  state: {
-    init(_, state) {
-      return applyModelRules(state);
-    },
-    apply(tr, decorationSet, oldState, newState) {
-      tr = tr;
-      oldState = oldState;
-      newState = newState;
-      decorationSet = decorationSet;
-      return applyModelRules(newState);
-    },
-  },
-  props: {
-    decorations(state) {
-      return this.getState(state);
-    }
-  }
-});
+// const modelBackgroundPlugin = () => new Plugin({
+//   state: {
+//     init(_, state) {
+//       return applyModelRules(state);
+//     },
+//     apply(tr, decorationSet, oldState, newState) {
+//       tr = tr;
+//       oldState = oldState;
+//       newState = newState;
+//       decorationSet = decorationSet;
+//       return applyModelRules(newState);
+//     },
+//   },
+//   props: {
+//     decorations(state) {
+//       return this.getState(state);
+//     }
+//   }
+// });
 
 const isTableCellOrHeader = node =>
       node.type.name === "table_cell" ||
@@ -186,7 +204,7 @@ const isTableCellOrHeader = node =>
 // const isTableCell = node =>
 //       node.type.name === "table_cell";
 
-const getCells = (state) => {
+const getCells = state => {
   const { doc } = state;
   const cells = [];
   let row = 0, col = 0;
@@ -200,17 +218,20 @@ const getCells = (state) => {
       const cellExprs = cellPlugin.getState(state);
       const name = node.attrs.name;
       const text = cellExprs && name && cellExprs.cells[name]?.text || node.textContent;
+      const val = cellExprs && name && cellExprs.cells[name]?.val;
       cells.push({
         row,
         col,
         name,
         text,
+        val,
         from: pos,
         to: pos + node.nodeSize,
         justify: node.attrs.justify,
         background: node.attrs.background,
         fontWeight: node.attrs.fontWeight,
         format: node.attrs.format,
+        assess: node.attrs.assess,
       });
     }
   });
@@ -253,6 +274,17 @@ const schema = new Schema({
           setDOMAttr(value, attrs) {
             if (value) {
               attrs.dataset = `data-format: ${value};`;
+            }
+          },
+        },
+        assess: {
+          default: null,
+          getFromDOM(dom) {
+            return JSON.parse(dom.dataset.format) || null;
+          },
+          setDOMAttr(value, attrs) {
+            if (value) {
+              attrs.dataset = `data-format: ${JSON.stringify(value)};`;
             }
           },
         },
@@ -380,14 +412,14 @@ const replaceCellContent = (editorView, name, newText, doMoveCursor = false) => 
   const paragraphNode = newText &&
         state.schema.node("paragraph", null, state.schema.text(newText)) ||
         state.schema.node("paragraph");
-  console.log(
-    "replaceCellContent()",
-    "name=" + name,
-    "newText=" + newText,
-    "contentStart=" + contentStart,
-    "contentEnd=" + contentEnd,
-    "cellNode=" + JSON.stringify(cellNode, null, 2),
-  );
+  // console.log(
+  //   "replaceCellContent()",
+  //   "name=" + name,
+  //   "newText=" + newText,
+  //   "contentStart=" + contentStart,
+  //   "contentEnd=" + contentEnd,
+  //   "cellNode=" + JSON.stringify(cellNode, null, 2),
+  // );
   const tr = state.tr;
   tr.replaceWith(contentStart, contentEnd, paragraphNode);
   if (doMoveCursor) {
@@ -673,17 +705,22 @@ const cellPlugin = new Plugin({
           return cells;
         }
       }, cells);
-      // console.log(
-      //   "cellsPugin/state/init()",
-      //   "cellsWithDeps=" + JSON.stringify(cellsWithDeps, null, 2)
-      // );
-      return {
+      console.log(
+        "cellsPugin/state/init()",
+        "cellsWithDeps=" + JSON.stringify(cellsWithDeps, null, 2)
+      );
+      const value = {
         lastFocusedCell: null,
         blurredCell: null,
         focusedCell: null,
         dirtyCells,
         cells: cellsWithDeps,
       };
+      const decorations = applyModelRules(state, value);
+      return {
+        ...value,
+        decorations,
+      }
     },
     apply(tr, value, oldState, newState) {
       tr = tr;
@@ -792,11 +829,20 @@ const cellPlugin = new Plugin({
           },
         };
       }
-      console.log(
-        "[3] cellPlugin/state/apply()",
-        "value=" + JSON.stringify(value, null, 2)
-      );
-      return value;
+      // console.log(
+      //   "[3] cellPlugin/state/apply()",
+      //   "value=" + JSON.stringify(value, null, 2)
+      // );
+      const decorations = applyModelRules(newState, value);
+      return {
+        ...value,
+        decorations,
+      };
+    }
+  },
+  props: {
+    decorations(state) {
+      return this.getState(state).decorations;
     }
   }
 });
@@ -812,7 +858,7 @@ const plugins = [
     'Shift-Tab': goToNextCell(-1),
   }),
   menuPlugin,
-  modelBackgroundPlugin(),
+//  modelBackgroundPlugin(),
   makeTableHeadersReadOnlyPlugin,
   cellPlugin,
 ];
