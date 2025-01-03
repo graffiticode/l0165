@@ -109,20 +109,20 @@ const applyDecoration = ({ doc, cells }) => {
 };
 
 const getCellColor = (cell) => {
-  const { row, col, name, text, assess, val, lastFocusedCell } = cell;
-  console.log(
-    "getCellColor()",
-    "name=" + name,
-    "lastFocusedCell=" + lastFocusedCell,
-    "row=" + row,
-    "col=" + col,
-    "text=" + text,
-    "val=" + val,
-    "assess=" + JSON.stringify(assess, null, 2),
-  );
+  const { row, col, name, assess, val, lastFocusedCell } = cell;
+  // console.log(
+  //   "getCellColor()",
+  //   "name=" + name,
+  //   "lastFocusedCell=" + lastFocusedCell,
+  //   "row=" + row,
+  //   "col=" + col,
+  //   "text=" + text,
+  //   "val=" + val,
+  //   "assess=" + JSON.stringify(assess, null, 2),
+  // );
   const { expected } = assess || {};
   return row > 1 && col > 1 && expected && name !== lastFocusedCell && (
-    text !== expected &&
+    val !== expected &&
       "#fee" ||
       "#efe"
   ) || null;
@@ -130,11 +130,11 @@ const getCellColor = (cell) => {
 
 const applyModelRules = (state, value) => {
   const cells = getCells(state);
-  console.log(
-    "applyModelRules()",
-    "cells=" + JSON.stringify(cells, null, 2),
-    "value.cells=" + JSON.stringify(value.cells, null, 2),
-  );
+  // console.log(
+  //   "applyModelRules()",
+  //   "cells=" + JSON.stringify(cells, null, 2),
+  //   "value.cells=" + JSON.stringify(value.cells, null, 2),
+  // );
   const { doc, selection } = state;
   const { lastFocusedCell } = value;
   // Multiply first row and first column values and compare to body values.
@@ -686,6 +686,7 @@ const cellPlugin = new Plugin({
             // console.log(
             //   "cellsPugin/init()",
             //   "name=" + name,
+            //   "val=" + val,
             //   "cell=" + JSON.stringify(cell, null, 2)
             // );
             return cell && {
@@ -705,16 +706,32 @@ const cellPlugin = new Plugin({
           return cells;
         }
       }, cells);
-      console.log(
-        "cellsPugin/state/init()",
-        "cellsWithDeps=" + JSON.stringify(cellsWithDeps, null, 2)
-      );
+      const allCells = dirtyCells.reduce((cells, name) => {
+        // Add current cell as dependency of independent cells.
+        const val = evalCell({env: {cells}, name});
+        const cell = cells[name];
+        // console.log(
+        //   "cellsPugin/init()",
+        //   "name=" + name,
+        //   "val=" + val,
+        // );
+        return cell && {
+          ...cells,
+          [name]: {
+            ...cell,
+            val,
+            deps: [
+              ...cell?.deps,
+            ],
+          },
+        } || cells;
+      }, cellsWithDeps);
       const value = {
         lastFocusedCell: null,
         blurredCell: null,
         focusedCell: null,
         dirtyCells,
-        cells: cellsWithDeps,
+        cells: allCells,
       };
       const decorations = applyModelRules(state, value);
       return {
