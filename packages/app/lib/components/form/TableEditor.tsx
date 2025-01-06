@@ -1,11 +1,11 @@
 /*
   TODO
-  [ ] Mark and score cells
-  [ ] BUG fix updating cells when clicking on headers
-  [ ] Format numbers and dates using format patterns
+  [ ] Scoring by formula and text (vs value)
   [ ] Handle single and double click and tab in cells
   [ ] Sort dependency tree & check for cycles
   [ ] Make expanderBuilders a module parameter
+  [ ] BUG fix updating cells when clicking on headers
+  [ ] Format numbers and dates using format patterns
   [x] Handle $ sign
   [x] Add dependencies of changed cells to dirty list
   [x] Add dependencies on init
@@ -116,7 +116,6 @@ const getCellColor = (cell) => {
   //   "lastFocusedCell=" + lastFocusedCell,
   //   "row=" + row,
   //   "col=" + col,
-  //   "text=" + text,
   //   "val=" + val,
   //   "assess=" + JSON.stringify(assess, null, 2),
   // );
@@ -522,6 +521,7 @@ const getSingleCellDependencies = ({ env, name }) => {
 };
 
 const getCellDependencies = ({ env, names }) => {
+  // Get the cells that `names` depend on.
   const deps = names.reduce((deps, name) => {
     const names = getSingleCellDependencies({env, name});
     return [...new Set([
@@ -762,11 +762,11 @@ const cellPlugin = new Plugin({
       //   "value=" + JSON.stringify(value, null, 2)
       // );
       if (lastFocusedCell !== name) {
-        // We just left a cell, so recompute its value and the values of its
-        // dependencies.
+        // We just left a cell, so compute its value, add to its dependencies
+        // dependents list (`deps`), and recompute the value of its dependents.
         if (lastFocusedCell && value.cells[lastFocusedCell]) {
-          //const { lastFocusedCell } = value;
           const cell = value.cells[lastFocusedCell];
+          // Compute the value of `lastFocusedCell`.
           value = {
             ...value,
             blurredCell: lastFocusedCell,
@@ -785,7 +785,7 @@ const cellPlugin = new Plugin({
           };
           const deps = getCellDependencies({env: value, names: [lastFocusedCell]});
           value = deps.reduce((value, name) => {
-            // Add current cell as dependency of independent cells.
+            // Add as dependent to each dependency.
             const cell = value.cells[name];
             return cell && {
               ...value,
@@ -802,21 +802,24 @@ const cellPlugin = new Plugin({
               },
             } || value;
           }, value);
-          if (cell.deps?.includes(name)) {
-            // If the focusedCell depends on the lastFocusedCell, update its
-            // its so its dependents are updated.
-            const val = evalCell({ env: value, name });
-            value = {
+          value = cell.deps.reduce((value, name) => {
+            // Update the value of the dependents.
+            const cell = value.cells[name];
+            return cell && {
               ...value,
               cells: {
                 ...value.cells,
                 [name]: {
-                  ...value.cells[name],
-                  val: val || undefined,
+                  ...cell,
+                  val: evalCell({env: value, name}),
+                  // deps: [
+                  //   ...cell?.deps,
+                  //   ...!cell.deps.includes(lastFocusedCell) && [lastFocusedCell] || [],
+                  // ],
                 },
               },
-            };
-          }
+            } || value;
+          }, value);
         }
         value = {
           ...value,
@@ -845,6 +848,10 @@ const cellPlugin = new Plugin({
             },
           },
         };
+        // console.log(
+        //   "[3] cellPlugin/state/apply()",
+        //   "value=" + JSON.stringify(value, null, 2)
+        // );
       }
       // console.log(
       //   "[3] cellPlugin/state/apply()",
