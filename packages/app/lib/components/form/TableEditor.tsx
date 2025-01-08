@@ -802,7 +802,7 @@ const cellPlugin = new Plugin({
               },
             } || value;
           }, value);
-          value = cell.deps.reduce((value, name) => {
+          value = cell.deps?.reduce((value, name) => {
             // Update the value of the dependents.
             const cell = value.cells[name];
             return cell && {
@@ -819,7 +819,7 @@ const cellPlugin = new Plugin({
                 },
               },
             } || value;
-          }, value);
+          }, value) || value;
         }
         value = {
           ...value,
