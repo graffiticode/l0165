@@ -109,22 +109,13 @@ const applyDecoration = ({ doc, cells }) => {
 };
 
 const getCellColor = (cell) => {
-  const { row, col, name, assess, val, lastFocusedCell } = cell;
-  // console.log(
-  //   "getCellColor()",
-  //   "name=" + name,
-  //   "lastFocusedCell=" + lastFocusedCell,
-  //   "row=" + row,
-  //   "col=" + col,
-  //   "val=" + val,
-  //   "assess=" + JSON.stringify(assess, null, 2),
-  // );
+  const { row, col, name, assess, val, background, lastFocusedCell } = cell;
   const { expected } = assess || {};
   return row > 1 && col > 1 && expected && name !== lastFocusedCell && (
     val !== expected &&
       "#fee" ||
       "#efe"
-  ) || null;
+  ) || background || null;
 };
 
 const applyModelRules = (state, value) => {
