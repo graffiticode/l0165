@@ -26,7 +26,8 @@
     "pack": "rm *.tgz; npm pack ."
   },
   "dependencies": {
-    "@artcompiler/translatex": "^0.19.6",
+    "@artcompiler/parselatex": "^1.7.6",
+    "@artcompiler/translatex": "^0.19.7",
     "assert": "^2.1.0",
     "bent": "^7.3.12",
     "prosemirror-example-setup": "^1.2.3",

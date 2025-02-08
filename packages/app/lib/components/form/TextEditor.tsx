@@ -11,26 +11,26 @@ import ReactDOM from 'react-dom';
 import { MenuView } from './MenuView';
 import { debounce } from "lodash";
 
-const menuPlugin = new Plugin({
-  view(editorView) {
-    let menuDiv = document.createElement('div');
-    editorView.dom.parentNode.insertBefore(menuDiv, editorView.dom);
-    const update = () => {
-      ReactDOM.render(
-        <MenuView className="" editorView={editorView} />,
-        menuDiv
-      );
-    };
-    update();
-    return {
-      update,
-      destroy() {
-        ReactDOM.unmountComponentAtNode(menuDiv);
-        menuDiv.remove();
-      }
-    };
-  }
-});
+// const menuPlugin = new Plugin({
+//   view(editorView) {
+//     let menuDiv = document.createElement('div');
+//     editorView.dom.parentNode.insertBefore(menuDiv, editorView.dom);
+//     const update = () => {
+//       ReactDOM.render(
+//         <MenuView className="" editorView={editorView} />,
+//         menuDiv
+//       );
+//     };
+//     update();
+//     return {
+//       update,
+//       destroy() {
+//         ReactDOM.unmountComponentAtNode(menuDiv);
+//         menuDiv.remove();
+//       }
+//     };
+//   }
+// });
 
 const debouncedStateUpdate = debounce(({ state, editorState }) => {
   state.apply({
@@ -46,7 +46,7 @@ export const TextEditor = ({ state }) => {
     history(),
     keymap({"Mod-z": undo, "Mod-y": redo}),
     keymap(baseKeymap),
-    menuPlugin,
+//    menuPlugin,
   ];
   useEffect(() => {
     if (!editorRef.current) {
