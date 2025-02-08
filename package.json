@@ -1,5 +1,4 @@
 {
-  "private": true,
   "type": "module",
   "workspaces": [
     "packages/api",
@@ -13,7 +12,7 @@
     "lint": "eslint test/",
     "lint:fix": "eslint --fix test/",
     "pack": "rm *.tgz; npm -w packages/app pack",
-    "publish": "npm -w packages/app publish"
+    "publish": "npm -w packages/app publish --access=public"
   },
   "devDependencies": {
     "eslint": "^8.44.0",

@@ -76,9 +76,9 @@ main {
   text-align: right;
   padding: 4px;
   border: 1px solid #eee;
+  height: 24px;
 }
 .ProseMirror tr {
-  height: 100px;
 }
 .ProseMirror .column-resize-handle {
   position: absolute;

@@ -318,6 +318,20 @@ const schema = new Schema({
               attrs.style = (attrs.style || '') + `font-weight: ${value};`;
           },
         },
+        // height: {
+        //   default: null,
+        //   getFromDOM(dom) {
+        //     return dom.style.height || null;
+        //   },
+        //   setDOMAttr(value, attrs) {
+        //     console.log(
+        //       "height",
+        //       "value=" + value,
+        //     );
+        //     if (value)
+        //       attrs.style = (attrs.style || '') + `height: ${"24px"};`;
+        //   },
+        // },
       },
     }),
   ),

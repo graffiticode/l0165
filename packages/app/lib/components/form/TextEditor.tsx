@@ -6,9 +6,9 @@ import { baseKeymap } from "prosemirror-commands"
 import { undo, redo, history } from "prosemirror-history";
 import { keymap } from "prosemirror-keymap";
 
-import { Plugin } from 'prosemirror-state';
-import ReactDOM from 'react-dom';
-import { MenuView } from './MenuView';
+//import { Plugin } from 'prosemirror-state';
+//import ReactDOM from 'react-dom';
+//import { MenuView } from './MenuView';
 import { debounce } from "lodash";
 
 // const menuPlugin = new Plugin({
