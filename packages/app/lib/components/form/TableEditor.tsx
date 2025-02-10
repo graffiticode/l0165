@@ -932,6 +932,162 @@ class ParagraphView {
   }
 }
 
+const buildCell = ({ col, row, attrs, colsAttrs }) => {
+  colsAttrs = colsAttrs || {};
+  const cell = row[col];
+  // console.log(
+  //   "buildCell()",
+  //   "col=" + col,
+  //   "row._.text=" + JSON.stringify(row._.text),
+  //   "cell=" + JSON.stringify(cell, null, 2)
+  // );
+  let content;
+  let colspan = 1;
+  let rowspan = 1;
+  const colwidth = col === "_" && [40] || [colsAttrs[col]?.width];
+  let background = attrs.color;
+  const { text } = cell; //String(row[col]);
+  content = [
+    {
+      "type": "paragraph",
+      "content": text && [
+        {
+          "type": "text",
+          text: String(text),
+        }
+      ]
+    }
+  ];
+  const isHeader = cell.type === "th";
+  return {
+    "type": isHeader && "table_header" || "table_cell",
+    "attrs": {
+      name: `${col}${row._.text || 0}`,
+      colspan,
+      rowspan,
+      colwidth,
+      width: "50px",
+      height: "24px",
+      background,
+      ...colsAttrs[col],
+      ...cell.attrs,
+    },
+    "content": content,
+  };
+};
+
+const buildRow = ({ cols, row, attrs, colsAttrs }) => {
+  return ({
+    "type": "table_row",
+    "content": cols.map(col => {
+      return buildCell({col, row, attrs, colsAttrs});
+    }),
+  })
+};
+
+const buildTable = ({ cols, rows, attrs, colsAttrs }) => {
+  return ({
+    "type": "table",
+    "content": rows.map((row, rowIndex) => {
+      return buildRow({cols, row, colsAttrs, attrs: attrs[rowIndex]});
+    })
+  })
+};
+
+const buildDocFromTable = ({ cols, rows, colsAttrs }) => {
+  const attrs = applyRules({ cols, rows });
+  return {
+    "type": "doc",
+    "content": [
+      {
+        ...buildTable({cols, rows, attrs, colsAttrs}),
+      },
+    ]
+  }
+};
+
+const applyRules = ({ cols, rows }) => {
+  const argsCols = cols.slice(0, cols.length - 1);
+//  const totalCol = cols[cols.length - 1];
+  const rowAttrs = []
+  rows.forEach((row, rowIndex) => {
+    let total = 0;
+    argsCols.forEach(col => {
+      total += +row[col];
+    });
+    if (rowAttrs[rowIndex] === undefined) {
+      rowAttrs[rowIndex] = {};
+    }
+    rowAttrs[rowIndex].color = /*+row[totalCol] !== total && "#f99" ||*/ "#fff";
+  });
+  return rowAttrs;
+};
+
+const getCell = (row, col, cells) => (
+  col === "_" && row !== 0 && {
+    type: "th",
+    text: row
+  } ||
+  row === 0 && col !== "_" && {
+    type: "th",
+    text: col
+  } ||
+    row !== 0 && col !== "_" && cells[`${col}${row}`] && {
+      type: "td",
+      ...cells[`${col}${row}`],
+  } || {}
+);
+
+const makeEditorState = ({ type, columns, cells }) => {
+  console.log(
+    "makeEditorState()",
+    "type=" + type,
+    "columns=" + JSON.stringify(columns, null, 2),
+    "cells=" + JSON.stringify(cells, null, 2),
+  );
+  //x = x > 26 && 26 || x;  // Max col count is 26.
+  const { x, y } = Object.keys(cells).reduce((dims, cellName) => {
+    const x = letters.indexOf(cellName.slice(0, 1));
+    const y = +cellName.slice(1);
+    return {
+      x: x > dims.x && x || dims.x,
+      y: y > dims.y && y || dims.y,
+    };
+  }, {x: 0, y: 0});
+  switch (type) {
+  case "table": {
+    const cols = Array.apply(null, Array(x + 1)).map((_, col) => letters[col])
+    const rows = Array.apply(null, Array(y + 1)).map((_, row) =>
+      cols.reduce((rows, col) =>
+        ({
+          ...rows,
+          [col]: getCell(row, col, cells || {})
+        }), {}
+      )
+    );
+    const doc = buildDocFromTable({
+      cols,
+      rows,
+      colsAttrs: columns,
+    });
+    // console.log(
+    //   "makeEditorState()",
+    //   "doc=" + JSON.stringify(doc, null, 2)
+    // );
+    return {
+      doc: doc,
+      selection: {
+        type: "text",
+        anchor: 1,
+        head: 1,
+      },
+    };
+  }
+  default:
+    return null;
+  }
+};
+
 export const TableEditor = ({ state }) => {
   const [ editorView, setEditorView ] = useState(null);
   const editorRef = useRef(null);
@@ -960,20 +1116,21 @@ export const TableEditor = ({ state }) => {
       }
     };
   }, []);
-  const { editorState } = state.data;
+  const { type, columns, cells } = state.data;
   useEffect(() => {
-    if (editorView && editorState) {
+    if (editorView && columns && cells) {
+      const editorStateData = makeEditorState({type, columns, cells});
       const newEditorState = EditorState.fromJSON({
         schema,
         plugins,
-      }, editorState);
+      }, editorStateData);
       editorView.updateState(newEditorState);
       const { pos } = getCellNodeByName({state: newEditorState, name: "A1"});
       if (!pos) return;
       const resolvedPos = newEditorState.doc.resolve(pos);
       editorView.dispatch(editorView.state.tr.setSelection(new TextSelection(resolvedPos)));
     }
-  }, [editorView, editorState]);
+  }, [editorView, columns, cells]);
   return (
     <div
       ref={editorRef}
