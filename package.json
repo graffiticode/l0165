@@ -27,5 +27,8 @@
       "<rootDir>/packages/",
       "<rootDir>/node_modules/"
     ]
+  },
+  "dependencies": {
+    "@graffiticode/l0151": "^0.1.4"
   }
 }
