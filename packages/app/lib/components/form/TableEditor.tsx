@@ -67,7 +67,7 @@ import { baseKeymap } from "prosemirror-commands"
 import { undo, redo, history } from "prosemirror-history";
 import { Plugin } from 'prosemirror-state';
 import { Decoration, DecorationSet } from "prosemirror-view";
-import ReactDOM from 'react-dom';
+import ReactDOM from 'react-dom/client';
 import { MenuView } from './MenuView';
 import { debounce } from "lodash";
 
@@ -76,20 +76,19 @@ import { evalRules, cellNameRules, formatRules } from './translatex-rules.js';
 
 const menuPlugin = new Plugin({
   view(editorView) {
-    let menuDiv = document.createElement('div');
+    const menuDiv = document.createElement('div');
+    const root = ReactDOM.createRoot(menuDiv!);
     editorView.dom.parentNode.insertBefore(menuDiv, editorView.dom);
     const update = () => {
-      ReactDOM.render(
+      root.render(
         <MenuView className="" editorView={editorView} />,
-        menuDiv
       );
     };
     update();
     return {
       update,
       destroy() {
-        ReactDOM.unmountComponentAtNode(menuDiv);
-        menuDiv.remove();
+        root.unmount();
       }
     };
   }

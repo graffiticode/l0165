@@ -1,6 +1,6 @@
 {
   "name": "@graffiticode/l0151",
-  "version": "0.1.4",
+  "version": "0.1.4-1",
   "type": "module",
   "main": "./dist/index.es.js",
   "module": "./dist/index.es.js",
@@ -23,7 +23,7 @@
     "preview": "vite preview",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "pack": "rm *.tgz; npm pack ."
+    "pack": "rm *.tgz; npm run build; npm pack ."
   },
   "dependencies": {
     "@artcompiler/parselatex": "^1.7.6",
