@@ -37,12 +37,13 @@ export const FormulaBar = ({ editorView }) => {
         fx
       </label>
       <input
-        id="name"
-        name="name"
+        id="formula"
+        name="formula"
         type="text"
         value={value}
+        style={{borderStyle: "none"}}
         onChange={e => handleChange(e.target.value)}
-        className="block w-full border-0 p-0 text-gray-900 placeholder:text-gray-400 sm:text-sm/6 focus:outline-0"
+        className="block w-full ring-0 border-0 p-0 text-gray-900 placeholder:text-gray-400 sm:text-sm/6 focus:outline-0 focus:ring-0 border-none"
       />
     </div>
   )

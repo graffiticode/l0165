@@ -50,7 +50,7 @@ const buildCell = ({ col, row, attrs, colsAttrs }) => {
       rowspan,
       colwidth,
       width: "50px",
-      height: "50px",
+      height: "24px",
       background,
       ...colsAttrs[col],
       ...cell.attrs,
