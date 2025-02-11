@@ -66,7 +66,6 @@ main {
   height: 250;
   overflow: hidden;
   border: 1px solid #eee;
-  height: 24px;
 }
 .ProseMirror td,
 .ProseMirror th {
@@ -78,7 +77,8 @@ main {
   border: 1px solid #eee;
   height: 24px;
 }
-.ProseMirror tr {
+.ProseMirror p {
+  margin: 0px;
 }
 .ProseMirror .column-resize-handle {
   position: absolute;
