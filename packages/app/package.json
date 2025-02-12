@@ -1,6 +1,6 @@
 {
   "name": "@graffiticode/l0151",
-  "version": "0.1.4-3",
+  "version": "0.1.5-2",
   "type": "module",
   "main": "./dist/index.es.js",
   "module": "./dist/index.es.js",

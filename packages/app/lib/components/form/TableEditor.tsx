@@ -69,7 +69,7 @@ import { Plugin } from 'prosemirror-state';
 import { Decoration, DecorationSet } from "prosemirror-view";
 import ReactDOM from 'react-dom/client';
 import { MenuView } from './MenuView';
-import { debounce } from "lodash";
+//import { debounce } from "lodash";
 
 import { TransLaTeX } from "@artcompiler/translatex";
 import { evalRules, cellNameRules, formatRules } from './translatex-rules.js';
@@ -117,8 +117,8 @@ const getCellColor = (cell) => {
   ) || background || null;
 };
 
-const applyModelRules = (state, value) => {
-  const cells = getCells(state);
+const applyModelRules = (cellExprs, state, value) => {
+  const cells = getCells(cellExprs, state);
   // console.log(
   //   "applyModelRules()",
   //   "cells=" + JSON.stringify(cells, null, 2),
@@ -193,7 +193,7 @@ const isTableCellOrHeader = node =>
 // const isTableCell = node =>
 //       node.type.name === "table_cell";
 
-const getCells = state => {
+const getCells = (cellExprs, state) => {
   const { doc } = state;
   const cells = [];
   let row = 0, col = 0;
@@ -204,7 +204,7 @@ const getCells = state => {
     }
     if (isTableCellOrHeader(node)) {
       col++;
-      const cellExprs = cellPlugin.getState(state);
+//      const cellExprs = cellPlugin.getState(state);
       const name = node.attrs.name;
       const text = cellExprs && name && cellExprs.cells[name]?.text || node.textContent;
       const val = cellExprs && name && cellExprs.cells[name]?.val;
@@ -231,12 +231,12 @@ const getCells = state => {
   return cells;
 };
 
-const debouncedStateUpdate = debounce(({ state, editorState }) => {
-  state.apply({
-    type: "update",
-    args: {editorState},
-  });
-}, 1000);
+// const debouncedStateUpdate = debounce(({ state, editorState }) => {
+//   state.apply({
+//     type: "update",
+//     args: {editorState},
+//   });
+// }, 1000);
 
 const schema = new Schema({
   nodes: baseSchema.spec.nodes.append(
@@ -616,287 +616,288 @@ const makeTableHeadersReadOnlyPlugin = new Plugin({
   }
 });
 
-const cellPlugin = new Plugin({
-  view(editorView) {
-    editorView = editorView;
-    return {
-      update(view) {
-        const { state, dispatch } = view;
-        const pluginState = cellPlugin.getState(state);
-        if (pluginState.dirtyCells.length > 0) {
-          const tr = state.tr;
-          tr.setMeta("updated", true);
-          dispatch(tr);
-        }
-        const cells = {...pluginState.cells};
-        // console.log(
-        //   "[1] cellPlugin/view/update()",
-        //   "dirtyCells=" + JSON.stringify(pluginState.dirtyCells, null, 2)
-        // );
-        pluginState.dirtyCells.forEach(name => {
-          const val = evalCell({ env: {cells}, name });
-          cells[name] = {
-            ...cells[name],
-            val,
-          };
-          const formattedVal = formatCellValue({env: {cells}, name});
-          const { node } = getCellNodeByName({state: view.state, name});
-          if (name !== pluginState.focusedCell && formattedVal !== node.textContent) {
-            replaceCellContent(view, name, formattedVal);
-          }
-        });
-        if (pluginState.focusedCell) {
-          const name = pluginState.focusedCell;
-          const text = pluginState.cells[name]?.text || "";
-          const { node } = getCellNodeByName({state: view.state, name});
-          // console.log(
-          //   "[2] cellPlugin/view/update()",
-          //   "name=" + name,
-          //   "text=" + text,
-          //   "node=" + JSON.stringify(node, null, 2)
-          // );
-          if (node.type.name === "table_cell" && text !== node.textContent) {
-            replaceCellContent(view, name, text, true);
-          }
-        }
-      }
-    };
-  },
-  state: {
-    init(config, state) {
-      config = config;
-      const cells = getCells(state).reduce((cells, cell) => (
-        cell.row > 1 && cell.col > 1 && {
-          ...cells,
-          [cell.name]: {
-            ...cell,
-            deps: [],
-          }
-        } || cells
-      ), {});
-      const dirtyCells = getCells(state).reduce((dirtyCells, cell) => (
-        cell.row > 1 && cell.col > 1 && cell.text &&
-          [...dirtyCells, cell.name] ||
-          dirtyCells
-      ), []);
-      const cellsWithDeps = getCells(state).reduce((cells, cell) => {
-        if (cell.row > 1 && cell.col > 1)  {
-          const deps = getCellDependencies({env: {cells}, names: [cell.name]});
-          const cellName = cell.name;
-          return deps.reduce((cells, name) => {
-            // Add current cell as dependency of independent cells.
-            const val = evalCell({env: {cells}, name});
-            const cell = cells[name];
-            // console.log(
-            //   "cellsPugin/init()",
-            //   "name=" + name,
-            //   "val=" + val,
-            //   "cell=" + JSON.stringify(cell, null, 2)
-            // );
-            return cell && {
-              ...cells,
-              [name]: {
-                ...cell,
-                val,
-                deps: [
-                  ...cell?.deps,
-                  cellName,
-                ],
-                format: cell.format,
-              },
-            } || cells;
-          }, cells);
-        } else {
-          return cells;
-        }
-      }, cells);
-      const allCells = dirtyCells.reduce((cells, name) => {
-        // Add current cell as dependency of independent cells.
-        const val = evalCell({env: {cells}, name});
-        const cell = cells[name];
-        // console.log(
-        //   "cellsPugin/init()",
-        //   "name=" + name,
-        //   "val=" + val,
-        // );
-        return cell && {
-          ...cells,
-          [name]: {
-            ...cell,
-            val,
-            deps: [
-              ...cell?.deps,
-            ],
-          },
-        } || cells;
-      }, cellsWithDeps);
-      const value = {
-        lastFocusedCell: null,
-        blurredCell: null,
-        focusedCell: null,
-        dirtyCells,
-        cells: allCells,
-      };
-      const decorations = applyModelRules(state, value);
+const getResponses = cells => (
+  Object.keys(cells).reduce(
+    (acc, name) => {
+      const {text, val, assess} = cells[name];
+      return assess && {
+        ...acc,
+        [name]: {text, val},
+      } || acc
+    }, {}
+  )
+);
+
+const buildCellPlugin = state => {
+  const self = new Plugin({
+    view(editorView) {
+      editorView = editorView;
       return {
-        ...value,
-        decorations,
-      }
+        update(view) {
+          const { state, dispatch } = view;
+          const pluginState = self.getState(state);
+          if (pluginState.dirtyCells.length > 0) {
+            const tr = state.tr;
+            tr.setMeta("updated", true);
+            dispatch(tr);
+          }
+          const cells = {...pluginState.cells};
+          // console.log(
+          //   "[1] cellPlugin/view/update()",
+          //   "dirtyCells=" + JSON.stringify(pluginState.dirtyCells, null, 2)
+          // );
+          pluginState.dirtyCells.forEach(name => {
+            const val = evalCell({ env: {cells}, name });
+            cells[name] = {
+              ...cells[name],
+              val,
+            };
+            const formattedVal = formatCellValue({env: {cells}, name});
+            const { node } = getCellNodeByName({state: view.state, name});
+            if (name !== pluginState.focusedCell && formattedVal !== node.textContent) {
+              replaceCellContent(view, name, formattedVal);
+            }
+          });
+          if (pluginState.focusedCell) {
+            const name = pluginState.focusedCell;
+            const text = pluginState.cells[name]?.text || "";
+            const { node } = getCellNodeByName({state: view.state, name});
+            // console.log(
+            //   "[2] cellPlugin/view/update()",
+            //   "name=" + name,
+            //   "text=" + text,
+            //   "node=" + JSON.stringify(node, null, 2)
+            // );
+            if (node.type.name === "table_cell" && text !== node.textContent) {
+              replaceCellContent(view, name, text, true);
+            }
+          }
+        }
+      };
     },
-    apply(tr, value, oldState, newState) {
-      tr = tr;
-      oldState = oldState;
-      newState = newState;
-      if (tr.getMeta("updated")) {
-        value = {
-          ...value,
-          focusedCell: null,
-          dirtyCells: [],
-        };
-      }
-      const { selection } = newState;
-      const $anchor = selection.$anchor;
-      const node = $anchor.node(-1);
-      const name = node.attrs?.name;
-      const lastFocusedCell = value.lastFocusedCell;
-      // console.log(
-      //   "[1] cellPlugin/state/apply()",
-      //   "name=" + name,
-      //   "lastFocusedCell=" + lastFocusedCell,
-      //   "value=" + JSON.stringify(value, null, 2)
-      // );
-      if (lastFocusedCell !== name) {
-        // We just left a cell, so compute its value, add to its dependencies
-        // dependents list (`deps`), and recompute the value of its dependents.
-        if (lastFocusedCell && value.cells[lastFocusedCell]) {
-          const cell = value.cells[lastFocusedCell];
-          // Compute the value of `lastFocusedCell`.
-          value = {
-            ...value,
-            blurredCell: lastFocusedCell,
-            cells: {
-              ...value.cells,
-              [lastFocusedCell]: {
-                ...cell,
-                val: evalCell({env: value, name: lastFocusedCell}),
-              },
-            },
-            dirtyCells: [
-              ...value?.dirtyCells,
-              lastFocusedCell,  // Order matters.
-              ...(cell?.deps || []),
-            ],
-          };
-          const deps = getCellDependencies({env: value, names: [lastFocusedCell]});
-          value = deps.reduce((value, name) => {
-            // Add as dependent to each dependency.
-            const cell = value.cells[name];
-            return cell && {
-              ...value,
-              cells: {
-                ...value.cells,
+    state: {
+      init(config, state) {
+        config = config;
+        const cellExprs = self.getState(state);
+        const cells = getCells(cellExprs, state).reduce((cells, cell) => (
+          cell.row > 1 && cell.col > 1 && {
+            ...cells,
+            [cell.name]: {
+              ...cell,
+              deps: [],
+            }
+          } || cells
+        ), {});
+        const dirtyCells = getCells(cellExprs, state).reduce((dirtyCells, cell) => (
+          cell.row > 1 && cell.col > 1 && cell.text &&
+            [...dirtyCells, cell.name] ||
+            dirtyCells
+        ), []);
+        const cellsWithDeps = getCells(cellExprs, state).reduce((cells, cell) => {
+          if (cell.row > 1 && cell.col > 1)  {
+            const deps = getCellDependencies({env: {cells}, names: [cell.name]});
+            const cellName = cell.name;
+            return deps.reduce((cells, name) => {
+              // Add current cell as dependency of independent cells.
+              const val = evalCell({env: {cells}, name});
+              const cell = cells[name];
+              // console.log(
+              //   "cellsPugin/init()",
+              //   "name=" + name,
+              //   "val=" + val,
+              //   "cell=" + JSON.stringify(cell, null, 2)
+              // );
+              return cell && {
+                ...cells,
                 [name]: {
                   ...cell,
-                  val: evalCell({env: value, name}),
+                  val,
                   deps: [
                     ...cell?.deps,
-                    ...!cell.deps.includes(lastFocusedCell) && [lastFocusedCell] || [],
+                    cellName,
                   ],
+                  format: cell.format,
                 },
-              },
-            } || value;
-          }, value);
-          value = cell.deps?.reduce((value, name) => {
-            // Update the value of the dependents.
-            const cell = value.cells[name];
-            return cell && {
-              ...value,
-              cells: {
-                ...value.cells,
-                [name]: {
-                  ...cell,
-                  val: evalCell({env: value, name}),
-                  // deps: [
-                  //   ...cell?.deps,
-                  //   ...!cell.deps.includes(lastFocusedCell) && [lastFocusedCell] || [],
-                  // ],
-                },
-              },
-            } || value;
-          }, value) || value;
-        }
-        value = {
-          ...value,
-          lastFocusedCell: node.attrs.name,
-          focusedCell: node.attrs.name,
-        };
-        // console.log(
-        //   "[2] cellPlugin/state/apply()",
-        //   "value=" + JSON.stringify(value, null, 2)
-        // );
-      } else if (isTableCellOrHeader(node) && node.attrs?.name) {
-        const name = node.attrs.name;
-        const text = node.textContent.trim();
-        const val = evalCell({env: value, name});
-        value = {
-          ...value,
+              } || cells;
+            }, cells);
+          } else {
+            return cells;
+          }
+        }, cells);
+        const allCells = dirtyCells.reduce((cells, name) => {
+          // Add current cell as dependency of independent cells.
+          const val = evalCell({env: {cells}, name});
+          const cell = cells[name];
+          // console.log(
+          //   "cellsPugin/init()",
+          //   "name=" + name,
+          //   "val=" + val,
+          // );
+          return cell && {
+            ...cells,
+            [name]: {
+              ...cell,
+              val,
+              deps: [
+                ...cell?.deps,
+              ],
+            },
+          } || cells;
+        }, cellsWithDeps);
+        const value = {
+          lastFocusedCell: null,
           blurredCell: null,
           focusedCell: null,
-          dirtyCells: [],
-          cells: {
-            ...value.cells,
-            [name]: {
-              ...value.cells[name],
-              text: text || undefined,
-              val: val || undefined,
-            },
-          },
+          dirtyCells,
+          cells: allCells,
         };
+        const decorations = applyModelRules(cellExprs, state, value);
+        return {
+          ...value,
+          decorations,
+        }
+      },
+      apply(tr, value, oldState, newState) {
+        tr = tr;
+        oldState = oldState;
+        newState = newState;
+        if (tr.getMeta("updated")) {
+          value = {
+            ...value,
+            focusedCell: null,
+            dirtyCells: [],
+          };
+        }
+        const { selection } = newState;
+        const $anchor = selection.$anchor;
+        const node = $anchor.node(-1);
+        const name = node.attrs?.name;
+        const lastFocusedCell = value.lastFocusedCell;
+        // console.log(
+        //   "[1] cellPlugin/state/apply()",
+        //   "name=" + name,
+        //   "lastFocusedCell=" + lastFocusedCell,
+        //   "value=" + JSON.stringify(value, null, 2)
+        // );
+        if (lastFocusedCell !== name) {
+          // We just left a cell, so compute its value, add to its dependencies
+          // dependents list (`deps`), and recompute the value of its dependents.
+          if (lastFocusedCell && value.cells[lastFocusedCell]) {
+            const cell = value.cells[lastFocusedCell];
+            // Compute the value of `lastFocusedCell`.
+            value = {
+              ...value,
+              blurredCell: lastFocusedCell,
+              cells: {
+                ...value.cells,
+                [lastFocusedCell]: {
+                  ...cell,
+                  val: evalCell({env: value, name: lastFocusedCell}),
+                },
+              },
+              dirtyCells: [
+                ...value?.dirtyCells,
+                lastFocusedCell,  // Order matters.
+                ...(cell?.deps || []),
+              ],
+            };
+            const deps = getCellDependencies({env: value, names: [lastFocusedCell]});
+            value = deps.reduce((value, name) => {
+              // Add as dependent to each dependency.
+              const cell = value.cells[name];
+              return cell && {
+                ...value,
+                cells: {
+                  ...value.cells,
+                  [name]: {
+                    ...cell,
+                    val: evalCell({env: value, name}),
+                    deps: [
+                      ...cell?.deps,
+                      ...!cell.deps.includes(lastFocusedCell) && [lastFocusedCell] || [],
+                    ],
+                  },
+                },
+              } || value;
+            }, value);
+            value = cell.deps?.reduce((value, name) => {
+              // Update the value of the dependents.
+              const cell = value.cells[name];
+              return cell && {
+                ...value,
+                cells: {
+                  ...value.cells,
+                  [name]: {
+                    ...cell,
+                    val: evalCell({env: value, name}),
+                    // deps: [
+                    //   ...cell?.deps,
+                    //   ...!cell.deps.includes(lastFocusedCell) && [lastFocusedCell] || [],
+                    // ],
+                  },
+                },
+              } || value;
+            }, value) || value;
+          }
+          value = {
+            ...value,
+            lastFocusedCell: node.attrs.name,
+            focusedCell: node.attrs.name,
+          };
+          const cells = getResponses(value.cells);
+          state.apply({
+            type: "update",
+            args: {
+              cells,
+            },
+          });
+          // console.log(
+          //   "[2] cellPlugin/state/apply()",
+          //   "value=" + JSON.stringify(value, null, 2)
+          // );
+        } else if (isTableCellOrHeader(node) && node.attrs?.name) {
+          const name = node.attrs.name;
+          const text = node.textContent.trim();
+          const val = evalCell({env: value, name});
+          value = {
+            ...value,
+            blurredCell: null,
+            focusedCell: null,
+            dirtyCells: [],
+            cells: {
+              ...value.cells,
+              [name]: {
+                ...value.cells[name],
+                text: text || undefined,
+                val: val || undefined,
+              },
+            },
+          };
+          // console.log(
+          //   "[3] cellPlugin/state/apply()",
+          //   "value=" + JSON.stringify(value, null, 2)
+          // );
+        }
         // console.log(
         //   "[3] cellPlugin/state/apply()",
         //   "value=" + JSON.stringify(value, null, 2)
         // );
+        const cellExprs = self.getState(state);
+        const decorations = applyModelRules(cellExprs, newState, value);
+        return {
+          ...value,
+          decorations,
+        };
       }
-      // console.log(
-      //   "[3] cellPlugin/state/apply()",
-      //   "value=" + JSON.stringify(value, null, 2)
-      // );
-      const decorations = applyModelRules(newState, value);
-      return {
-        ...value,
-        decorations,
-      };
+    },
+    props: {
+      decorations(state) {
+        return this.getState(state).decorations;
+      }
     }
-  },
-  props: {
-    decorations(state) {
-      return this.getState(state).decorations;
-    }
-  }
-});
-
-const plugins = [
-  columnResizing(),
-  tableEditing(),
-  history(),
-  keymap({"Mod-z": undo, "Mod-y": redo}),
-  keymap({
-    ...baseKeymap,
-    Tab: goToNextCell(1),
-    'Shift-Tab': goToNextCell(-1),
-  }),
-  menuPlugin,
-//  modelBackgroundPlugin(),
-  makeTableHeadersReadOnlyPlugin,
-  cellPlugin,
-];
-
-let initEditorState = EditorState.create({
-  schema,
-  plugins,
-});
-const fix = fixTables(initEditorState);
-if (fix) initEditorState = initEditorState.apply(fix.setMeta('addToHistory', false));
+  });
+  return self;
+}
 
 class ParagraphView {
   public dom;
@@ -946,7 +947,7 @@ const buildCell = ({ col, row, attrs, colsAttrs }) => {
   let rowspan = 1;
   const colwidth = col === "_" && [40] || [colsAttrs[col]?.width];
   let background = attrs.color;
-  const { text } = cell; //String(row[col]);
+  const { text } = cell;
   content = [
     {
       "type": "paragraph",
@@ -1090,20 +1091,42 @@ const makeEditorState = ({ type, columns, cells }) => {
 
 export const TableEditor = ({ state }) => {
   const [ editorView, setEditorView ] = useState(null);
+  const cellPlugin = buildCellPlugin(state);
+  const [ plugins ] = useState([
+    columnResizing(),
+    tableEditing(),
+    history(),
+    keymap({"Mod-z": undo, "Mod-y": redo}),
+    keymap({
+      ...baseKeymap,
+      Tab: goToNextCell(1),
+      'Shift-Tab': goToNextCell(-1),
+    }),
+    menuPlugin,
+    //  modelBackgroundPlugin(),
+    makeTableHeadersReadOnlyPlugin,
+    cellPlugin,
+  ]);
   const editorRef = useRef(null);
   useEffect(() => {
     if (!editorRef.current) {
       return;
     }
+    let initEditorState = EditorState.create({
+      schema,
+      plugins,
+    });
+    const fix = fixTables(initEditorState);
+    if (fix) initEditorState = initEditorState.apply(fix.setMeta('addToHistory', false));
     const editorView = new EditorView(editorRef.current, {
       state: initEditorState,
       dispatchTransaction(transaction) {
         const editorState = editorView.state.apply(transaction);
         editorView.updateState(editorState);
-        debouncedStateUpdate({
-          state,
-          editorState: editorState.toJSON()
-        });
+        // debouncedStateUpdate({
+        //   state,
+        //   editorState: editorState.toJSON()
+        // });
       },
       nodeViews: {
         paragraph(node, view) { return new ParagraphView(node, view) }
