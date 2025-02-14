@@ -4,7 +4,7 @@ import { TextEditor } from "./TextEditor";
 import { TableEditor } from "./TableEditor";
 
 export const Editor = ({ state }) => {
-  const { type } = state.data;
+  const type = state.data.interaction?.type;
   return (
     <div>
       <MenuView className="hidden" editorView={null} />

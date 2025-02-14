@@ -1,22 +1,4 @@
 window.gcexports.globalLexicon = {
-  "hello" : {
-    "tk": 1,
-    "name": "HELLO",
-    "cls": "function",
-    "length": 1,
-  },
-  "image" : {
-    "tk": 1,
-    "name": "IMAGE",
-    "cls": "function",
-    "length": 1,
-  },
-  "theme" : {
-    "tk": 1,
-    "name": "THEME",
-    "cls": "function",
-    "length": 2,
-  },
   "table" : {
     "tk": 1,
     "name": "TABLE",

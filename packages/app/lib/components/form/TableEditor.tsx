@@ -846,7 +846,7 @@ const buildCellPlugin = state => {
           };
           const cells = getResponses(value.cells);
           state.apply({
-            type: "update",
+            type: "response",
             args: {
               cells,
             },
@@ -1139,7 +1139,7 @@ export const TableEditor = ({ state }) => {
       }
     };
   }, []);
-  const { type, columns, cells } = state.data;
+  const { type, columns, cells } = state.data.interaction;
   useEffect(() => {
     if (editorView && columns && cells) {
       const editorStateData = makeEditorState({type, columns, cells});
