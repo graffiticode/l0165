@@ -103,3 +103,52 @@ export const formatRules = {
     ]
   },
 }
+
+export const normalizeRules = {
+  "types": {
+    "cellName": [
+      "\\type{variable}\\type{integer}"
+    ],
+    "cellRange": [
+      "\\type{cellName}:\\type{cellName}"
+    ],
+    "fn": [
+      "sum",
+      "mul"
+    ]
+  },
+  "rules": {
+    "=\\type{cellName}": [
+      "$cell"
+    ],
+    "=?": [
+      {
+        "%2": {
+          "\\type{cellRange}": "%1:%2",
+          "\\type{fn}(\\type{cellRange})": "$normalize",
+          "?+?": "$normalize {\"acc\": [\"SUM\"]}",
+          "?-?": "$normalize {\"acc\": [\"SUB\"]}",
+          "?*?": "$normalize {\"acc\": [\"MUL\"]}",
+          "?/?": "$normalize {\"acc\": [\"DIV\"]}",
+          "?%": "$percent",
+          "-?": "$minus"
+        }
+      }
+    ],
+    "\\type{cellRange}": [
+      "$range"
+    ],
+    "\\type{cellName}": [
+      "%1%2"
+    ],
+    "\\type{fn}(\\type{cellRange})": [
+      "%1(%2)"
+    ],
+    "??": [
+      "%1%2"
+    ],
+    "?": [
+      "%1"
+    ]
+  },
+}

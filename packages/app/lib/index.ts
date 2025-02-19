@@ -1,2 +1,2 @@
-export { Form } from "./components";
+export { Form, scoreCell } from "./components";
 export { View } from "./view";

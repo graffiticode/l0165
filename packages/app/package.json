@@ -1,6 +1,6 @@
 {
   "name": "@graffiticode/l0151",
-  "version": "0.1.5-5",
+  "version": "0.1.5-7",
   "type": "module",
   "main": "./dist/index.es.js",
   "module": "./dist/index.es.js",
@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "@artcompiler/parselatex": "^1.7.6",
-    "@artcompiler/translatex": "^0.19.7",
+    "@artcompiler/translatex": "^0.19.8",
     "assert": "^2.1.0",
     "bent": "^7.3.12",
     "prosemirror-example-setup": "^1.2.3",

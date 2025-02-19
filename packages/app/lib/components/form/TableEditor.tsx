@@ -72,7 +72,64 @@ import { MenuView } from './MenuView';
 //import { debounce } from "lodash";
 
 import { TransLaTeX } from "@artcompiler/translatex";
-import { evalRules, cellNameRules, formatRules } from './translatex-rules.js';
+import { evalRules, cellNameRules, formatRules, normalizeRules } from './translatex-rules.js';
+
+const normalizeCell = text => {
+  let result = text;
+  try {
+    const options = {
+      allowThousandsSeparator: true,
+      ...normalizeRules,
+    };
+    if (text.length > 0 && text.indexOf("=") === 0) {
+      TransLaTeX.translate(
+        options,
+        text, (err, val) => {
+          if (err && err.length) {
+            console.error(err);
+          }
+          result = val;
+        }
+      );
+    }
+  } catch (x) {
+    console.log("parse error: " + x.stack);
+  }
+  return result;
+};
+
+const equivFormula = (actual, expected) => (
+  console.log(
+    "equivFormula()",
+    "actual=" + normalizeCell(actual),
+    "expected=" + normalizeCell(expected),
+  ),
+  actual !== undefined && normalizeCell(actual) === normalizeCell(expected) || false
+);
+
+const equivValue = (actual, expected) => (
+  console.log(
+    "equivValue()",
+    "actual=" + actual,
+    "expected=" + expected,
+    "equiv=" + actual !== undefined && actual === expected || false
+  ),
+  actual !== undefined && actual === expected || false
+);
+
+export const scoreCell = ({ method, expected, points = 1 }, {val, formula}) => (
+  console.log(
+    "scoreCell()",
+    "method=" + method,
+    "expected=" + expected,
+    "points=" + points,
+    "val=" + val,
+    "formula=" + formula,
+  ),
+  method === "formula" && equivFormula(formula, expected) && points ||
+    method === "value" && equivValue(val, expected) && points ||
+  0
+);
 
 const menuPlugin = new Plugin({
   view(editorView) {
@@ -108,10 +165,14 @@ const applyDecoration = ({ doc, cells }) => {
 };
 
 const getCellColor = (cell) => {
-  const { row, col, name, assess, val, background, lastFocusedCell } = cell;
+  const { row, col, name, assess, background, lastFocusedCell } = cell;
   const { expected } = assess || {};
   return row > 1 && col > 1 && expected && name !== lastFocusedCell && (
-    val !== expected &&
+    console.log(
+      "getCellColor()",
+      "cell=" + JSON.stringify(cell, null, 2),
+    ),
+    scoreCell(assess, cell) === 0 &&
       "#fee" ||
       "#efe"
   ) || background || null;
@@ -136,6 +197,7 @@ const applyModelRules = (cellExprs, state, value) => {
     const color = getCellColor({
       ...cell,
       val: value.cells[cell.name]?.val,
+      formula: value.cells[cell.name]?.formula,
       lastFocusedCell
     });
     const { row, col } = cell;
@@ -153,12 +215,16 @@ const applyModelRules = (cellExprs, state, value) => {
     {
       ...cell,
       readonly: cell.readonly,
-      border: cell.col === 1 && cell.row === 1 && "border: 1px solid #ddd; border-right: 1px solid #aaa; border-bottom: 1px solid #aaa;" ||
-        cell.col === 1 && "text-align: center; border: 1px solid #ddd; border-right: 1px solid #aaa;" ||
-        cell.row === 1 && "text-align: center; border: 1px solid #ddd; border-bottom: 1px solid #aaa;" ||
-        selection.anchor > cell.from && selection.anchor < cell.to &&
-        `font-weight: ${cell.fontWeight || "normal"}; text-align: ${cell.justify || "right"}; border: 2px solid royalblue;` ||
-        `font-weight: ${cell.fontWeight || "normal"}; text-align: ${cell.justify || "right"}; border: 1px solid #ddd;`,
+      border: (
+        cell.col === 1 && cell.row === 1 &&
+          "border: 1px solid #ddd; border-right: 1px solid #aaa; border-bottom: 1px solid #aaa;" ||
+          cell.col === 1 &&
+          "text-align: center; border: 1px solid #ddd; border-right: 1px solid #aaa;" ||
+          cell.row === 1 && "text-align: center; border: 1px solid #ddd; border-bottom: 1px solid #aaa;" ||
+          selection.anchor > cell.from && selection.anchor < cell.to &&
+          `font-weight: ${cell.fontWeight || "normal"}; text-align: ${cell.justify || "right"}; border: 2px solid royalblue;` ||
+          `font-weight: ${cell.fontWeight || "normal"}; text-align: ${cell.justify || "right"}; border: 1px solid #ddd;`
+      ),
       color: (cell.col === 1 || cell.row === 1) && "#fff" ||
         cellColors[cell.row][cell.col] || "#fff"
     }
@@ -208,12 +274,14 @@ const getCells = (cellExprs, state) => {
       const name = node.attrs.name;
       const text = cellExprs && name && cellExprs.cells[name]?.text || node.textContent;
       const val = cellExprs && name && cellExprs.cells[name]?.val;
+      const formula = cellExprs && name && cellExprs.cells[name]?.formula;
       cells.push({
         row,
         col,
         name,
         text,
         val,
+        formula,
         from: pos,
         to: pos + node.nodeSize,
         justify: node.attrs.justify,
@@ -434,7 +502,10 @@ const replaceCellContent = (editorView, name, newText, doMoveCursor = false) => 
 
 const evalCell = ({ env, name }) => {
   const text = env.cells[name]?.text || "";
-  let result = text;
+  let result = {
+    formula: text,
+    val: text
+  };
   try {
     const options = {
       allowThousandsSeparator: true,
@@ -448,7 +519,10 @@ const evalCell = ({ env, name }) => {
           if (err && err.length) {
             console.error(err);
           }
-          result = val;
+          result = {
+            ...result,
+            val
+          };
         }
       );
     }
@@ -647,10 +721,9 @@ const buildCellPlugin = state => {
           //   "dirtyCells=" + JSON.stringify(pluginState.dirtyCells, null, 2)
           // );
           pluginState.dirtyCells.forEach(name => {
-            const val = evalCell({ env: {cells}, name });
             cells[name] = {
               ...cells[name],
-              val,
+              ...evalCell({ env: {cells}, name }),
             };
             const formattedVal = formatCellValue({env: {cells}, name});
             const { node } = getCellNodeByName({state: view.state, name});
@@ -699,18 +772,20 @@ const buildCellPlugin = state => {
             const cellName = cell.name;
             return deps.reduce((cells, name) => {
               // Add current cell as dependency of independent cells.
-              const val = evalCell({env: {cells}, name});
+              const { formula, val } = evalCell({env: {cells}, name});
               const cell = cells[name];
-              // console.log(
-              //   "cellsPugin/init()",
-              //   "name=" + name,
-              //   "val=" + val,
-              //   "cell=" + JSON.stringify(cell, null, 2)
-              // );
+              console.log(
+                "cellsPugin/init()",
+                "name=" + name,
+                "formula=" + formula,
+                "val=" + val,
+                "cell=" + JSON.stringify(cell, null, 2)
+              );
               return cell && {
                 ...cells,
                 [name]: {
                   ...cell,
+//                  formula,
                   val,
                   deps: [
                     ...cell?.deps,
@@ -726,7 +801,6 @@ const buildCellPlugin = state => {
         }, cells);
         const allCells = dirtyCells.reduce((cells, name) => {
           // Add current cell as dependency of independent cells.
-          const val = evalCell({env: {cells}, name});
           const cell = cells[name];
           // console.log(
           //   "cellsPugin/init()",
@@ -737,7 +811,7 @@ const buildCellPlugin = state => {
             ...cells,
             [name]: {
               ...cell,
-              val,
+              ...evalCell({env: {cells}, name}),
               deps: [
                 ...cell?.deps,
               ],
@@ -792,7 +866,7 @@ const buildCellPlugin = state => {
                 ...value.cells,
                 [lastFocusedCell]: {
                   ...cell,
-                  val: evalCell({env: value, name: lastFocusedCell}),
+                  ...evalCell({env: value, name: lastFocusedCell}),
                 },
               },
               dirtyCells: [
@@ -811,7 +885,7 @@ const buildCellPlugin = state => {
                   ...value.cells,
                   [name]: {
                     ...cell,
-                    val: evalCell({env: value, name}),
+                    ...evalCell({env: value, name}),
                     deps: [
                       ...cell?.deps,
                       ...!cell.deps.includes(lastFocusedCell) && [lastFocusedCell] || [],
@@ -829,7 +903,7 @@ const buildCellPlugin = state => {
                   ...value.cells,
                   [name]: {
                     ...cell,
-                    val: evalCell({env: value, name}),
+                    ...evalCell({env: value, name}),
                     // deps: [
                     //   ...cell?.deps,
                     //   ...!cell.deps.includes(lastFocusedCell) && [lastFocusedCell] || [],
@@ -851,14 +925,13 @@ const buildCellPlugin = state => {
               cells,
             },
           });
-          // console.log(
-          //   "[2] cellPlugin/state/apply()",
-          //   "value=" + JSON.stringify(value, null, 2)
-          // );
+          console.log(
+            "[2] cellPlugin/state/apply()",
+            "value=" + JSON.stringify(value, null, 2)
+          );
         } else if (isTableCellOrHeader(node) && node.attrs?.name) {
           const name = node.attrs.name;
           const text = node.textContent.trim();
-          const val = evalCell({env: value, name});
           value = {
             ...value,
             blurredCell: null,
@@ -868,8 +941,9 @@ const buildCellPlugin = state => {
               ...value.cells,
               [name]: {
                 ...value.cells[name],
-                text: text || undefined,
-                val: val || undefined,
+                ...evalCell({env: value, name}),
+                text,
+                formula: text,
               },
             },
           };
@@ -1099,6 +1173,7 @@ export const TableEditor = ({ state }) => {
     keymap({"Mod-z": undo, "Mod-y": redo}),
     keymap({
       ...baseKeymap,
+      Enter: goToNextCell(1),
       Tab: goToNextCell(1),
       'Shift-Tab': goToNextCell(-1),
     }),
