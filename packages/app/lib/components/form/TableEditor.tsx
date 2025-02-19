@@ -118,7 +118,9 @@ const equivFormula = (actual, expected) => {
     "expected=" + normalizedExpected,
   );
   return normalizedActual.every((val, index) => (
-    isValidDecimal(val) && new Decimal(val).equals(new Decimal(normalizedExpected[index])) ||
+    isValidDecimal(val) &&
+      isValidDecimal(normalizedExpected[index]) &&
+      new Decimal(val).equals(new Decimal(normalizedExpected[index])) ||
       val === normalizedExpected[index]
   ));
 };
