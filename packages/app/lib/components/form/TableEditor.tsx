@@ -73,9 +73,20 @@ import { MenuView } from './MenuView';
 
 import { TransLaTeX } from "@artcompiler/translatex";
 import { evalRules, cellNameRules, formatRules, normalizeRules } from './translatex-rules.js';
+import Decimal from 'decimal.js';
 
-const normalizeCell = text => {
-  let result = text;
+const isValidDecimal = val => {
+  try {
+    new Decimal(val);
+    return true;
+  } catch (x) {
+    x = x
+    return false;
+  }
+};
+
+const normalizeValue = text => {
+  let result = [text];
   try {
     const options = {
       allowThousandsSeparator: true,
@@ -88,7 +99,7 @@ const normalizeCell = text => {
           if (err && err.length) {
             console.error(err);
           }
-          result = val;
+          result = val.split(",");
         }
       );
     }
@@ -98,14 +109,19 @@ const normalizeCell = text => {
   return result;
 };
 
-const equivFormula = (actual, expected) => (
+const equivFormula = (actual, expected) => {
+  const normalizedActual = normalizeValue(actual);
+  const normalizedExpected = normalizeValue(expected);
   console.log(
     "equivFormula()",
-    "actual=" + normalizeCell(actual),
-    "expected=" + normalizeCell(expected),
-  ),
-  actual !== undefined && normalizeCell(actual) === normalizeCell(expected) || false
-);
+    "actual=" + normalizedActual,
+    "expected=" + normalizedExpected,
+  );
+  return normalizedActual.every((val, index) => (
+    isValidDecimal(val) && new Decimal(val).equals(new Decimal(normalizedExpected[index])) ||
+      val === normalizedExpected[index]
+  ));
+};
 
 const equivValue = (actual, expected) => (
   console.log(
