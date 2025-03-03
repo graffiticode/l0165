@@ -186,10 +186,10 @@ const getCellColor = (cell) => {
   const { row, col, name, assess, background, lastFocusedCell } = cell;
   const { expected } = assess || {};
   return row > 1 && col > 1 && expected && name !== lastFocusedCell && (
-    console.log(
-      "getCellColor()",
-      "cell=" + JSON.stringify(cell, null, 2),
-    ),
+    // console.log(
+    //   "getCellColor()",
+    //   "cell=" + JSON.stringify(cell, null, 2),
+    // ),
     scoreCell(assess, cell) === 0 &&
       "#fee" ||
       "#efe"
@@ -409,10 +409,6 @@ const schema = new Schema({
             return dom.style.height || null;
           },
           setDOMAttr(value, attrs) {
-            console.log(
-              "height",
-              "value=" + value,
-            );
             if (value)
               attrs.style = (attrs.style || '') + `height: ${"24px"};`;
           },
@@ -711,10 +707,10 @@ const makeTableHeadersReadOnlyPlugin = new Plugin({
 const getResponses = cells => (
   Object.keys(cells).reduce(
     (acc, name) => {
-      const {text, val, assess} = cells[name];
+      const {text, val, formula, assess} = cells[name];
       return assess && {
         ...acc,
-        [name]: {text, val},
+        [name]: {text, val, formula},
       } || acc
     }, {}
   )
@@ -792,18 +788,18 @@ const buildCellPlugin = state => {
               // Add current cell as dependency of independent cells.
               const { formula, val } = evalCell({env: {cells}, name});
               const cell = cells[name];
-              console.log(
-                "cellsPugin/init()",
-                "name=" + name,
-                "formula=" + formula,
-                "val=" + val,
-                "cell=" + JSON.stringify(cell, null, 2)
-              );
+              // console.log(
+              //   "cellsPugin/init()",
+              //   "name=" + name,
+              //   "formula=" + formula,
+              //   "val=" + val,
+              //   "cell=" + JSON.stringify(cell, null, 2)
+              // );
               return cell && {
                 ...cells,
                 [name]: {
                   ...cell,
-//                  formula,
+                  formula,
                   val,
                   deps: [
                     ...cell?.deps,
@@ -943,10 +939,10 @@ const buildCellPlugin = state => {
               cells,
             },
           });
-          console.log(
-            "[2] cellPlugin/state/apply()",
-            "value=" + JSON.stringify(value, null, 2)
-          );
+          // console.log(
+          //   "[2] cellPlugin/state/apply()",
+          //   "value=" + JSON.stringify(value, null, 2)
+          // );
         } else if (isTableCellOrHeader(node) && node.attrs?.name) {
           const name = node.attrs.name;
           const text = node.textContent.trim();
@@ -1132,12 +1128,12 @@ const getCell = (row, col, cells) => (
 );
 
 const makeEditorState = ({ type, columns, cells }) => {
-  console.log(
-    "makeEditorState()",
-    "type=" + type,
-    "columns=" + JSON.stringify(columns, null, 2),
-    "cells=" + JSON.stringify(cells, null, 2),
-  );
+  // console.log(
+  //   "makeEditorState()",
+  //   "type=" + type,
+  //   "columns=" + JSON.stringify(columns, null, 2),
+  //   "cells=" + JSON.stringify(cells, null, 2),
+  // );
   //x = x > 26 && 26 || x;  // Max col count is 26.
   const { x, y } = Object.keys(cells).reduce((dims, cellName) => {
     const x = letters.indexOf(cellName.slice(0, 1));
