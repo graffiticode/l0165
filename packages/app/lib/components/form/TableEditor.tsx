@@ -112,11 +112,6 @@ const normalizeValue = text => {
 const equivFormula = (actual, expected) => {
   const normalizedActual = normalizeValue(actual);
   const normalizedExpected = normalizeValue(expected);
-  console.log(
-    "equivFormula()",
-    "actual=" + normalizedActual,
-    "expected=" + normalizedExpected,
-  );
   return normalizedActual.every((val, index) => (
     isValidDecimal(val) &&
       isValidDecimal(normalizedExpected[index]) &&
@@ -126,24 +121,10 @@ const equivFormula = (actual, expected) => {
 };
 
 const equivValue = (actual, expected) => (
-  console.log(
-    "equivValue()",
-    "actual=" + actual,
-    "expected=" + expected,
-    "equiv=" + actual !== undefined && actual === expected || false
-  ),
   actual !== undefined && actual === expected || false
 );
 
 export const scoreCell = ({ method, expected, points = 1 }, {val, formula}) => (
-  console.log(
-    "scoreCell()",
-    "method=" + method,
-    "expected=" + expected,
-    "points=" + points,
-    "val=" + val,
-    "formula=" + formula,
-  ),
   method === "formula" && equivFormula(formula, expected) && points ||
     method === "value" && equivValue(val, expected) && points ||
   0
@@ -186,10 +167,6 @@ const getCellColor = (cell) => {
   const { row, col, name, assess, background, lastFocusedCell } = cell;
   const { expected } = assess || {};
   return row > 1 && col > 1 && expected && name !== lastFocusedCell && (
-    // console.log(
-    //   "getCellColor()",
-    //   "cell=" + JSON.stringify(cell, null, 2),
-    // ),
     scoreCell(assess, cell) === 0 &&
       "#fee" ||
       "#efe"
@@ -198,18 +175,9 @@ const getCellColor = (cell) => {
 
 const applyModelRules = (cellExprs, state, value) => {
   const cells = getCells(cellExprs, state);
-  // console.log(
-  //   "applyModelRules()",
-  //   "cells=" + JSON.stringify(cells, null, 2),
-  //   "value.cells=" + JSON.stringify(value.cells, null, 2),
-  // );
   const { doc, selection } = state;
   const { lastFocusedCell } = value;
   // Multiply first row and first column values and compare to body values.
-  // console.log(
-  //   "applyModelRules()",
-  //   "cells=" + JSON.stringify(cells, null, 2),
-  // );
   let cellColors = [];
   cells.forEach(cell => {
     const color = getCellColor({
@@ -224,11 +192,6 @@ const applyModelRules = (cellExprs, state, value) => {
     }
     cellColors[row][col] = color;
   });
-  // console.log(
-  //   "applyModelRules()",
-  //   "cells=" + JSON.stringify(cells, null, 2),
-  //   "cellColors=" + JSON.stringify(cellColors, null, 2),
-  // );
   const coloredCells = cells.map(cell => (
     {
       ...cell,
@@ -310,10 +273,6 @@ const getCells = (cellExprs, state) => {
       });
     }
   });
-  // console.log(
-  //   "getCells()",
-  //   "cells=" + JSON.stringify(cells, null, 2)
-  // );
   return cells;
 };
 
@@ -461,13 +420,6 @@ const getAdjacentCellNodeByName = ({ state, name }) => {
   const adjRow = row === 0 && row + 1 || row;
   const adjCol = col === 0 && col + 1 || col;
   const adjName = `${letters[adjCol]}${adjRow}`;
-  // console.log(
-  //   "getAdjacentCellNodeByName()",
-  //   "name=" + name,
-  //   "row=" + row,
-  //   "col=" + col,
-  //   "adjName=" + adjName
-  // );
   return getCellNodeByName({state, name: adjName});
 }
 
@@ -497,14 +449,6 @@ const replaceCellContent = (editorView, name, newText, doMoveCursor = false) => 
   const paragraphNode = newText &&
         state.schema.node("paragraph", null, state.schema.text(newText)) ||
         state.schema.node("paragraph");
-  // console.log(
-  //   "replaceCellContent()",
-  //   "name=" + name,
-  //   "newText=" + newText,
-  //   "contentStart=" + contentStart,
-  //   "contentEnd=" + contentEnd,
-  //   "cellNode=" + JSON.stringify(cellNode, null, 2),
-  // );
   const tr = state.tr;
   tr.replaceWith(contentStart, contentEnd, paragraphNode);
   if (doMoveCursor) {
@@ -549,13 +493,6 @@ const evalCell = ({ env, name }) => {
 const formatCellValue = ({ env, name }) => {
   const { val, format } = env.cells[name] || {};
   let result = val;
-  // console.log(
-  //   "[1] formatCellValue()",
-  //   "env=" + JSON.stringify(env, null, 2),
-  //   "name=" + name,
-  //   "format=" + format,
-  //   "result=" + result
-  // );
   try {
     if (format && val.length > 0) {
       const options = {
@@ -575,11 +512,6 @@ const formatCellValue = ({ env, name }) => {
   } catch (x) {
     console.log("parse error: " + x.stack);
   }
-  // console.log(
-  //   "[2] formatCellValue()",
-  //   "name=" + name,
-  //   "result=" + result
-  // );
   return result;
 }
 
@@ -641,10 +573,6 @@ const makeTableHeadersReadOnlyPlugin = new Plugin({
         const { pos: adjPos, node: adjNode } = getAdjacentCellNodeByName({state, name});
         const cursorPos = adjPos + 2;
         const newText = adjNode.textContent;
-        // console.log(
-        //   "makeTableHeaderReadOnlyPlugin()",
-        //   "newText=" + newText
-        // );
         const selection = TextSelection.create(state.tr.doc, cursorPos + newText.length);
 
         // Dispatch the transaction to update the selection
@@ -730,10 +658,6 @@ const buildCellPlugin = state => {
             dispatch(tr);
           }
           const cells = {...pluginState.cells};
-          // console.log(
-          //   "[1] cellPlugin/view/update()",
-          //   "dirtyCells=" + JSON.stringify(pluginState.dirtyCells, null, 2)
-          // );
           pluginState.dirtyCells.forEach(name => {
             cells[name] = {
               ...cells[name],
@@ -749,12 +673,6 @@ const buildCellPlugin = state => {
             const name = pluginState.focusedCell;
             const text = pluginState.cells[name]?.text || "";
             const { node } = getCellNodeByName({state: view.state, name});
-            // console.log(
-            //   "[2] cellPlugin/view/update()",
-            //   "name=" + name,
-            //   "text=" + text,
-            //   "node=" + JSON.stringify(node, null, 2)
-            // );
             if (node.type.name === "table_cell" && text !== node.textContent) {
               replaceCellContent(view, name, text, true);
             }
@@ -788,13 +706,6 @@ const buildCellPlugin = state => {
               // Add current cell as dependency of independent cells.
               const { formula, val } = evalCell({env: {cells}, name});
               const cell = cells[name];
-              // console.log(
-              //   "cellsPugin/init()",
-              //   "name=" + name,
-              //   "formula=" + formula,
-              //   "val=" + val,
-              //   "cell=" + JSON.stringify(cell, null, 2)
-              // );
               return cell && {
                 ...cells,
                 [name]: {
@@ -816,11 +727,6 @@ const buildCellPlugin = state => {
         const allCells = dirtyCells.reduce((cells, name) => {
           // Add current cell as dependency of independent cells.
           const cell = cells[name];
-          // console.log(
-          //   "cellsPugin/init()",
-          //   "name=" + name,
-          //   "val=" + val,
-          // );
           return cell && {
             ...cells,
             [name]: {
@@ -861,12 +767,6 @@ const buildCellPlugin = state => {
         const node = $anchor.node(-1);
         const name = node.attrs?.name;
         const lastFocusedCell = value.lastFocusedCell;
-        // console.log(
-        //   "[1] cellPlugin/state/apply()",
-        //   "name=" + name,
-        //   "lastFocusedCell=" + lastFocusedCell,
-        //   "value=" + JSON.stringify(value, null, 2)
-        // );
         if (lastFocusedCell !== name) {
           // We just left a cell, so compute its value, add to its dependencies
           // dependents list (`deps`), and recompute the value of its dependents.
@@ -939,10 +839,6 @@ const buildCellPlugin = state => {
               cells,
             },
           });
-          // console.log(
-          //   "[2] cellPlugin/state/apply()",
-          //   "value=" + JSON.stringify(value, null, 2)
-          // );
         } else if (isTableCellOrHeader(node) && node.attrs?.name) {
           const name = node.attrs.name;
           const text = node.textContent.trim();
@@ -961,15 +857,7 @@ const buildCellPlugin = state => {
               },
             },
           };
-          // console.log(
-          //   "[3] cellPlugin/state/apply()",
-          //   "value=" + JSON.stringify(value, null, 2)
-          // );
         }
-        // console.log(
-        //   "[3] cellPlugin/state/apply()",
-        //   "value=" + JSON.stringify(value, null, 2)
-        // );
         const cellExprs = self.getState(state);
         const decorations = applyModelRules(cellExprs, newState, value);
         return {
@@ -1024,12 +912,6 @@ class ParagraphView {
 const buildCell = ({ col, row, attrs, colsAttrs }) => {
   colsAttrs = colsAttrs || {};
   const cell = row[col];
-  // console.log(
-  //   "buildCell()",
-  //   "col=" + col,
-  //   "row._.text=" + JSON.stringify(row._.text),
-  //   "cell=" + JSON.stringify(cell, null, 2)
-  // );
   let content;
   let colspan = 1;
   let rowspan = 1;
@@ -1112,7 +994,34 @@ const applyRules = ({ cols, rows }) => {
   return rowAttrs;
 };
 
-const getCell = (row, col, cells) => (
+const replaceVariables = (str, env) => {
+  Object.keys(env).forEach(key => {
+    const re = new RegExp(`\\{${key}\\}`, "g");
+    str = str.replace(re, env[key]);
+  });
+  return str;
+}
+
+const isNonNullNonArrayNonEmptyObject = obj => (
+  typeof obj === "object" &&
+    !Array.isArray(obj) &&
+    obj !== null &&
+    Object.keys(obj).length > 0
+);
+
+const resolveVariables = (obj, env) => (
+  Object.keys(obj).reduce((obj, key) => {
+    const val = obj[key];
+    if (typeof obj[key] === "string") {
+      obj[key] = replaceVariables(val, env);
+    } else if (isNonNullNonArrayNonEmptyObject(val)) {
+      obj[key] = resolveVariables(val, env);
+    }
+    return obj;
+  }, obj)
+);
+
+const getCell = (row, col, cells, env) => (
   col === "_" && row !== 0 && {
     type: "th",
     text: row
@@ -1123,17 +1032,11 @@ const getCell = (row, col, cells) => (
   } ||
     row !== 0 && col !== "_" && cells[`${col}${row}`] && {
       type: "td",
-      ...cells[`${col}${row}`],
+      ...resolveVariables(cells[`${col}${row}`], env),
   } || {}
 );
 
-const makeEditorState = ({ type, columns, cells }) => {
-  // console.log(
-  //   "makeEditorState()",
-  //   "type=" + type,
-  //   "columns=" + JSON.stringify(columns, null, 2),
-  //   "cells=" + JSON.stringify(cells, null, 2),
-  // );
+const makeEditorState = ({ type, columns, cells, env }) => {
   //x = x > 26 && 26 || x;  // Max col count is 26.
   const { x, y } = Object.keys(cells).reduce((dims, cellName) => {
     const x = letters.indexOf(cellName.slice(0, 1));
@@ -1150,7 +1053,7 @@ const makeEditorState = ({ type, columns, cells }) => {
       cols.reduce((rows, col) =>
         ({
           ...rows,
-          [col]: getCell(row, col, cells || {})
+          [col]: getCell(row, col, cells || {}, env)
         }), {}
       )
     );
@@ -1159,10 +1062,6 @@ const makeEditorState = ({ type, columns, cells }) => {
       rows,
       colsAttrs: columns,
     });
-    // console.log(
-    //   "makeEditorState()",
-    //   "doc=" + JSON.stringify(doc, null, 2)
-    // );
     return {
       doc: doc,
       selection: {
@@ -1229,9 +1128,13 @@ export const TableEditor = ({ state }) => {
     };
   }, []);
   const { type, columns, cells } = state.data.interaction;
+  const templateVariablesRecords = state.data.templateVariablesRecords || [];
+  const index = Math.floor(Math.random() * templateVariablesRecords.length);
+  const env = templateVariablesRecords[index];
+
   useEffect(() => {
     if (editorView && columns && cells) {
-      const editorStateData = makeEditorState({type, columns, cells});
+      const editorStateData = makeEditorState({type, columns, cells, env});
       const newEditorState = EditorState.fromJSON({
         schema,
         plugins,
@@ -1250,3 +1153,17 @@ export const TableEditor = ({ state }) => {
     />
   );
 };
+
+// function buildEnv(keys, vals) {
+//   const env = {}; // Object.assign({}, params);
+//   keys.forEach((k, i) => {
+//     if (vals[i] !== undefined) {
+//       // env[k] = {
+//       //   type: 'const',
+//       //   value: vals[i],
+//       // };
+//       env[k] = vals[i];
+//     }
+//   });
+//   return env;
+// }
