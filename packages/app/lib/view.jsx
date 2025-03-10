@@ -34,6 +34,32 @@ function isNonNullObject(obj) {
   it chanages.
 */
 
+const replaceVariables = (str, env) => {
+  Object.keys(env).forEach(key => {
+    const re = new RegExp(`\\{\\{${key}\\}\\}`, "g");
+    str = str.replace(re, env[key]);
+  });
+  return str;
+}
+
+const isNonNullNonEmptyObject = obj => (
+  typeof obj === "object" &&
+    obj !== null &&
+    Object.keys(obj).length > 0
+);
+
+const resolveVariables = (obj, env) => (
+  Object.keys(obj).reduce((obj, key) => {
+    const val = obj[key];
+    if (typeof obj[key] === "string") {
+      obj[key] = replaceVariables(val, env);
+    } else if (isNonNullNonEmptyObject(val)) {
+      obj[key] = resolveVariables(val, env);
+    }
+    return obj;
+  }, obj)
+);
+
 export const View = () => {
   const [ id, setId ] = useState();
   const [ accessToken, setAccessToken ] = useState();
@@ -41,11 +67,11 @@ export const View = () => {
   const [ doInit, setDoInit ] = useState(true);
   const [ doRecompile, setDoRecompile ] = useState(false);
   const [ state ] = useState(createState({}, (data, { type, args }) => {
-    console.log(
-      "L0151 state.apply()",
-      "type=" + type,
-      "args=" + JSON.stringify(args, null, 2)
-    );
+    // console.log(
+    //   "L0151 state.apply()",
+    //   "type=" + type,
+    //   "args=" + JSON.stringify(args, null, 2)
+    // );
     switch (type) {
     case "init":
       return {
@@ -108,6 +134,11 @@ export const View = () => {
   );
 
   if (initResp.data) {
+    const data = initResp.data;
+    const templateVariablesRecords = data.templateVariablesRecords || [];
+    const index = Math.floor(Math.random() * templateVariablesRecords.length);
+    const env = templateVariablesRecords[index];
+    const args = resolveVariables(data, env);
     state.apply({
       type: "init",
       args: initResp.data,

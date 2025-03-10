@@ -1,6 +1,5 @@
 /*
   TODO
-  [ ] Scoring by formula and text (vs value)
   [ ] Handle single and double click and tab in cells
   [ ] Sort dependency tree & check for cycles
   [ ] Make expanderBuilders a module parameter
@@ -18,6 +17,7 @@
   [x] Make row and column headings read only
   [x] Select cell adjacent to selected header
   [x] Handle unary `-` and `%`
+  [x] Scoring by formula and text (vs value)
 */
 
 import React, { useState, useEffect, useRef } from 'react'; React;
@@ -164,17 +164,64 @@ const applyDecoration = ({ doc, cells }) => {
 };
 
 const getCellColor = (cell) => {
-  const { row, col, name, assess, background, lastFocusedCell } = cell;
-  const { expected } = assess || {};
-  return row > 1 && col > 1 && expected && name !== lastFocusedCell && (
-    scoreCell(assess, cell) === 0 &&
-      "#fee" ||
-      "#efe"
+  const { row, col, name, background, lastFocusedCell, score } = cell;
+  //const { expected } = assess || {};
+  return row > 1 && col > 1 && score !== undefined && name !== lastFocusedCell && (
+    score > 0 &&
+      "#efe" ||
+      "#fee"
   ) || background || null;
 };
 
-const applyModelRules = (cellExprs, state, value) => {
+const getCellsValidationFromRangeValidation = ({ cells, range }) => {
+  cells = cells;
+  const { rows } = range;
+  const cellsValidation = rows.reduce((cells, row, index) => (
+    Object.keys(row).forEach(key => (
+      row[key]?.attrs?.assess && (cells[key + (index + 1)] = row[key])
+    )),
+    cells
+  ), {});
+  return cellsValidation;
+};
+
+const getRangeValidations = ({ cells, validation }) => {
+  const { ranges } = validation;
+  const rangeName = Object.keys(ranges).find(key => (
+    key === "*"
+  ));
+  // TODO Handle multiple ranges. Split cells by range.
+  return [{
+    range: ranges[rangeName],
+    cells,
+  }];
+};
+
+const getCellsValidation = ({ cells, validation }) => {
+  const rangeValidations = getRangeValidations({cells, validation});
+  const cellsValidations = rangeValidations.map(rangeValidation => (
+    getCellsValidationFromRangeValidation(rangeValidation)
+  ));
+  return cellsValidations[0];
+};
+
+const scoreCells = ({ cells, validation }) => {
+  const cellsValidation = getCellsValidation({cells, validation});
+  return Object.keys(cellsValidation).reduce((cells, cellName) => (
+    {
+      ...cells,
+      [cellName]: cells[cellName] && {
+        ...cells[cellName],
+        score: scoreCell(cellsValidation[cellName].attrs.assess, cells[cellName]),
+      } || undefined,
+    }
+  ), cells);
+};
+
+const applyModelRules = (cellExprs, state, value, validation) => {
   const cells = getCells(cellExprs, state);
+  // TODO score cells here.
+  const scoredCells = scoreCells({ cells: value.cells, validation });
   const { doc, selection } = state;
   const { lastFocusedCell } = value;
   // Multiply first row and first column values and compare to body values.
@@ -182,9 +229,8 @@ const applyModelRules = (cellExprs, state, value) => {
   cells.forEach(cell => {
     const color = getCellColor({
       ...cell,
-      val: value.cells[cell.name]?.val,
-      formula: value.cells[cell.name]?.formula,
-      lastFocusedCell
+      lastFocusedCell,
+      score: scoredCells[cell.name]?.score,
     });
     const { row, col } = cell;
     if (cellColors[row] === undefined) {
@@ -213,26 +259,6 @@ const applyModelRules = (cellExprs, state, value) => {
   return applyDecoration({doc, cells: coloredCells});
 }
 
-// const modelBackgroundPlugin = () => new Plugin({
-//   state: {
-//     init(_, state) {
-//       return applyModelRules(state);
-//     },
-//     apply(tr, decorationSet, oldState, newState) {
-//       tr = tr;
-//       oldState = oldState;
-//       newState = newState;
-//       decorationSet = decorationSet;
-//       return applyModelRules(newState);
-//     },
-//   },
-//   props: {
-//     decorations(state) {
-//       return this.getState(state);
-//     }
-//   }
-// });
-
 const isTableCellOrHeader = node =>
       node.type.name === "table_cell" ||
       node.type.name === "table_header";
@@ -251,7 +277,6 @@ const getCells = (cellExprs, state) => {
     }
     if (isTableCellOrHeader(node)) {
       col++;
-//      const cellExprs = cellPlugin.getState(state);
       const name = node.attrs.name;
       const text = cellExprs && name && cellExprs.cells[name]?.text || node.textContent;
       const val = cellExprs && name && cellExprs.cells[name]?.val;
@@ -644,7 +669,7 @@ const getResponses = cells => (
   )
 );
 
-const buildCellPlugin = state => {
+const buildCellPlugin = formState => {
   const self = new Plugin({
     view(editorView) {
       editorView = editorView;
@@ -745,16 +770,15 @@ const buildCellPlugin = state => {
           dirtyCells,
           cells: allCells,
         };
-        const decorations = applyModelRules(cellExprs, state, value);
+        const { validation } = formState.data;
+        const decorations = applyModelRules(cellExprs, state, value, validation);
         return {
           ...value,
           decorations,
         }
       },
-      apply(tr, value, oldState, newState) {
-        tr = tr;
+      apply(tr, value, oldState, state) {
         oldState = oldState;
-        newState = newState;
         if (tr.getMeta("updated")) {
           value = {
             ...value,
@@ -762,7 +786,7 @@ const buildCellPlugin = state => {
             dirtyCells: [],
           };
         }
-        const { selection } = newState;
+        const { selection } = state;
         const $anchor = selection.$anchor;
         const node = $anchor.node(-1);
         const name = node.attrs?.name;
@@ -770,6 +794,12 @@ const buildCellPlugin = state => {
         if (lastFocusedCell !== name) {
           // We just left a cell, so compute its value, add to its dependencies
           // dependents list (`deps`), and recompute the value of its dependents.
+          // console.log(
+          //   "cellPlugin/apply()",
+          //   "state=" + JSON.stringify(state, null, 2),
+          //   "value=" + JSON.stringify(value, null, 2),
+          //   "formState=" + JSON.stringify(formState, null, 2),
+          // );
           if (lastFocusedCell && value.cells[lastFocusedCell]) {
             const cell = value.cells[lastFocusedCell];
             // Compute the value of `lastFocusedCell`.
@@ -818,10 +848,6 @@ const buildCellPlugin = state => {
                   [name]: {
                     ...cell,
                     ...evalCell({env: value, name}),
-                    // deps: [
-                    //   ...cell?.deps,
-                    //   ...!cell.deps.includes(lastFocusedCell) && [lastFocusedCell] || [],
-                    // ],
                   },
                 },
               } || value;
@@ -833,7 +859,7 @@ const buildCellPlugin = state => {
             focusedCell: node.attrs.name,
           };
           const cells = getResponses(value.cells);
-          state.apply({
+          formState.apply({
             type: "response",
             args: {
               cells,
@@ -859,7 +885,8 @@ const buildCellPlugin = state => {
           };
         }
         const cellExprs = self.getState(state);
-        const decorations = applyModelRules(cellExprs, newState, value);
+        const { validation } = formState.data;
+        const decorations = applyModelRules(cellExprs, state, value, validation);
         return {
           ...value,
           decorations,
@@ -994,34 +1021,7 @@ const applyRules = ({ cols, rows }) => {
   return rowAttrs;
 };
 
-const replaceVariables = (str, env) => {
-  Object.keys(env).forEach(key => {
-    const re = new RegExp(`\\{${key}\\}`, "g");
-    str = str.replace(re, env[key]);
-  });
-  return str;
-}
-
-const isNonNullNonArrayNonEmptyObject = obj => (
-  typeof obj === "object" &&
-    !Array.isArray(obj) &&
-    obj !== null &&
-    Object.keys(obj).length > 0
-);
-
-const resolveVariables = (obj, env) => (
-  Object.keys(obj).reduce((obj, key) => {
-    const val = obj[key];
-    if (typeof obj[key] === "string") {
-      obj[key] = replaceVariables(val, env);
-    } else if (isNonNullNonArrayNonEmptyObject(val)) {
-      obj[key] = resolveVariables(val, env);
-    }
-    return obj;
-  }, obj)
-);
-
-const getCell = (row, col, cells, env) => (
+const getCell = (row, col, cells) => (
   col === "_" && row !== 0 && {
     type: "th",
     text: row
@@ -1032,11 +1032,11 @@ const getCell = (row, col, cells, env) => (
   } ||
     row !== 0 && col !== "_" && cells[`${col}${row}`] && {
       type: "td",
-      ...resolveVariables(cells[`${col}${row}`], env),
+      ...cells[`${col}${row}`],
   } || {}
 );
 
-const makeEditorState = ({ type, columns, cells, env }) => {
+const makeEditorState = ({ type, columns, cells }) => {
   //x = x > 26 && 26 || x;  // Max col count is 26.
   const { x, y } = Object.keys(cells).reduce((dims, cellName) => {
     const x = letters.indexOf(cellName.slice(0, 1));
@@ -1053,7 +1053,7 @@ const makeEditorState = ({ type, columns, cells, env }) => {
       cols.reduce((rows, col) =>
         ({
           ...rows,
-          [col]: getCell(row, col, cells || {}, env)
+          [col]: getCell(row, col, cells || {})
         }), {}
       )
     );
@@ -1128,13 +1128,12 @@ export const TableEditor = ({ state }) => {
     };
   }, []);
   const { type, columns, cells } = state.data.interaction;
-  const templateVariablesRecords = state.data.templateVariablesRecords || [];
-  const index = Math.floor(Math.random() * templateVariablesRecords.length);
-  const env = templateVariablesRecords[index];
-
+  // const templateVariablesRecords = state.data.templateVariablesRecords || [];
+  // const index = Math.floor(Math.random() * templateVariablesRecords.length);
+  // const env = templateVariablesRecords[index];
   useEffect(() => {
     if (editorView && columns && cells) {
-      const editorStateData = makeEditorState({type, columns, cells, env});
+      const editorStateData = makeEditorState({type, columns, cells});
       const newEditorState = EditorState.fromJSON({
         schema,
         plugins,
@@ -1153,17 +1152,3 @@ export const TableEditor = ({ state }) => {
     />
   );
 };
-
-// function buildEnv(keys, vals) {
-//   const env = {}; // Object.assign({}, params);
-//   keys.forEach((k, i) => {
-//     if (vals[i] !== undefined) {
-//       // env[k] = {
-//       //   type: 'const',
-//       //   value: vals[i],
-//       // };
-//       env[k] = vals[i];
-//     }
-//   });
-//   return env;
-// }

@@ -7,15 +7,99 @@ import {
   Compiler as BasisCompiler
 } from '@graffiticode/basis';
 
-const getValidation = cells => (
-  Object.keys(cells).reduce((obj, key) => ({
-    ...obj,
-    points: obj.points + (cells[key]?.attrs?.assess && (cells[key]?.attrs?.assess?.points || 1) || 0), 
-    values: {
-      ...obj.values,
-      [key]: cells[key]?.attrs?.assess && cells[key].attrs.assess || undefined,
-    },
-  }), {points: 0, values: {}})
+const rowInRange = (range, cellName) => {
+  const [min, max] = range.split("..");
+  const row = cellName.slice(1);
+  return +row >= +min || +row <= +max;
+};
+
+const getPrimaryColumn = (rows, cellName) => {
+  // Check rows to see if cellName is included.
+  // If so, return the index col.
+  console.log(
+    "getPrimaryColumn()",
+    "rows=" + JSON.stringify(rows, null, 2),
+    "cellName=" + cellName,
+  );
+  const range = rows && Object.keys(rows).find(key =>
+    (key === "*" || rowInRange(key, cellName)) && key
+  ) || "*";
+  return [range, rows[range]?.assess?.index];
+};
+
+const getIndexCell = (cells, colName, cellName) => (
+  // Get the cell of the index col for the same row as cellName.
+  // If there is an assess field, return it.
+  // If not, then return null.
+  console.log(
+    "getIndexCell()",
+    "cells=" + JSON.stringify(cells, null, 2),
+    "colName=" + colName,
+    "cellName=" + cellName,
+  ),
+  cells[colName + cellName.slice(1)]
+);
+
+// TODO Scoring will find a match for the index assess and then score the
+// current cell with its assess.
+// If there is no assess in the index cell, then the cell is scored as is.
+
+const getValidation = ({rows, cells}) => (
+  // TODO compile the index column and value for each validated cell.
+  console.log(
+    "getValidation()",
+    "rows=" + JSON.stringify(rows, null, 2),
+    "cells=" + JSON.stringify(cells, null, 2),
+  ),
+  Object.keys(cells).reduce((obj, key) => {
+    const [rowRange, primaryColumn] = getPrimaryColumn(rows, key);
+    console.log(
+      "getValidation()",
+      "primaryColumn=" + primaryColumn,
+    );
+    // const cell = cells[key]?.attrs?.assess && {
+    //   ...cells[key].attrs.assess,
+    //   index: {
+    //     cellName: primaryColumn + key.slice(1),
+    //     ...getIndexCell(cells, primaryColumn, key),
+    //   },
+    // } || undefined;
+    const cell = cells[key];
+    const col = key.slice(0, 1);
+    const rowIndex = +key.slice(1) - 1;
+    const row = obj.ranges[rowRange]?.rows[rowIndex] || {};
+    console.log(
+      "getValidation()",
+      "col=" + col,
+      "rowIndex=" + rowIndex,
+      "row=" + JSON.stringify(row, null, 2),
+      "cell=" + JSON.stringify(cell, null, 2),
+    );
+    const newRows = (obj.ranges[rowRange]?.rows || []).toSpliced(rowIndex, 1, {...row, [col]: cell});
+    return {
+      ...obj,
+      points: obj.points + (cells[key]?.attrs?.assess && (cells[key]?.attrs?.assess?.points || 1) || 0),
+      ranges: {
+        ...obj.ranges,
+        [rowRange]: {
+          primaryColumn: primaryColumn,
+          order: "actual",  // "asc", "desc", "expected" (default)
+          rows: newRows,
+        },
+      },
+      // cells: {
+      //   ...obj.cells,
+      //   [key]: assess,
+      //   // cells[key]?.attrs?.assess && {
+      //   //   ...cells[key].attrs.assess,
+      //   //   index: {
+      //   //     cellName: primaryColumn + key.slice(1),
+      //   //     ...getIndexCell(cells, primaryColumn, key),
+      //   //   },
+      //   // } || undefined,
+      // },
+    }
+  }, {points: 0, ranges: {}, cells: {}})
 );
 
 export class Checker extends BasisChecker {
@@ -42,7 +126,7 @@ export class Transformer extends BasisTransformer {
         const data = options?.data || {};
         const err = [];
         const val = {
-          validation: getValidation(v0.cells),
+          validation: getValidation(v0),
           interaction: {
             type: "table",
             ...v0,
@@ -112,7 +196,9 @@ export class Transformer extends BasisTransformer {
       const vals = values.slice(1).map(vals => (
         buildEnv(values[0], vals)
       ));
-      resume([], vals);
+      resume([], {
+        templateVariablesRecords: vals
+      });
     });
 
     function expandArgs(args) {
