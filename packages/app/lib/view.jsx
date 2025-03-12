@@ -137,7 +137,7 @@ export const View = () => {
     const data = initResp.data;
     const templateVariablesRecords = data.templateVariablesRecords || [];
     const index = Math.floor(Math.random() * templateVariablesRecords.length);
-    const env = templateVariablesRecords[index];
+    const env = templateVariablesRecords[index] || {};
     const args = resolveVariables(data, env);
     state.apply({
       type: "init",
