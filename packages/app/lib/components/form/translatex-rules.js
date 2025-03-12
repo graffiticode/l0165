@@ -40,6 +40,9 @@ export const evalRules = {
     "??": [
       "%1%2"
     ],
+    "{{var:\\type{cellName}}}": [
+      "{{var:%2}}"
+    ],
     "?": [
       "%1"
     ]

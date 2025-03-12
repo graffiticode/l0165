@@ -124,7 +124,7 @@ const equivValue = (actual, expected) => (
   actual !== undefined && actual === expected || false
 );
 
-export const scoreCell = ({ method, expected, points = 1 }, {val, formula}) => (
+const scoreCell = ({ method, expected, points = 1 }, {val, formula}) => (
   method === "formula" && equivFormula(formula, expected) && points ||
     method === "value" && equivValue(val, expected) && points ||
   0
@@ -197,7 +197,7 @@ const getRangeValidations = ({ cells, validation }) => {
   }];
 };
 
-const getCellsValidation = ({ cells, validation }) => {
+export const getCellsValidation = ({ cells, validation }) => {
   const rangeValidations = getRangeValidations({cells, validation});
   const cellsValidations = rangeValidations.map(rangeValidation => (
     getCellsValidationFromRangeValidation(rangeValidation)
@@ -205,7 +205,7 @@ const getCellsValidation = ({ cells, validation }) => {
   return cellsValidations[0];
 };
 
-const scoreCells = ({ cells, validation }) => {
+export const scoreCells = ({ cells, validation }) => {
   const cellsValidation = getCellsValidation({cells, validation});
   return Object.keys(cellsValidation).reduce((cells, cellName) => (
     {
@@ -1122,6 +1122,7 @@ export const TableEditor = ({ state }) => {
     });
     setEditorView(editorView);
     return () => {
+      console.log("editorView.destroy()");
       if (editorView) {
         editorView.destroy();
       }

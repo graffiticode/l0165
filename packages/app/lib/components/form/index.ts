@@ -1,2 +1,2 @@
 export { Form } from "./Form";
-export { scoreCell } from "./TableEditor";
+export { scoreCells, getCellsValidation } from "./TableEditor";
