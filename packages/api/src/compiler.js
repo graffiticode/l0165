@@ -24,7 +24,7 @@ const getPrimaryColumn = (rows, cellName) => {
   const range = rows && Object.keys(rows).find(key =>
     (key === "*" || rowInRange(key, cellName)) && key
   ) || "*";
-  return [range, rows[range]?.assess?.index];
+  return [range, rows && rows[range]?.assess?.index || null];
 };
 
 const getIndexCell = (cells, colName, cellName) => (
