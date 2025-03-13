@@ -175,6 +175,7 @@ const getCellColor = (cell) => {
 };
 
 const getCellsValidationFromRangeValidation = ({ cells, range }) => {
+  // TODO shape validation based on given cells if order === "actual".
   console.log(
     "getCellsValidationFromRangeValidation()",
     "cells=" + JSON.stringify(cells, null, 2),
@@ -183,8 +184,9 @@ const getCellsValidationFromRangeValidation = ({ cells, range }) => {
   assert(range, "getCellsValidationFromRangeValidation() missing range value");
   const { rows } = range;
   const cellsValidation = rows.reduce((cells, row, index) => (
+    index = row.id || index + 1,
     Object.keys(row).forEach(key => (
-      row[key]?.attrs?.assess && (cells[key + (index + 1)] = row[key])
+      row[key]?.attrs?.assess && (cells[key + index] = row[key])
     )),
     cells
   ), {});
