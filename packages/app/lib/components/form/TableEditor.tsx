@@ -20,6 +20,7 @@
   [x] Scoring by formula and text (vs value)
 */
 
+import assert from "assert";
 import React, { useState, useEffect, useRef } from 'react'; React;
 
 import 'prosemirror-view/style/prosemirror.css';
@@ -174,7 +175,12 @@ const getCellColor = (cell) => {
 };
 
 const getCellsValidationFromRangeValidation = ({ cells, range }) => {
-  cells = cells;
+  console.log(
+    "getCellsValidationFromRangeValidation()",
+    "cells=" + JSON.stringify(cells, null, 2),
+    "range=" + JSON.stringify(range, null, 2),
+  );
+  assert(range, "getCellsValidationFromRangeValidation() missing range value");
   const { rows } = range;
   const cellsValidation = rows.reduce((cells, row, index) => (
     Object.keys(row).forEach(key => (
@@ -182,13 +188,17 @@ const getCellsValidationFromRangeValidation = ({ cells, range }) => {
     )),
     cells
   ), {});
+  console.log(
+    "getCellsValidationFromRangeValidation()",
+    "cellsValidation=" + JSON.stringify(cellsValidation, null, 2),
+  );
   return cellsValidation;
 };
 
 const getRangeValidations = ({ cells, validation }) => {
   const { ranges } = validation;
   const rangeName = Object.keys(ranges).find(key => (
-    key === "*"
+    key    // return the first range name for now.
   ));
   // TODO Handle multiple ranges. Split cells by range.
   return [{
