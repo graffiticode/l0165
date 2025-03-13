@@ -70,7 +70,7 @@ const getValidation = ({rows, cells}) => (
     const rowIndex = +key.slice(1) - 1;
     const order = rows[rowRange]?.assess?.order || "expected";  // "actual", "asc", "desc", "expected" (default)
     const row = obj.ranges[rowRange]?.rows[rowIndex] || {
-      id: order !== "actual" && rowIndex + 1 || undefined
+      id: order !== "actual" && rowIndex || undefined
     };
     console.log(
       "getValidation()",
