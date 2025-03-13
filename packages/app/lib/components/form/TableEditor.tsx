@@ -92,7 +92,7 @@ const normalizeValue = text => {
       allowThousandsSeparator: true,
       ...normalizeRules,
     };
-    if (text.length > 0 && text.indexOf("=") === 0) {
+    if (text && text.length > 0 && text.indexOf("=") === 0) {
       TransLaTeX.translate(
         options,
         text, (err, val) => {
@@ -495,7 +495,7 @@ const evalCell = ({ env, name }) => {
       env: env.cells,
       ...evalRules,
     };
-    if (text.length > 0 && text.indexOf("=") === 0) {
+    if (text && text.length > 0 && text.indexOf("=") === 0) {
       TransLaTeX.translate(
         options,
         text, (err, val) => {
@@ -549,7 +549,7 @@ const getSingleCellDependencies = ({ env, name }) => {
       env: env.cells,
       ...cellNameRules,
     };
-    if (text.length > 0 && text.indexOf("=") === 0) {
+    if (text && text.length > 0 && text.indexOf("=") === 0) {
       // FIXME this condition is brittle.
       TransLaTeX.translate(
         options,
