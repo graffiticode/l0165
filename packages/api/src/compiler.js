@@ -69,9 +69,7 @@ const getValidation = ({rows, cells}) => (
     const col = key.slice(0, 1);
     const rowIndex = +key.slice(1) - 1;
     const order = rows[rowRange]?.assess?.order || "expected";  // "actual", "asc", "desc", "expected" (default)
-    const row = obj.ranges[rowRange]?.rows[rowIndex] || {
-      id: order !== "actual" && rowIndex || undefined
-    };
+    const row = obj.ranges[rowRange]?.rows[rowIndex] || {}
     console.log(
       "getValidation()",
       "col=" + col,
@@ -79,7 +77,11 @@ const getValidation = ({rows, cells}) => (
       "row=" + JSON.stringify(row, null, 2),
       "cell=" + JSON.stringify(cell, null, 2),
     );
-    const newRows = (obj.ranges[rowRange]?.rows || []).toSpliced(rowIndex, 1, {...row, [col]: cell});
+    const newRows = (obj.ranges[rowRange]?.rows || []).toSpliced(rowIndex, 1, {
+      ...row,
+      id: order !== "actual" && rowIndex + 1,
+      [col]: cell,
+    });
     return {
       ...obj,
       points: obj.points + (cells[key]?.attrs?.assess && (cells[key]?.attrs?.assess?.points || 1) || 0),
