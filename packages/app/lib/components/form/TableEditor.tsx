@@ -560,6 +560,11 @@ const formatCellValue = ({ env, name }) => {
         }
       );
     }
+    console.log(
+      "formatCellValue()",
+      "val=" + val,
+      "result=" + result,
+    );
   } catch (x) {
     console.log("parse error: " + x.stack);
   }
@@ -962,6 +967,12 @@ class ParagraphView {
   }
 }
 
+const fixText = text => (
+  String(text)
+    .replace(new RegExp("\\{\\{", "g"), "[")
+    .replace(new RegExp("\\}\\}", "g"), "]")
+);
+
 const buildCell = ({ col, row, attrs, colsAttrs }) => {
   colsAttrs = colsAttrs || {};
   const cell = row[col];
@@ -975,13 +986,14 @@ const buildCell = ({ col, row, attrs, colsAttrs }) => {
     "buildCell()",
     "text=" + text,
   );
+
   content = [
     {
       "type": "paragraph",
       "content": text && [
         {
           "type": "text",
-          text: String(text),
+          text: fixText(text),
         }
       ]
     }
