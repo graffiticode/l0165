@@ -543,8 +543,8 @@ const evalCell = ({ env, name }) => {
 
 const fixText = text => (
   text
-    .replace(new RegExp("\\{\\{", "g"), "[")
-    .replace(new RegExp("\\}\\}", "g"), "]")
+    .replace(new RegExp("\\{\\{", "g"), "[[")
+    .replace(new RegExp("\\}\\}", "g"), "]]")
 );
 
 const formatCellValue = ({ env, name }) => {
@@ -568,7 +568,6 @@ const formatCellValue = ({ env, name }) => {
         }
       );
     }
-    result = fixText(result);
   } catch (x) {
     console.log("parse error: " + x.stack);
   }
@@ -723,7 +722,7 @@ const buildCellPlugin = formState => {
               ...cells[name],
               ...evalCell({ env: {cells}, name }),
             };
-            const formattedVal = formatCellValue({env: {cells}, name});
+            const formattedVal = fixText(formatCellValue({env: {cells}, name}));
             const { node } = getCellNodeByName({state: view.state, name});
             if (name !== pluginState.focusedCell && formattedVal !== node.textContent) {
               replaceCellContent(view, name, formattedVal);
@@ -731,7 +730,7 @@ const buildCellPlugin = formState => {
           });
           if (pluginState.focusedCell) {
             const name = pluginState.focusedCell;
-            const text = pluginState.cells[name]?.text || "";
+            const text = fixText(pluginState.cells[name]?.text || "");
             const { node } = getCellNodeByName({state: view.state, name});
             if (node.type.name === "table_cell" && text !== node.textContent) {
               replaceCellContent(view, name, text, true);
