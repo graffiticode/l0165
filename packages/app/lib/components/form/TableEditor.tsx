@@ -971,6 +971,10 @@ const buildCell = ({ col, row, attrs, colsAttrs }) => {
   const colwidth = col === "_" && [40] || [colsAttrs[col]?.width];
   let background = attrs.color;
   const { text } = cell;
+  console.log(
+    "buildCell()",
+    "text=" + text,
+  );
   content = [
     {
       "type": "paragraph",
