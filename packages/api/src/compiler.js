@@ -79,7 +79,7 @@ const getValidation = ({rows, cells}) => (
     );
     const newRows = (obj.ranges[rowRange]?.rows || []).toSpliced(rowIndex, 1, {
       ...row,
-      id: order !== "actual" && rowIndex + 1,
+      id: order !== "actual" && rowIndex + 1 || undefined,
       [col]: cell,
     });
     return {
@@ -213,7 +213,7 @@ export class Transformer extends BasisTransformer {
       args.forEach((s) => {
         const exprs = s.split(',');
         const vals = [];
-        exprs.forEach((expr) => {
+        exprs.forEach(expr => {
           const [r, _incr = 1] = expr.split(':');
           const [start, _stop] = r.split('..');
           let incr = _incr;
@@ -223,7 +223,7 @@ export class Transformer extends BasisTransformer {
             stop = undefined;
           }
           if (stop === undefined) {
-            vals.push(start);
+            vals.push(start.trim());
           } else {
             let e; let n; let
 t;

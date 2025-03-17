@@ -174,6 +174,19 @@ const getCellColor = (cell) => {
   ) || background || null;
 };
 
+const sortAssessRowsToMatchActual = ({ cells, range }) => {
+  const { primaryColumn, rows } = range;
+  const order = Object.keys(cells).map(name => name.slice(0, 1) === primaryColumn && cells[name].val || null).filter(x => x !== null);
+  const dataMap = new Map(rows.map(row => [row[primaryColumn]?.text, row]));
+  const sortedRows = order.map(id => (id !== null ? dataMap.get(id) || null : null));
+  console.log(
+    "sortAssessRowsToMatchActual()",
+    "order=" + JSON.stringify(order),
+    "sortedRows=" + JSON.stringify(sortedRows, null, 2),
+  );
+  return sortedRows;
+}
+
 const getCellsValidationFromRangeValidation = ({ cells, range }) => {
   // TODO shape validation based on given cells if order === "actual".
   console.log(
@@ -181,11 +194,12 @@ const getCellsValidationFromRangeValidation = ({ cells, range }) => {
     "cells=" + JSON.stringify(cells, null, 2),
     "range=" + JSON.stringify(range, null, 2),
   );
+  const rows = sortAssessRowsToMatchActual({cells, range}) as [{id}];
   assert(range, "getCellsValidationFromRangeValidation() missing range value");
-  const { rows } = range;
+  //const { rows } = range;
   const cellsValidation = rows.reduce((cells, row, index) => (
-    index = row.id || index + 1,
-    Object.keys(row).forEach(key => (
+    index = row?.id || index + 1,
+    row && Object.keys(row).forEach(key => (
       row[key]?.attrs?.assess && (cells[key + index] = row[key])
     )),
     cells
