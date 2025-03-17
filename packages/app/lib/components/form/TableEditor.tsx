@@ -541,12 +541,20 @@ const evalCell = ({ env, name }) => {
   return result;
 }
 
+const fixText = text => (
+  text
+    .replace(new RegExp("\\{\\{", "g"), "[")
+    .replace(new RegExp("\\}\\}", "g"), "]")
+);
+
 const formatCellValue = ({ env, name }) => {
   const { val, format } = env.cells[name] || {};
   let result = val;
   try {
     if (format && val.length > 0) {
       const options = {
+        allowInterval: true,
+        RHS: false,
         env: {format},
         ...formatRules,
       };
@@ -560,11 +568,7 @@ const formatCellValue = ({ env, name }) => {
         }
       );
     }
-    console.log(
-      "formatCellValue()",
-      "val=" + val,
-      "result=" + result,
-    );
+    result = fixText(result);
   } catch (x) {
     console.log("parse error: " + x.stack);
   }
@@ -967,12 +971,6 @@ class ParagraphView {
   }
 }
 
-const fixText = text => (
-  String(text)
-    .replace(new RegExp("\\{\\{", "g"), "[")
-    .replace(new RegExp("\\}\\}", "g"), "]")
-);
-
 const buildCell = ({ col, row, attrs, colsAttrs }) => {
   colsAttrs = colsAttrs || {};
   const cell = row[col];
@@ -982,18 +980,13 @@ const buildCell = ({ col, row, attrs, colsAttrs }) => {
   const colwidth = col === "_" && [40] || [colsAttrs[col]?.width];
   let background = attrs.color;
   const { text } = cell;
-  console.log(
-    "buildCell()",
-    "text=" + text,
-  );
-
   content = [
     {
       "type": "paragraph",
       "content": text && [
         {
           "type": "text",
-          text: fixText(text),
+          text: String(text),
         }
       ]
     }
