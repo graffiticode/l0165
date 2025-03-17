@@ -194,7 +194,11 @@ const getCellsValidationFromRangeValidation = ({ cells, range }) => {
     "cells=" + JSON.stringify(cells, null, 2),
     "range=" + JSON.stringify(range, null, 2),
   );
-  const rows = sortAssessRowsToMatchActual({cells, range}) as [{id}];
+  const rows = (
+    range.order === "actual" &&
+      sortAssessRowsToMatchActual({cells, range}) as [{id}] ||
+      range.rows
+  );
   assert(range, "getCellsValidationFromRangeValidation() missing range value");
   //const { rows } = range;
   const cellsValidation = rows.reduce((cells, row, index) => (
@@ -232,6 +236,11 @@ export const getCellsValidation = ({ cells, validation }) => {
 };
 
 export const scoreCells = ({ cells, validation }) => {
+  console.log(
+    "scoreCells()",
+    "cells=" + JSON.stringify(cells, null, 2),
+    "validation=" + JSON.stringify(validation, null, 2),
+  );
   const cellsValidation = getCellsValidation({cells, validation});
   return Object.keys(cellsValidation).reduce((cells, cellName) => (
     {
@@ -246,7 +255,6 @@ export const scoreCells = ({ cells, validation }) => {
 
 const applyModelRules = (cellExprs, state, value, validation) => {
   const cells = getCells(cellExprs, state);
-  // TODO score cells here.
   const scoredCells = scoreCells({ cells: value.cells, validation });
   const { doc, selection } = state;
   const { lastFocusedCell } = value;
