@@ -125,7 +125,7 @@ const equivValue = (actual, expected) => (
   actual !== undefined && actual === expected || false
 );
 
-const scoreCell = ({ method, expected, points = 1 }, {val, formula}) => (
+const scoreCell = ({ method, expected, points = 1 }, {val, formula} = {val:undefined, formula:undefined}) => (
   method === "formula" && equivFormula(formula, expected) && points ||
     method === "value" && equivValue(val, expected) && points ||
   0
@@ -246,18 +246,15 @@ export const scoreCells = ({ cells, validation }) => {
     "validation=" + JSON.stringify(validation, null, 2),
   );
   const cellsValidation = getCellsValidation({cells, validation});
-  return Object.keys(cellsValidation).reduce((cells, cellName) => {
-    const score = scoreCell(cellsValidation[cellName].attrs.assess, cells[cellName]);
-    return (
-      score !== undefined && {
-        ...cells,
-        [cellName]: cells[cellName] && {
-          ...cells[cellName],
-          score,
-        } || undefined,
-      } || cells
-    )
-  }, cells);
+  return Object.keys(cellsValidation).reduce((cells, cellName) => (
+    {
+      ...cells,
+      [cellName]: cells[cellName] && {
+        ...cells[cellName],
+        score: scoreCell(cellsValidation[cellName].attrs.assess, cells[cellName]),
+      } || undefined,
+    }
+  ), cells);
 };
 
 const applyModelRules = (cellExprs, state, value, validation) => {
