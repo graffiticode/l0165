@@ -176,7 +176,11 @@ const getCellColor = (cell) => {
 
 const sortAssessRowsToMatchActual = ({ cells, range }) => {
   const { primaryColumn, rows } = range;
-  const order = Object.keys(cells).map(name => name.slice(0, 1) === primaryColumn && cells[name].val || null).filter(x => x !== null);
+  const order = Object.keys(cells).sort((a, b) => +a.slice(1) - +b.slice(1)).map(
+    name => (
+      name.slice(0, 1) === primaryColumn && (cells[name].text || cells[name].val) || null
+    )
+  ).filter(x => x !== null);
   const dataMap = new Map(rows.map(row => [row[primaryColumn]?.text, row]));
   const sortedRows = order.map(id => (id !== null ? dataMap.get(id) || null : null));
   console.log(
@@ -242,15 +246,18 @@ export const scoreCells = ({ cells, validation }) => {
     "validation=" + JSON.stringify(validation, null, 2),
   );
   const cellsValidation = getCellsValidation({cells, validation});
-  return Object.keys(cellsValidation).reduce((cells, cellName) => (
-    {
-      ...cells,
-      [cellName]: cells[cellName] && {
-        ...cells[cellName],
-        score: scoreCell(cellsValidation[cellName].attrs.assess, cells[cellName]),
-      } || undefined,
-    }
-  ), cells);
+  return Object.keys(cellsValidation).reduce((cells, cellName) => {
+    const score = scoreCell(cellsValidation[cellName].attrs.assess, cells[cellName]);
+    return (
+      score !== undefined && {
+        ...cells,
+        [cellName]: cells[cellName] && {
+          ...cells[cellName],
+          score,
+        } || undefined,
+      } || cells
+    )
+  }, cells);
 };
 
 const applyModelRules = (cellExprs, state, value, validation) => {

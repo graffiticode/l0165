@@ -16,11 +16,6 @@ const rowInRange = (range, cellName) => {
 const getPrimaryColumn = (rows, cellName) => {
   // Check rows to see if cellName is included.
   // If so, return the index col.
-  console.log(
-    "getPrimaryColumn()",
-    "rows=" + JSON.stringify(rows, null, 2),
-    "cellName=" + cellName,
-  );
   const range = rows && Object.keys(rows).find(key =>
     (key === "*" || rowInRange(key, cellName)) && key
   ) || "*";
@@ -53,35 +48,37 @@ const getValidation = ({rows, cells}) => (
   ),
   Object.keys(cells).reduce((obj, key) => {
     const [rowRange, primaryColumn] = getPrimaryColumn(rows, key);
-    console.log(
-      "getValidation()",
-      "primaryColumn=" + primaryColumn,
-      "range=" + JSON.stringify(rows[rowRange], null, 2),
-    );
-    // const cell = cells[key]?.attrs?.assess && {
-    //   ...cells[key].attrs.assess,
-    //   index: {
-    //     cellName: primaryColumn + key.slice(1),
-    //     ...getIndexCell(cells, primaryColumn, key),
-    //   },
-    // } || undefined;
+    // console.log(
+    //   "getValidation()",
+    //   "primaryColumn=" + primaryColumn,
+    //   "key=" + key,
+    //   "range=" + JSON.stringify(rows[rowRange], null, 2),
+    // );
     const cell = cells[key];
     const col = key.slice(0, 1);
     const rowIndex = +key.slice(1) - 1;
     const order = rows[rowRange]?.assess?.order || "expected";  // "actual", "asc", "desc", "expected" (default)
     const row = obj.ranges[rowRange]?.rows[rowIndex] || {}
+    // Replace the current row in rows
+    const newRows = obj.ranges[rowRange]?.rows || [];
+    // const newRows = row.toSpliced(rowIndex, 1, {
+    //   ...row,
+    //   id: order !== "actual" && rowIndex + 1 || undefined,
+    //   [col]: cell,
+    // });
+    newRows[rowIndex] = {
+      ...row,
+      id: order !== "actual" && rowIndex + 1 || undefined,
+      [col]: cell,
+    };
     console.log(
       "getValidation()",
       "col=" + col,
       "rowIndex=" + rowIndex,
       "row=" + JSON.stringify(row, null, 2),
       "cell=" + JSON.stringify(cell, null, 2),
+      "newRows=" + JSON.stringify(newRows, null, 2),
     );
-    const newRows = (obj.ranges[rowRange]?.rows || []).toSpliced(rowIndex, 1, {
-      ...row,
-      id: order !== "actual" && rowIndex + 1 || undefined,
-      [col]: cell,
-    });
     return {
       ...obj,
       points: obj.points + (cells[key]?.attrs?.assess && (cells[key]?.attrs?.assess?.points || 1) || 0),
@@ -93,17 +90,6 @@ const getValidation = ({rows, cells}) => (
           rows: newRows,
         },
       },
-      // cells: {
-      //   ...obj.cells,
-      //   [key]: assess,
-      //   // cells[key]?.attrs?.assess && {
-      //   //   ...cells[key].attrs.assess,
-      //   //   index: {
-      //   //     cellName: primaryColumn + key.slice(1),
-      //   //     ...getIndexCell(cells, primaryColumn, key),
-      //   //   },
-      //   // } || undefined,
-      // },
     }
   }, {points: 0, ranges: {}, cells: {}})
 );
