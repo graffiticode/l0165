@@ -174,14 +174,43 @@ const getCellColor = (cell) => {
   ) || background || null;
 };
 
-const sortAssessRowsToMatchActual = ({ cells, range }) => {
-  const { primaryColumn, rows } = range;
+const getCellValue = cell => (
+  console.log(
+    "getCellValue()",
+    "cell=" + JSON.stringify(cell, null, 2),
+  ),
+  cell.text || cell.val
+);
+
+const getExpectedCellValue = cell => (
+  console.log(
+    "getExpectedCellValue()",
+    "cell=" + JSON.stringify(cell, null, 2),
+  ),
+  cell?.text || cell?.attrs?.assess?.expected
+);
+
+const getActualOrder = ({cells, primaryColumn}) => {
   const order = Object.keys(cells).sort((a, b) => +a.slice(1) - +b.slice(1)).map(
     name => (
-      name.slice(0, 1) === primaryColumn && (cells[name].text || cells[name].val) || null
+      name.slice(0, 1) === primaryColumn && (getCellValue(cells[name]) || "<empty>") || null
     )
   ).filter(x => x !== null);
-  const dataMap = new Map(rows.map(row => [row[primaryColumn]?.text, row]));
+  const seen = new Set();
+  return order.map(item => {
+    // Mark dups for error.
+    if (seen.has(item)) {
+      return null;
+    }
+    seen.add(item);
+    return item;
+  }).filter(x => x !== null);
+}
+
+const sortAssessRowsToMatchActual = ({ cells, range }) => {
+  const { primaryColumn, rows } = range;
+  const order = getActualOrder({cells, primaryColumn});
+  const dataMap = new Map(rows.map(row => [getExpectedCellValue(row[primaryColumn]), row]));
   const sortedRows = order.map(id => (id !== null ? dataMap.get(id) || null : null));
   console.log(
     "sortAssessRowsToMatchActual()",
@@ -192,7 +221,6 @@ const sortAssessRowsToMatchActual = ({ cells, range }) => {
 }
 
 const getCellsValidationFromRangeValidation = ({ cells, range }) => {
-  // TODO shape validation based on given cells if order === "actual".
   console.log(
     "getCellsValidationFromRangeValidation()",
     "cells=" + JSON.stringify(cells, null, 2),
@@ -204,8 +232,8 @@ const getCellsValidationFromRangeValidation = ({ cells, range }) => {
       range.rows
   );
   assert(range, "getCellsValidationFromRangeValidation() missing range value");
-  //const { rows } = range;
   const cellsValidation = rows.reduce((cells, row, index) => (
+    // TODO mark holes as errors.
     index = row?.id || index + 1,
     row && Object.keys(row).forEach(key => (
       row[key]?.attrs?.assess && (cells[key + index] = row[key])
