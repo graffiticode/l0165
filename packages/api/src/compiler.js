@@ -26,12 +26,6 @@ const getIndexCell = (cells, colName, cellName) => (
   // Get the cell of the index col for the same row as cellName.
   // If there is an assess field, return it.
   // If not, then return null.
-  console.log(
-    "getIndexCell()",
-    "cells=" + JSON.stringify(cells, null, 2),
-    "colName=" + colName,
-    "cellName=" + cellName,
-  ),
   cells[colName + cellName.slice(1)]
 );
 
@@ -41,19 +35,8 @@ const getIndexCell = (cells, colName, cellName) => (
 
 const getValidation = ({rows, cells}) => (
   // TODO compile the index column and value for each validated cell.
-  console.log(
-    "getValidation()",
-    "rows=" + JSON.stringify(rows, null, 2),
-    "cells=" + JSON.stringify(cells, null, 2),
-  ),
   Object.keys(cells).reduce((obj, key) => {
     const [rowRange, primaryColumn] = getPrimaryColumn(rows, key);
-    // console.log(
-    //   "getValidation()",
-    //   "primaryColumn=" + primaryColumn,
-    //   "key=" + key,
-    //   "range=" + JSON.stringify(rows[rowRange], null, 2),
-    // );
     const cell = cells[key];
     const col = key.slice(0, 1);
     const rowIndex = +key.slice(1) - 1;
@@ -71,14 +54,6 @@ const getValidation = ({rows, cells}) => (
       id: order !== "actual" && rowIndex + 1 || undefined,
       [col]: cell,
     };
-    console.log(
-      "getValidation()",
-      "col=" + col,
-      "rowIndex=" + rowIndex,
-      "row=" + JSON.stringify(row, null, 2),
-      "cell=" + JSON.stringify(cell, null, 2),
-      "newRows=" + JSON.stringify(newRows, null, 2),
-    );
     return {
       ...obj,
       points: obj.points + (cells[key]?.attrs?.assess && (cells[key]?.attrs?.assess?.points || 1) || 0),
@@ -110,11 +85,6 @@ export class Transformer extends BasisTransformer {
   TABLE(node, options, resume) {
     this.visit(node.elts[0], options, async (e0, v0) => {
       this.visit(node.elts[1], options, async (e1, v1) => {
-        console.log(
-          "TABLE",
-          "v0=" + JSON.stringify(v0, null, 2),
-          "v1=" + JSON.stringify(v1, null, 2),
-        );
         const data = options?.data || {};
         const err = [];
         const val = {
@@ -125,10 +95,6 @@ export class Transformer extends BasisTransformer {
           },
           ...v1,
         };
-        console.log(
-          "TABLE",
-          "val=" + JSON.stringify(val, null, 2),
-        );
         resume(err, val);
       });
     });

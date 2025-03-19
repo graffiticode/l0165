@@ -175,30 +175,25 @@ const getCellColor = (cell) => {
 };
 
 const getCellValue = cell => (
-  console.log(
-    "getCellValue()",
-    "cell=" + JSON.stringify(cell, null, 2),
-  ),
   cell.text || cell.val
 );
 
 const getExpectedCellValue = cell => (
-  console.log(
-    "getExpectedCellValue()",
-    "cell=" + JSON.stringify(cell, null, 2),
-  ),
   cell?.text || cell?.attrs?.assess?.expected
 );
 
 const getActualOrder = ({cells, primaryColumn}) => {
-  const order = Object.keys(cells).sort((a, b) => +a.slice(1) - +b.slice(1)).map(
-    name => (
-      name.slice(0, 1) === primaryColumn && (getCellValue(cells[name]) || "<empty>") || null
-    )
-  ).filter(x => x !== null);
+  const primaryColumnCellNames = (
+    Object.keys(cells).sort((a, b) => +a.slice(1) - +b.slice(1)).map(name => (
+      name.slice(0, 1) === primaryColumn && name || null
+    )).filter(x => x !== null)
+  );
+  const order = primaryColumnCellNames.map(
+    name => getCellValue(cells[name]) || null
+  );
   const seen = new Set();
   return order.map(item => {
-    // Mark dups for error.
+    // Remove dups.
     if (seen.has(item)) {
       return null;
     }
@@ -212,20 +207,10 @@ const sortAssessRowsToMatchActual = ({ cells, range }) => {
   const order = getActualOrder({cells, primaryColumn});
   const dataMap = new Map(rows.map(row => [getExpectedCellValue(row[primaryColumn]), row]));
   const sortedRows = order.map(id => (id !== null ? dataMap.get(id) || null : null));
-  console.log(
-    "sortAssessRowsToMatchActual()",
-    "order=" + JSON.stringify(order),
-    "sortedRows=" + JSON.stringify(sortedRows, null, 2),
-  );
   return sortedRows;
 }
 
 const getCellsValidationFromRangeValidation = ({ cells, range }) => {
-  console.log(
-    "getCellsValidationFromRangeValidation()",
-    "cells=" + JSON.stringify(cells, null, 2),
-    "range=" + JSON.stringify(range, null, 2),
-  );
   const rows = (
     range.order === "actual" &&
       sortAssessRowsToMatchActual({cells, range}) as [{id}] ||
@@ -240,10 +225,6 @@ const getCellsValidationFromRangeValidation = ({ cells, range }) => {
     )),
     cells
   ), {});
-  console.log(
-    "getCellsValidationFromRangeValidation()",
-    "cellsValidation=" + JSON.stringify(cellsValidation, null, 2),
-  );
   return cellsValidation;
 };
 
@@ -268,11 +249,6 @@ export const getCellsValidation = ({ cells, validation }) => {
 };
 
 export const scoreCells = ({ cells, validation }) => {
-  console.log(
-    "scoreCells()",
-    "cells=" + JSON.stringify(cells, null, 2),
-    "validation=" + JSON.stringify(validation, null, 2),
-  );
   const cellsValidation = getCellsValidation({cells, validation});
   return Object.keys(cellsValidation).reduce((cells, cellName) => (
     {
@@ -1196,7 +1172,6 @@ export const TableEditor = ({ state }) => {
     });
     setEditorView(editorView);
     return () => {
-      console.log("editorView.destroy()");
       if (editorView) {
         editorView.destroy();
       }
