@@ -1323,19 +1323,24 @@ const applyRules = ({ cols, rows }) => {
 };
 
 const getCell = (row, col, cells) => (
-  col === "_" && row !== 0 && {
+  (row === 0 && col === "_") && {
+    type: "th",
+    text: "",  // Empty text for top-left corner
+    attrs: { readonly: "true" }
+  } ||
+  (col === "_" && row !== 0) && {
     type: "th",
     text: row,
     attrs: { readonly: "true" }
   } ||
-  row === 0 && col !== "_" && {
+  (row === 0 && col !== "_") && {
     type: "th",
     text: col,
     attrs: { readonly: "true" }
   } ||
-    row !== 0 && col !== "_" && cells[`${col}${row}`] && {
-      type: "td",
-      ...cells[`${col}${row}`],
+  (row !== 0 && col !== "_" && cells[`${col}${row}`]) && {
+    type: "td",
+    ...cells[`${col}${row}`],
   } || {}
 );
 
@@ -1445,8 +1450,9 @@ export const TableEditor = ({ state }) => {
       editorView.updateState(newEditorState);
       const { pos } = getCellNodeByName({state: newEditorState, name: "A1"});
       if (!pos) return;
-      const resolvedPos = newEditorState.doc.resolve(pos);
+      const resolvedPos = newEditorState.doc.resolve(pos + 1); // +1 to position cursor inside the cell
       editorView.dispatch(editorView.state.tr.setSelection(new TextSelection(resolvedPos)));
+      // editorView.focus();
     }
   }, [editorView, columns, cells]);
   return (
