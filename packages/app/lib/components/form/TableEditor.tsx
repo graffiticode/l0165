@@ -51,9 +51,9 @@ import {
 //   toggleHeaderRow,
 //   toggleHeaderColumn,
 //   toggleHeaderCell,
-  goToNextCell,
-  //   deleteTable,
-  //findCell,
+//   goToNextCell,
+//   deleteTable,
+//   findCell,
   TableMap,
 } from "prosemirror-tables";
 import {
@@ -207,6 +207,11 @@ const sortAssessRowsToMatchActual = ({ cells, range }) => {
   const order = getActualOrder({cells, primaryColumn});
   const dataMap = new Map(rows.map(row => [getExpectedCellValue(row[primaryColumn]), row]));
   const sortedRows = order.map(id => (id !== null ? dataMap.get(id) || null : null));
+  console.log(
+    "sortAssessRowsToMatchActual()",
+    "order=" + JSON.stringify(order, null, 2),
+    "sortedRows=" + JSON.stringify(sortedRows, null, 2),
+  );
   return sortedRows;
 }
 
@@ -240,6 +245,142 @@ const getRangeValidations = ({ cells, validation }) => {
   }];
 };
 
+// Determine if a position is within a header cell
+const isPosInHeader = (state, pos) => {
+  if (pos === null) return false;
+  const $pos = state.doc.resolve(pos);
+  for (let depth = $pos.depth; depth > 0; depth--) {
+    const node = $pos.node(depth);
+    if (node.type.name === "table_header") {
+      return true;
+    }
+  }
+  return false;
+};
+
+// Function to find the next non-header cell in the table
+const findNextDataCell = (state, dir) => {
+  const { doc, selection } = state;
+  const $pos = selection.$anchor;
+  const table = findTable($pos);
+
+  if (!table) return null;
+
+  const tableNode = doc.nodeAt(table.pos);
+  const tableMap = TableMap.get(tableNode);
+  const width = tableMap.width;
+  const height = tableMap.height;
+
+  // Get current cell position within the table
+  const cellPos = $pos.pos - table.pos - 1;
+
+  // Find the map index that contains our position
+  let currentMapIndex = -1;
+  for (let i = 0; i < tableMap.map.length; i++) {
+    if (tableMap.map[i] <= cellPos && (i === tableMap.map.length - 1 || tableMap.map[i + 1] > cellPos)) {
+      currentMapIndex = i;
+      break;
+    }
+  }
+
+  if (currentMapIndex === -1) {
+    // Fallback to the first data cell if we can't determine current position
+    return tableMap.map[width + 1] + table.pos + 1; // B2 cell (row 1, col 1)
+  }
+
+  // Calculate row and column
+  const row = Math.floor(currentMapIndex / width);
+  const col = currentMapIndex % width;
+
+  // Determine the next position based on direction
+  if (dir > 0) { // Forward (Tab, Right, Down)
+    // Try to find next cell in the same row
+    for (let c = col + 1; c < width; c++) {
+      const nextIndex = row * width + c;
+
+      // Skip if it's a header cell (first row or first column)
+      if (row > 0 && c > 0 && nextIndex < tableMap.map.length) {
+        return tableMap.map[nextIndex] + table.pos + 1;
+      }
+    }
+
+    // If we reached the end of the row, go to the next row
+    for (let r = row + 1; r < height; r++) {
+      // Start from first non-header column (col 1, which is B)
+      for (let c = 1; c < width; c++) {
+        const nextIndex = r * width + c;
+
+        // Skip if it's a header cell (first row or first column)
+        if (r > 0 && c > 0 && nextIndex < tableMap.map.length) {
+          return tableMap.map[nextIndex] + table.pos + 1;
+        }
+      }
+    }
+
+    // If we're at the last cell, wrap around to the first data cell
+    return tableMap.map[width + 1] + table.pos + 1; // B2 (row 1, col 1)
+
+  } else { // Backward (Shift-Tab, Left, Up)
+    // Try to find previous cell in the same row
+    for (let c = col - 1; c > 0; c--) {
+      const nextIndex = row * width + c;
+
+      // Skip if it's a header cell (first row or first column)
+      if (row > 0 && c > 0 && nextIndex < tableMap.map.length) {
+        return tableMap.map[nextIndex] + table.pos + 1;
+      }
+    }
+
+    // If we reached the start of the row, go to the previous row
+    for (let r = row - 1; r > 0; r--) {
+      // Go from right to left for previous row
+      for (let c = width - 1; c > 0; c--) {
+        const nextIndex = r * width + c;
+
+        // Skip if it's a header cell (first row or first column)
+        if (r > 0 && c > 0 && nextIndex < tableMap.map.length) {
+          return tableMap.map[nextIndex] + table.pos + 1;
+        }
+      }
+    }
+
+    // If we're at the first cell, wrap around to the last data cell
+    for (let r = height - 1; r > 0; r--) {
+      for (let c = width - 1; c > 0; c--) {
+        const nextIndex = r * width + c;
+        if (nextIndex < tableMap.map.length) {
+          return tableMap.map[nextIndex] + table.pos + 1;
+        }
+      }
+    }
+
+    // Fallback to the last valid cell
+    return tableMap.map[tableMap.map.length - 1] + table.pos + 1;
+  }
+};
+
+// Skip headers in navigation
+const skipHeadersGoToNextCell = dir => (state, dispatch) => {
+  // Find the next non-header cell position
+  const nextPos = findNextDataCell(state, dir);
+
+  if (nextPos !== null && dispatch) {
+    // Create a text selection at the next position
+    const tr = state.tr;
+    const doc = tr.doc;
+    const $nextPos = doc.resolve(nextPos);
+    const selection = TextSelection.near($nextPos);
+
+    // Update the selection and dispatch the transaction
+    dispatch(tr.setSelection(selection));
+
+    return true;
+  }
+
+  return false;
+};
+
+
 export const getCellsValidation = ({ cells, validation }) => {
   const rangeValidations = getRangeValidations({cells, validation});
   const cellsValidations = rangeValidations.map(rangeValidation => (
@@ -250,6 +391,11 @@ export const getCellsValidation = ({ cells, validation }) => {
 
 export const scoreCells = ({ cells, validation }) => {
   const cellsValidation = getCellsValidation({cells, validation});
+  console.log(
+    "scoreCells()",
+    "cells=" + JSON.stringify(cells, null, 2),
+    "cellsVaidation=" + JSON.stringify(cellsValidation, null, 2),
+  );
   return Object.keys(cellsValidation).reduce((cells, cellName) => (
     {
       ...cells,
@@ -264,6 +410,10 @@ export const scoreCells = ({ cells, validation }) => {
 const applyModelRules = (cellExprs, state, value, validation) => {
   const cells = getCells(cellExprs, state);
   const scoredCells = scoreCells({ cells: value.cells, validation });
+  console.log(
+    "applyModelRules()",
+    "scoredCells=" + JSON.stringify(scoredCells, null, 2),
+  );
   const { doc, selection } = state;
   const { lastFocusedCell } = value;
   // Multiply first row and first column values and compare to body values.
@@ -294,7 +444,7 @@ const applyModelRules = (cellExprs, state, value, validation) => {
           `font-weight: ${cell.fontWeight || "normal"}; text-align: ${cell.justify || "right"}; border: 2px solid royalblue;` ||
           `font-weight: ${cell.fontWeight || "normal"}; text-align: ${cell.justify || "right"}; border: 1px solid #ddd;`
       ),
-      color: (cell.col === 1 || cell.row === 1) && "#fff" ||
+      color: (cell.col === 1 || cell.row === 1) && "#f8f8f8" || // Light gray background for headers
         cellColors[cell.row][cell.col] || "#fff"
     }
   ));
@@ -405,8 +555,11 @@ const schema = new Schema({
             return dom.dataset.readonly || null;
           },
           setDOMAttr(value, attrs) {
-            if (value)
+            if (value) {
               attrs['data-readonly'] = value;
+              // Add a CSS class to visually indicate read-only status
+              attrs.class = (attrs.class || '') + ' readonly-cell';
+            }
           },
         },
         background: {
@@ -634,24 +787,22 @@ const getCellDependencies = ({ env, names }) => {
 
 const makeTableHeadersReadOnlyPlugin = new Plugin({
   props: {
-    handleClickOn(view, pos, node, nodePos, event, direct) {
-      pos = pos;
-      nodePos = nodePos;
-      event = event;
-      direct = direct;
+    handleClickOn(view, _pos, node, _nodePos, _event, _direct) {
       const { state, dispatch } = view;
 
       // Check if the clicked node is a `table_header`
       if (node.type.name === "table_header") {
-        // Create a CellSelection for the clicked cell
+        // Create a selection for the adjacent cell instead
         const name = node.attrs.name || "_0";
         const { pos: adjPos, node: adjNode } = getAdjacentCellNodeByName({state, name});
-        const cursorPos = adjPos + 2;
-        const newText = adjNode.textContent;
-        const selection = TextSelection.create(state.tr.doc, cursorPos + newText.length);
+        if (adjPos && adjNode) {
+          const cursorPos = adjPos + 2;
+          const newText = adjNode.textContent;
+          const selection = TextSelection.create(state.tr.doc, cursorPos + newText.length);
 
-        // Dispatch the transaction to update the selection
-        dispatch(state.tr.setSelection(selection));
+          // Dispatch the transaction to update the selection
+          dispatch(state.tr.setSelection(selection));
+        }
         return true; // Prevent further handling
       }
 
@@ -660,52 +811,150 @@ const makeTableHeadersReadOnlyPlugin = new Plugin({
 
     handleDOMEvents: {
       beforeinput(view, event) {
-        const { state } = view;
-        const { selection } = state;
-        const $pos = selection.$anchor;
+        if (isInsideTableHeader(view.state)) {
+          event.preventDefault();
+          return true;
+        }
+        return false;
+      },
+      keydown(view, event) {
+        const { state, dispatch } = view;
 
-        for (let depth = $pos.depth; depth > 0; depth--) {
-          const node = $pos.node(depth);
-          if (node.type.name === "table_header") {
-            event.preventDefault();
+        // Check if we're in a header cell already
+        if (isInsideTableHeader(state)) {
+          event.preventDefault();
+
+          // If it's tab, use our reliable tab handler
+          if (event.key === 'Tab') {
+            const dir = event.shiftKey ? -1 : 1;
+            skipHeadersGoToNextCell(dir)(state, dispatch);
             return true;
           }
+
+          // For all other cases, try to move to B2 (first data cell)
+          const { pos } = getCellNodeByName({state, name: "B2"});
+          if (pos) {
+            const tr = state.tr;
+            const resolvedPos = state.doc.resolve(pos);
+            // Mark this as our redirected transaction to prevent recursion
+            tr.setMeta("_headerRedirect", true);
+            tr.setSelection(new TextSelection(resolvedPos));
+            dispatch(tr);
+          }
+
+          return true; // Prevent default handling
+        }
+
+        // For all navigation keys, check if they would move into a header
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
+          // Get current position
+          const $pos = state.selection.$anchor;
+          const table = findTable($pos);
+
+          if (table) {
+            const tableNode = state.doc.nodeAt(table.pos);
+            const tableMap = TableMap.get(tableNode);
+            const width = tableMap.width;
+
+            // Get current cell position
+            const cellPos = $pos.pos - table.pos - 1;
+            let currentMapIndex = -1;
+            for (let i = 0; i < tableMap.map.length; i++) {
+              if (tableMap.map[i] <= cellPos && (i === tableMap.map.length - 1 || tableMap.map[i + 1] > cellPos)) {
+                currentMapIndex = i;
+                break;
+              }
+            }
+
+            if (currentMapIndex !== -1) {
+              const row = Math.floor(currentMapIndex / width);
+              const col = currentMapIndex % width;
+              const height = tableMap.height;
+
+              // Check if the move would end up in a header
+              if ((event.key === 'ArrowUp' && row === 1) ||
+                  (event.key === 'ArrowLeft' && col === 1)) {
+                event.preventDefault();
+                return true; // Block the navigation
+              }
+
+              // Block navigation at edges to prevent wrapping to headers
+              if ((event.key === 'ArrowRight' && col === width - 1) ||
+                  (event.key === 'ArrowDown' && row === height - 1)) {
+                event.preventDefault();
+                return true; // Block navigation at the edge
+              }
+            }
+          }
+        }
+
+        return false;
+      },
+      copy(_view, _event) {
+        // Still allow copying from headers
+        return false;
+      },
+      paste(view, event) {
+        if (isInsideTableHeader(view.state)) {
+          event.preventDefault();
+          return true;
+        }
+        return false;
+      },
+      cut(view, event) {
+        if (isInsideTableHeader(view.state)) {
+          event.preventDefault();
+          return true;
         }
         return false;
       }
-    },
-
-    // handleKeyDown(view, event) {
-    //   const { state } = view;
-    //   const { selection } = state;
-    //   const $pos = selection.$anchor;
-
-    //   for (let depth = $pos.depth; depth > 0; depth--) {
-    //     const node = $pos.node(depth);
-    //     if (node.type.name === "table_header") {
-    //       event.preventDefault(); // Block key event
-    //       return true; // Stop further handling
-    //     }
-    //   }
-    //   return false; // Allow other key events
-    // }
+    }
   },
 
   filterTransaction(tr, state) {
-    const { selection } = state;
-    const $pos = selection.$anchor;
+    // Skip our own redirected transactions - add a meta flag to prevent recursion
+    if (tr.getMeta("_headerRedirect")) {
+      return true;
+    }
 
-    for (let depth = $pos.depth; depth > 0; depth--) {
-      const node = $pos.node(depth);
-      if (node.type.name === "table_header") {
-        if (tr.steps.length > 0) {
-          return false;
+    // Check if this transaction would modify content inside a table header
+    if (tr.steps.length > 0 && isInsideTableHeader(state)) {
+      // Block content modification transactions, but allow selection changes
+      const isSelectionOnly = tr.steps.every(step => step.toJSON().stepType === "setSelection");
+      return isSelectionOnly;
+    }
+
+    // For selection-only transactions, check if they would land in a header
+    // WITHOUT applying the transaction (which would cause recursion)
+    if (tr.selectionSet) {
+      // Check if this would land in a header by examining the position directly
+      const $pos = tr.selection.$anchor;
+      if ($pos) {
+        for (let depth = $pos.depth; depth > 0; depth--) {
+          const node = $pos.node(depth);
+          if (node && node.type.name === "table_header") {
+            return false; // Cancel the transaction
+          }
+        }
+
+        // Also check if this is an attempt to wrap around the table
+        // by preventing selection of cell at position 0,0
+        if ($pos.pos === 1) {
+          return false; // Cancel any transaction that tries to select the first position
         }
       }
     }
+
     return true;
   }
 });
+
+// Helper function to check if current selection is inside a table header
+function isInsideTableHeader(state) {
+  const { selection } = state;
+  return isPosInHeader(state, selection.$anchor.pos);
+}
+
 
 const getResponses = cells => (
   Object.keys(cells).reduce(
@@ -1017,6 +1266,8 @@ const buildCell = ({ col, row, attrs, colsAttrs }) => {
       width: "50px",
       height: "24px",
       background,
+      // Set readonly attribute for header cells
+      readonly: isHeader ? "true" : null,
       ...colsAttrs[col],
       ...cell.attrs,
     },
@@ -1074,11 +1325,13 @@ const applyRules = ({ cols, rows }) => {
 const getCell = (row, col, cells) => (
   col === "_" && row !== 0 && {
     type: "th",
-    text: row
+    text: row,
+    attrs: { readonly: "true" }
   } ||
   row === 0 && col !== "_" && {
     type: "th",
-    text: col
+    text: col,
+    attrs: { readonly: "true" }
   } ||
     row !== 0 && col !== "_" && cells[`${col}${row}`] && {
       type: "td",
@@ -1136,9 +1389,10 @@ export const TableEditor = ({ state }) => {
     keymap({"Mod-z": undo, "Mod-y": redo}),
     keymap({
       ...baseKeymap,
-      Enter: goToNextCell(1),
-      Tab: goToNextCell(1),
-      'Shift-Tab': goToNextCell(-1),
+      Tab: skipHeadersGoToNextCell(1),
+      'Shift-Tab': skipHeadersGoToNextCell(-1),
+      Enter: skipHeadersGoToNextCell(1),
+      // Use simpler arrow handlers - let the plugin's keydown handler do the header prevention
     }),
     menuPlugin,
     //  modelBackgroundPlugin(),

@@ -106,3 +106,13 @@ main {
   background: rgba(200, 200, 255, 0.4);
   pointer-events: none;
 }
+
+/* Style for read-only cells */
+.ProseMirror th,
+.ProseMirror .readonly-cell {
+  background-color: #f8f8f8;
+  font-weight: 600;
+  color: #666;
+  cursor: default;
+  user-select: none;
+}
