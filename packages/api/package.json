@@ -10,8 +10,8 @@
     "coverage": "nyc npm run test",
     "lint": "eslint src/ tools/",
     "lint:fix": "eslint --fix src/ tools/",
-    "build-docs": "npx spec-md ./docs/docs.md > ./public/docs.html",
-    "watch-docs": "npx nodemon --exec 'npx spec-md > ./public/docs.html' ./docs/docs.md"
+    "build-spec": "npx spec-md ./spec/spec.md > ./public/spec.html",
+    "watch-spec": "npx nodemon --exec 'npx spec-md > ./public/spec.html' ./spec/spec.md"
   },
   "dependencies": {
     "@graffiticode/auth": "^2.1.2",
