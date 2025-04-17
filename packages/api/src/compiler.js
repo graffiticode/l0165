@@ -77,6 +77,36 @@ export class Checker extends BasisChecker {
       resume(err, val);
     });
   }
+
+  CELLS(node, options, resume) {
+    this.visit(node.elts[0], options, async (e0, v0) => {
+      this.visit(node.elts[1], options, async (e1, v1) => {
+        const err = [];
+        const val = node;
+        resume(err, val);
+      });
+    });
+  }
+
+  ROWS(node, options, resume) {
+    this.visit(node.elts[0], options, async (e0, v0) => {
+      this.visit(node.elts[1], options, async (e1, v1) => {
+        const err = [];
+        const val = node;
+        resume(err, val);
+      });
+    });
+  }
+
+  COLUMNS(node, options, resume) {
+    this.visit(node.elts[0], options, async (e0, v0) => {
+      this.visit(node.elts[1], options, async (e1, v1) => {
+        const err = [];
+        const val = node;
+        resume(err, val);
+      });
+    });
+  }
 }
 
 const MAX_LIMIT = 249;
@@ -93,6 +123,45 @@ export class Transformer extends BasisTransformer {
             type: "table",
             ...v0,
           },
+          ...v1,
+        };
+        resume(err, val);
+      });
+    });
+  }
+
+  CELLS(node, options, resume) {
+    this.visit(node.elts[0], options, async (e0, v0) => {
+      this.visit(node.elts[1], options, async (e1, v1) => {
+        const err = [];
+        const val = {
+          cells: v0,
+          ...v1,
+        };
+        resume(err, val);
+      });
+    });
+  }
+
+  ROWS(node, options, resume) {
+    this.visit(node.elts[0], options, async (e0, v0) => {
+      this.visit(node.elts[1], options, async (e1, v1) => {
+        const err = [];
+        const val = {
+          rows: v0,
+          ...v1,
+        };
+        resume(err, val);
+      });
+    });
+  }
+
+  COLUMNS(node, options, resume) {
+    this.visit(node.elts[0], options, async (e0, v0) => {
+      this.visit(node.elts[1], options, async (e1, v1) => {
+        const err = [];
+        const val = {
+          columns: v0,
           ...v1,
         };
         resume(err, val);
