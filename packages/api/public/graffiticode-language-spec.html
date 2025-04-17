@@ -174,6 +174,9 @@ end
 <li><strong>Strict evaluation</strong>: arguments evaluated before function application</li>
 <li><strong>Immutable data</strong>: all values are immutable</li>
 </ul>
+<p>Many built-in functions in Graffiticode follow a model-threading pattern. In this pattern, functions are defined to take one or more arguments followed by a model, which represents the current state of the program or view. The function uses the earlier arguments to compute an update to the model and returns a new model as its result.</p>
+<p>This style enables a declarative and order-independent composition of functions. Since each function call returns a new model, multiple calls can be reordered without changing the final result, provided the functional dependencies are preserved.</p>
+<p>This approach draws inspiration from <strong>Model-View-Update</strong> (MVU) architectures, in which the model represents the application state and functions describe pure, deterministic transformations of that state.</p>
 </section>
 <section id="sec-Functions" secid="4.2">
 <h2><span class="spec-secid" title="link to this section"><a href="#sec-Functions">4.2</a></span>Functions</h2>
@@ -305,12 +308,12 @@ end
 </tr>
 <tr>
 <td align="left"><code>get</code></td>
-<td align="left"><code>&lt;record string: any&gt;</code></td>
+<td align="left"><code>&lt;string record: any&gt;</code></td>
 <td align="left">Retrieves a value from a record by key</td>
 </tr>
 <tr>
 <td align="left"><code>set</code></td>
-<td align="left"><code>&lt;record string any: record&gt;</code></td>
+<td align="left"><code>&lt;string any record: record&gt;</code></td>
 <td align="left">Returns a new record with a key set to a value</td>
 </tr>
 </tbody>
@@ -414,13 +417,13 @@ end
 <section id="sec-get" secid="5.2.17">
 <h3><span class="spec-secid" title="link to this section"><a href="#sec-get">5.2.17</a></span>get</h3>
 <p>Retrieve a record field</p>
-<pre><code>get {a: 1, b: 2} "b"  | returns 2
+<pre><code>get "b" {a: 1, b: 2}  | returns 2
 </code></pre>
 </section>
 <section id="sec-set" secid="5.2.18">
 <h3><span class="spec-secid" title="link to this section"><a href="#sec-set">5.2.18</a></span>set</h3>
 <p>Return a new record with an updated field</p>
-<pre><code>set {a: 1} "a" 2  | returns {a: 2}
+<pre><code>set "a" 2 {a: 1}  | returns {a: 2}
 </code></pre>
 </section>
 </section>
