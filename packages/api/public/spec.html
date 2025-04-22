@@ -19,11 +19,10 @@
 <div class="title">Contents</div>
 <ol>
 <li><a href="#sec-Functions"><span class="spec-secid">1</span>Functions</a><ol>
-<li><a href="#sec-table"><span class="spec-secid">1.1</span>table</a></li>
-<li><a href="#sec-cells"><span class="spec-secid">1.2</span>cells</a></li>
-<li><a href="#sec-rows"><span class="spec-secid">1.3</span>rows</a></li>
-<li><a href="#sec-columns"><span class="spec-secid">1.4</span>columns</a></li>
-<li><a href="#sec-params"><span class="spec-secid">1.5</span>params</a></li>
+<li><a href="#sec-cells"><span class="spec-secid">1.1</span>cells</a></li>
+<li><a href="#sec-rows"><span class="spec-secid">1.2</span>rows</a></li>
+<li><a href="#sec-columns"><span class="spec-secid">1.3</span>columns</a></li>
+<li><a href="#sec-params"><span class="spec-secid">1.4</span>params</a></li>
 </ol>
 </li>
 <li><a href="#sec-Program-Examples"><span class="spec-secid">2</span>Program Examples</a></li>
@@ -42,11 +41,6 @@
 </thead>
 <tbody>
 <tr>
-<td align="left"><code>table</code></td>
-<td align="left"><code>&lt;record: record&gt;</code></td>
-<td align="left">Creates a table with given content</td>
-</tr>
-<tr>
 <td align="left"><code>cells</code></td>
 <td align="left"><code>&lt;record record: record&gt;</code></td>
 <td align="left">Defines cell data and configurations</td>
@@ -64,36 +58,30 @@
 <tr>
 <td align="left"><code>params</code></td>
 <td align="left"><code>&lt;record: record&gt;</code></td>
-<td align="left">Defines parameters for the table</td>
+<td align="left">Defines parameters available as cell values</td>
 </tr>
 </tbody>
 </table>
-<section id="sec-table" secid="1.1">
-<h2><span class="spec-secid" title="link to this section"><a href="#sec-table">1.1</a></span>table</h2>
-<p>Creates a table with cells.</p>
-<pre><code>table cells {...}
-</code></pre>
-</section>
-<section id="sec-cells" secid="1.2">
-<h2><span class="spec-secid" title="link to this section"><a href="#sec-cells">1.2</a></span>cells</h2>
+<section id="sec-cells" secid="1.1">
+<h2><span class="spec-secid" title="link to this section"><a href="#sec-cells">1.1</a></span>cells</h2>
 <p>Defines cell content.</p>
 <pre><code>cells {...} {...}
 </code></pre>
 </section>
-<section id="sec-rows" secid="1.3">
-<h2><span class="spec-secid" title="link to this section"><a href="#sec-rows">1.3</a></span>rows</h2>
+<section id="sec-rows" secid="1.2">
+<h2><span class="spec-secid" title="link to this section"><a href="#sec-rows">1.2</a></span>rows</h2>
 <p>Defines row attributes.</p>
 <pre><code>rows {...} {...}
 </code></pre>
 </section>
-<section id="sec-columns" secid="1.4">
-<h2><span class="spec-secid" title="link to this section"><a href="#sec-columns">1.4</a></span>columns</h2>
+<section id="sec-columns" secid="1.3">
+<h2><span class="spec-secid" title="link to this section"><a href="#sec-columns">1.3</a></span>columns</h2>
 <p>Defines column attributes.</p>
 <pre><code>columns {...} {...}
 </code></pre>
 </section>
-<section id="sec-params" secid="1.5">
-<h2><span class="spec-secid" title="link to this section"><a href="#sec-params">1.5</a></span>params</h2>
+<section id="sec-params" secid="1.4">
+<h2><span class="spec-secid" title="link to this section"><a href="#sec-params">1.4</a></span>params</h2>
 <p>Defines parameter sets used to populate cells.</p>
 <pre><code>params {
   A1: "Fees earned",
@@ -110,59 +98,57 @@
 </section>
 <section id="sec-Program-Examples" secid="2">
 <h1><span class="spec-secid" title="link to this section"><a href="#sec-Program-Examples">2</a></span>Program Examples</h1>
-<p>Create a 2 by 2 table assessment where the rows are sorted to match the candidate&rsquo;s actual response.</p>
-<pre><code>table 
-  rows {
-    "*": {
-      assess: {
-        index: "B",
-        order: "actual", | "expected", "asc", "desc"
-      }
+<p>Create a 2 by 2 spreadsheet assessment where the rows are sorted to match the candidate&rsquo;s actual response.</p>
+<pre><code>rows {
+  "*": {
+    assess: {
+      index: "B",
+      order: "actual", | "expected", "asc", "desc"
     }
   }
-  columns {
-    A: {
-      width: 100,
-      justify: "right",
+}
+columns {
+  A: {
+    width: 100,
+    justify: "right",
+  },
+  B: {
+    width: 100,
+    justify: "left",
+  },
+}
+cells {
+  A1: {
+    text: "{{A1}}",
+    attrs: {
+      assess: {
+        method: "value",
+        expected: "{{A1}}"
+      }
     },
-    B: {
-      width: 100,
-      justify: "left",
+  },
+  A2: {
+    text: "{{A2}}",
+    attrs: {
+      assess: {
+        method: "value",
+        expected: "{{A2}}"
+      }
     },
-  }
-  cells {
-    A1: {
-      text: "{{A1}}",
-      attrs: {
-        assess: {
-          method: "value",
-          expected: "{{A1}}"
-        }
-      },
-    },
-    A2: {
-      text: "{{A2}}",
-      attrs: {
-        assess: {
-          method: "value",
-          expected: "{{A2}}"
-        }
-      },
-    },
-    B1: {
-      text: "{{B1}}",
-    },
-    B2: {
-      text: "{{B2}}",
-    },
-  }
-  params {
-    A1: "100..200: 50",
-    A2: "1000..2000: 500",
-    B1: "pigs, chickens, cows",
-    B2: "apples, oranges, bananas",
-  }
-..
+  },
+  B1: {
+    text: "{{B1}}",
+  },
+  B2: {
+    text: "{{B2}}",
+  },
+}
+params {
+  A1: "100..200: 50",
+  A2: "1000..2000: 500",
+  B1: "pigs, chickens, cows",
+  B2: "apples, oranges, bananas",
+}{}..
 </code></pre>
 </section>
 </article>
@@ -175,11 +161,10 @@ Written in <a href="https://spec-md.com" target="_blank">Spec Markdown</a>.</foo
 <ol><li id="_sidebar_1"><a href="#sec-Functions"><span class="spec-secid">1</span>Functions</a>
 <input hidden class="toggle" type="checkbox" id="_toggle_1" /><label for="_toggle_1"></label>
 <ol>
-<li id="_sidebar_1.1"><a href="#sec-table"><span class="spec-secid">1.1</span>table</a></li>
-<li id="_sidebar_1.2"><a href="#sec-cells"><span class="spec-secid">1.2</span>cells</a></li>
-<li id="_sidebar_1.3"><a href="#sec-rows"><span class="spec-secid">1.3</span>rows</a></li>
-<li id="_sidebar_1.4"><a href="#sec-columns"><span class="spec-secid">1.4</span>columns</a></li>
-<li id="_sidebar_1.5"><a href="#sec-params"><span class="spec-secid">1.5</span>params</a></li>
+<li id="_sidebar_1.1"><a href="#sec-cells"><span class="spec-secid">1.1</span>cells</a></li>
+<li id="_sidebar_1.2"><a href="#sec-rows"><span class="spec-secid">1.2</span>rows</a></li>
+<li id="_sidebar_1.3"><a href="#sec-columns"><span class="spec-secid">1.3</span>columns</a></li>
+<li id="_sidebar_1.4"><a href="#sec-params"><span class="spec-secid">1.4</span>params</a></li>
 </ol>
 </li>
 <li id="_sidebar_2"><a href="#sec-Program-Examples"><span class="spec-secid">2</span>Program Examples</a></li>

@@ -217,9 +217,9 @@ const sortAssessRowsToMatchActual = ({ cells, range }) => {
 
 const getCellsValidationFromRangeValidation = ({ cells, range }) => {
   const rows = (
-    range.order === "actual" &&
+    range?.order === "actual" &&
       sortAssessRowsToMatchActual({cells, range}) as [{id}] ||
-      range.rows
+      range?.rows || []
   );
   assert(range, "getCellsValidationFromRangeValidation() missing range value");
   const cellsValidation = rows.reduce((cells, row, index) => (
@@ -229,7 +229,7 @@ const getCellsValidationFromRangeValidation = ({ cells, range }) => {
       row[key]?.attrs?.assess && (cells[key + index] = row[key])
     )),
     cells
-  ), {});
+  ), {}) || {};
   return cellsValidation;
 };
 
@@ -240,7 +240,7 @@ const getRangeValidations = ({ cells, validation }) => {
   ));
   // TODO Handle multiple ranges. Split cells by range.
   return [{
-    range: ranges[rangeName],
+    range: ranges[rangeName] || {},
     cells,
   }];
 };
@@ -383,6 +383,12 @@ const skipHeadersGoToNextCell = dir => (state, dispatch) => {
 
 export const getCellsValidation = ({ cells, validation }) => {
   const rangeValidations = getRangeValidations({cells, validation});
+  console.log(
+    "getCellsValidation()",
+    "cells=" + JSON.stringify(cells, null, 2),
+    "validation=" + JSON.stringify(validation, null, 2),
+    "rangeValidations=" + JSON.stringify(rangeValidations, null, 2),
+  );
   const cellsValidations = rangeValidations.map(rangeValidation => (
     getCellsValidationFromRangeValidation(rangeValidation)
   ));
@@ -391,11 +397,6 @@ export const getCellsValidation = ({ cells, validation }) => {
 
 export const scoreCells = ({ cells, validation }) => {
   const cellsValidation = getCellsValidation({cells, validation});
-  console.log(
-    "scoreCells()",
-    "cells=" + JSON.stringify(cells, null, 2),
-    "cellsVaidation=" + JSON.stringify(cellsValidation, null, 2),
-  );
   return Object.keys(cellsValidation).reduce((cells, cellName) => (
     {
       ...cells,
@@ -410,10 +411,6 @@ export const scoreCells = ({ cells, validation }) => {
 const applyModelRules = (cellExprs, state, value, validation) => {
   const cells = getCells(cellExprs, state);
   const scoredCells = scoreCells({ cells: value.cells, validation });
-  console.log(
-    "applyModelRules()",
-    "scoredCells=" + JSON.stringify(scoredCells, null, 2),
-  );
   const { doc, selection } = state;
   const { lastFocusedCell } = value;
   // Multiply first row and first column values and compare to body values.
@@ -1441,7 +1438,7 @@ export const TableEditor = ({ state }) => {
   // const index = Math.floor(Math.random() * templateVariablesRecords.length);
   // const env = templateVariablesRecords[index];
   useEffect(() => {
-    if (editorView && columns && cells) {
+    if (editorView && cells) {
       const editorStateData = makeEditorState({type, columns, cells});
       const newEditorState = EditorState.fromJSON({
         schema,

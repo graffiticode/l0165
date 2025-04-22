@@ -33,7 +33,7 @@ const getIndexCell = (cells, colName, cellName) => (
 // current cell with its assess.
 // If there is no assess in the index cell, then the cell is scored as is.
 
-const getValidation = ({rows, cells}) => (
+const getValidation = ({rows = {}, cells = {}}) => (
   // TODO compile the index column and value for each validated cell.
   Object.keys(cells).reduce((obj, key) => {
     const [rowRange, primaryColumn] = getPrimaryColumn(rows, key);
@@ -112,24 +112,6 @@ export class Checker extends BasisChecker {
 const MAX_LIMIT = 249;
 
 export class Transformer extends BasisTransformer {
-  TABLE(node, options, resume) {
-    this.visit(node.elts[0], options, async (e0, v0) => {
-      this.visit(node.elts[1], options, async (e1, v1) => {
-        const data = options?.data || {};
-        const err = [];
-        const val = {
-          validation: getValidation(v0),
-          interaction: {
-            type: "table",
-            ...v0,
-          },
-          ...v1,
-        };
-        resume(err, val);
-      });
-    });
-  }
-
   CELLS(node, options, resume) {
     this.visit(node.elts[0], options, async (e0, v0) => {
       this.visit(node.elts[1], options, async (e1, v1) => {
@@ -347,10 +329,6 @@ t;
           ...v0,
         },
       };
-      console.log(
-        "PROG()",
-        "val=" + JSON.stringify(val, null, 2),
-      );
       resume(err, {
         ...val,
         ...data,
