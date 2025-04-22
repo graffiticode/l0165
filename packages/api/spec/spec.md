@@ -1,8 +1,8 @@
-# Graffiticode L0151 Vocabulary
+# Graffiticode L0165 Vocabulary
 
 This specification documents dialect-specific functions available in the
-**L0151** language of Graffiticode. These functions extend the core language
-with additional functionality tailored to L0151 use cases.
+**L0165** language of Graffiticode. These functions extend the core language
+with additional functionality tailored to L0165 use cases.
 
 The core language specification including the definition of its syntax,
 semantics and base library can be found here:

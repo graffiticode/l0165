@@ -1,17 +1,10 @@
 export const lexicon = {
-  "table" : {
-    "tk": 1,
-    "name": "TABLE",
-    "cls": "function",
-    "length": 2,
-    "arity": 2,
-  },
   "params" : {
     "tk": 1,
     "name": "PARAMS",
     "cls": "function",
-    "length": 1,
-    "arity": 1,
+    "length": 2,
+    "arity": 2,
   },
   "cells" : {
     "tk": 1,

@@ -339,7 +339,18 @@ t;
     this.visit(node.elts[0], options, async (e0, v0) => {
       const data = options?.data || {};
       const err = e0;
-      const val = v0.pop();
+      v0 = v0.pop();  // Get last expression.
+      const val = {
+        validation: getValidation(v0),
+        interaction: {
+          type: "table",
+          ...v0,
+        },
+      };
+      console.log(
+        "PROG()",
+        "val=" + JSON.stringify(val, null, 2),
+      );
       resume(err, {
         ...val,
         ...data,
@@ -349,7 +360,7 @@ t;
 }
 
 export const compiler = new BasisCompiler({
-  langID: '0151',
+  langID: '0165',
   version: 'v0.0.1',
   Checker: Checker,
   Transformer: Transformer,
