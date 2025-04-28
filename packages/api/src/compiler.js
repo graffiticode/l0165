@@ -322,11 +322,13 @@ t;
       const data = options?.data || {};
       const err = e0;
       v0 = v0.pop();  // Get last expression.
+      const { templateVariablesRecords, ...tableData } = v0;
       const val = {
+        templateVariablesRecords,
         validation: getValidation(v0),
         interaction: {
           type: "table",
-          ...v0,
+          ...tableData,
         },
       };
       resume(err, {
