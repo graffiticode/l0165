@@ -11,6 +11,11 @@
 <body><article>
 <header>
 <h1>Graffiticode Core Language Specification</h1>
+<section id="intro">
+<pre><code>Version: 0.1.0
+Date: 2025-04-30
+</code></pre>
+</section>
 <nav class="spec-toc">
 <div class="title">Contents</div>
 <ol>
@@ -47,23 +52,27 @@
 <li><a href="#sec-Types"><span class="spec-secid">5.1</span>Types</a></li>
 <li><a href="#sec-Built-in-Functions"><span class="spec-secid">5.2</span>Built-in Functions</a><ol>
 <li><a href="#sec-add"><span class="spec-secid">5.2.1</span>add</a></li>
-<li><a href="#sec-sub"><span class="spec-secid">5.2.2</span>sub</a></li>
-<li><a href="#sec-mul"><span class="spec-secid">5.2.3</span>mul</a></li>
+<li><a href="#sec-and"><span class="spec-secid">5.2.2</span>and</a></li>
+<li><a href="#sec-apply"><span class="spec-secid">5.2.3</span>apply</a></li>
 <li><a href="#sec-div"><span class="spec-secid">5.2.4</span>div</a></li>
-<li><a href="#sec-mod"><span class="spec-secid">5.2.5</span>mod</a></li>
-<li><a href="#sec-min"><span class="spec-secid">5.2.6</span>min</a></li>
-<li><a href="#sec-max"><span class="spec-secid">5.2.7</span>max</a></li>
-<li><a href="#sec-range"><span class="spec-secid">5.2.8</span>range</a></li>
-<li><a href="#sec-map"><span class="spec-secid">5.2.9</span>map</a></li>
-<li><a href="#sec-filter"><span class="spec-secid">5.2.10</span>filter</a></li>
-<li><a href="#sec-reduce"><span class="spec-secid">5.2.11</span>reduce</a></li>
-<li><a href="#sec-hd"><span class="spec-secid">5.2.12</span>hd</a></li>
-<li><a href="#sec-tl"><span class="spec-secid">5.2.13</span>tl</a></li>
-<li><a href="#sec-nth"><span class="spec-secid">5.2.14</span>nth</a></li>
-<li><a href="#sec-apply"><span class="spec-secid">5.2.15</span>apply</a></li>
-<li><a href="#sec-isEmpty"><span class="spec-secid">5.2.16</span>isEmpty</a></li>
-<li><a href="#sec-get"><span class="spec-secid">5.2.17</span>get</a></li>
-<li><a href="#sec-set"><span class="spec-secid">5.2.18</span>set</a></li>
+<li><a href="#sec-equiv"><span class="spec-secid">5.2.5</span>equiv</a></li>
+<li><a href="#sec-filter"><span class="spec-secid">5.2.6</span>filter</a></li>
+<li><a href="#sec-get"><span class="spec-secid">5.2.7</span>get</a></li>
+<li><a href="#sec-hd"><span class="spec-secid">5.2.8</span>hd</a></li>
+<li><a href="#sec-isEmpty"><span class="spec-secid">5.2.9</span>isEmpty</a></li>
+<li><a href="#sec-map"><span class="spec-secid">5.2.10</span>map</a></li>
+<li><a href="#sec-max"><span class="spec-secid">5.2.11</span>max</a></li>
+<li><a href="#sec-min"><span class="spec-secid">5.2.12</span>min</a></li>
+<li><a href="#sec-mod"><span class="spec-secid">5.2.13</span>mod</a></li>
+<li><a href="#sec-mul"><span class="spec-secid">5.2.14</span>mul</a></li>
+<li><a href="#sec-not"><span class="spec-secid">5.2.15</span>not</a></li>
+<li><a href="#sec-nth"><span class="spec-secid">5.2.16</span>nth</a></li>
+<li><a href="#sec-or"><span class="spec-secid">5.2.17</span>or</a></li>
+<li><a href="#sec-range"><span class="spec-secid">5.2.18</span>range</a></li>
+<li><a href="#sec-reduce"><span class="spec-secid">5.2.19</span>reduce</a></li>
+<li><a href="#sec-set"><span class="spec-secid">5.2.20</span>set</a></li>
+<li><a href="#sec-sub"><span class="spec-secid">5.2.21</span>sub</a></li>
+<li><a href="#sec-tl"><span class="spec-secid">5.2.22</span>tl</a></li>
 </ol>
 </li>
 </ol>
@@ -232,69 +241,9 @@ end
 <td align="left">Adds two numbers</td>
 </tr>
 <tr>
-<td align="left"><code>sub</code></td>
-<td align="left"><code>&lt;number number: number&gt;</code></td>
-<td align="left">Subtracts numbers</td>
-</tr>
-<tr>
-<td align="left"><code>mul</code></td>
-<td align="left"><code>&lt;number number: number&gt;</code></td>
-<td align="left">Multiplies numbers</td>
-</tr>
-<tr>
-<td align="left"><code>div</code></td>
-<td align="left"><code>&lt;number number: number&gt;</code></td>
-<td align="left">Divides numbers</td>
-</tr>
-<tr>
-<td align="left"><code>mod</code></td>
-<td align="left"><code>&lt;number number: number&gt;</code></td>
-<td align="left">Remainder of division</td>
-</tr>
-<tr>
-<td align="left"><code>min</code></td>
-<td align="left"><code>&lt;number number: number&gt;</code></td>
-<td align="left">Returns the smaller of two numbers</td>
-</tr>
-<tr>
-<td align="left"><code>max</code></td>
-<td align="left"><code>&lt;number number: number&gt;</code></td>
-<td align="left">Returns the larger of two numbers</td>
-</tr>
-<tr>
-<td align="left"><code>range</code></td>
-<td align="left"><code>&lt;number number number: list&gt;</code></td>
-<td align="left">Generates a range list</td>
-</tr>
-<tr>
-<td align="left"><code>map</code></td>
-<td align="left"><code>&lt;function list: list&gt;</code></td>
-<td align="left">Applies function to each item</td>
-</tr>
-<tr>
-<td align="left"><code>filter</code></td>
-<td align="left"><code>&lt;function list: list&gt;</code></td>
-<td align="left">Keeps items matching predicate</td>
-</tr>
-<tr>
-<td align="left"><code>reduce</code></td>
-<td align="left"><code>&lt;function list: any&gt;</code></td>
-<td align="left">Combines list using a reducer</td>
-</tr>
-<tr>
-<td align="left"><code>hd</code></td>
-<td align="left"><code>&lt;list: any&gt;</code></td>
-<td align="left">First item of list</td>
-</tr>
-<tr>
-<td align="left"><code>tl</code></td>
-<td align="left"><code>&lt;list: list&gt;</code></td>
-<td align="left">All items except first</td>
-</tr>
-<tr>
-<td align="left"><code>nth</code></td>
-<td align="left"><code>&lt;number list: any&gt;</code></td>
-<td align="left">Nth element of list</td>
+<td align="left"><code>and</code></td>
+<td align="left"><code>&lt;bool bool: bool&gt;</code></td>
+<td align="left">Logical AND operation</td>
 </tr>
 <tr>
 <td align="left"><code>apply</code></td>
@@ -302,9 +251,19 @@ end
 <td align="left">Applies a function to a list of arguments</td>
 </tr>
 <tr>
-<td align="left"><code>isEmpty</code></td>
-<td align="left"><code>&lt;list: bool&gt;</code></td>
-<td align="left">Returns true if the list is empty</td>
+<td align="left"><code>div</code></td>
+<td align="left"><code>&lt;number number: number&gt;</code></td>
+<td align="left">Divides numbers</td>
+</tr>
+<tr>
+<td align="left"><code>equiv</code></td>
+<td align="left"><code>&lt;any any: bool&gt;</code></td>
+<td align="left">Tests if two values are strictly equivalent</td>
+</tr>
+<tr>
+<td align="left"><code>filter</code></td>
+<td align="left"><code>&lt;function list: list&gt;</code></td>
+<td align="left">Keeps items matching predicate</td>
 </tr>
 <tr>
 <td align="left"><code>get</code></td>
@@ -312,9 +271,79 @@ end
 <td align="left">Retrieves a value from a record by key</td>
 </tr>
 <tr>
+<td align="left"><code>hd</code></td>
+<td align="left"><code>&lt;list: any&gt;</code></td>
+<td align="left">First item of list</td>
+</tr>
+<tr>
+<td align="left"><code>isEmpty</code></td>
+<td align="left"><code>&lt;list: bool&gt;</code></td>
+<td align="left">Returns true if the list is empty</td>
+</tr>
+<tr>
+<td align="left"><code>map</code></td>
+<td align="left"><code>&lt;function list: list&gt;</code></td>
+<td align="left">Applies function to each item</td>
+</tr>
+<tr>
+<td align="left"><code>max</code></td>
+<td align="left"><code>&lt;number number: number&gt;</code></td>
+<td align="left">Returns the larger of two numbers</td>
+</tr>
+<tr>
+<td align="left"><code>min</code></td>
+<td align="left"><code>&lt;number number: number&gt;</code></td>
+<td align="left">Returns the smaller of two numbers</td>
+</tr>
+<tr>
+<td align="left"><code>mod</code></td>
+<td align="left"><code>&lt;number number: number&gt;</code></td>
+<td align="left">Remainder of division</td>
+</tr>
+<tr>
+<td align="left"><code>mul</code></td>
+<td align="left"><code>&lt;number number: number&gt;</code></td>
+<td align="left">Multiplies numbers</td>
+</tr>
+<tr>
+<td align="left"><code>not</code></td>
+<td align="left"><code>&lt;bool: bool&gt;</code></td>
+<td align="left">Logical NOT operation, inverts a boolean value</td>
+</tr>
+<tr>
+<td align="left"><code>nth</code></td>
+<td align="left"><code>&lt;number list: any&gt;</code></td>
+<td align="left">Nth element of list</td>
+</tr>
+<tr>
+<td align="left"><code>or</code></td>
+<td align="left"><code>&lt;bool bool: bool&gt;</code></td>
+<td align="left">Logical OR operation</td>
+</tr>
+<tr>
+<td align="left"><code>range</code></td>
+<td align="left"><code>&lt;number number number: list&gt;</code></td>
+<td align="left">Generates a range list</td>
+</tr>
+<tr>
+<td align="left"><code>reduce</code></td>
+<td align="left"><code>&lt;function any list: any&gt;</code></td>
+<td align="left">Combines list using a reducer with initial value</td>
+</tr>
+<tr>
 <td align="left"><code>set</code></td>
 <td align="left"><code>&lt;string any record: record&gt;</code></td>
 <td align="left">Returns a new record with a key set to a value</td>
+</tr>
+<tr>
+<td align="left"><code>sub</code></td>
+<td align="left"><code>&lt;number number: number&gt;</code></td>
+<td align="left">Subtracts numbers</td>
+</tr>
+<tr>
+<td align="left"><code>tl</code></td>
+<td align="left"><code>&lt;list: list&gt;</code></td>
+<td align="left">All items except first</td>
 </tr>
 </tbody>
 </table>
@@ -324,16 +353,19 @@ end
 <pre><code>add 2 3  | returns 5
 </code></pre>
 </section>
-<section id="sec-sub" secid="5.2.2">
-<h3><span class="spec-secid" title="link to this section"><a href="#sec-sub">5.2.2</a></span>sub</h3>
-<p>Subtract the second number from the first</p>
-<pre><code>sub 5 2  | returns 3
+<section id="sec-and" secid="5.2.2">
+<h3><span class="spec-secid" title="link to this section"><a href="#sec-and">5.2.2</a></span>and</h3>
+<p>Logical AND operation</p>
+<pre><code>and false false  | returns false
+and false true   | returns false
+and true false   | returns false
+and true true    | returns true
 </code></pre>
 </section>
-<section id="sec-mul" secid="5.2.3">
-<h3><span class="spec-secid" title="link to this section"><a href="#sec-mul">5.2.3</a></span>mul</h3>
-<p>Multiply two numbers</p>
-<pre><code>mul 4 3  | returns 12
+<section id="sec-apply" secid="5.2.3">
+<h3><span class="spec-secid" title="link to this section"><a href="#sec-apply">5.2.3</a></span>apply</h3>
+<p>Apply a function to an argument list</p>
+<pre><code>apply add [1 2]  | returns 3
 </code></pre>
 </section>
 <section id="sec-div" secid="5.2.4">
@@ -342,88 +374,120 @@ end
 <pre><code>div 10 2  | returns 5
 </code></pre>
 </section>
-<section id="sec-mod" secid="5.2.5">
-<h3><span class="spec-secid" title="link to this section"><a href="#sec-mod">5.2.5</a></span>mod</h3>
-<p>Compute the remainder</p>
-<pre><code>mod 10 3  | returns 1
+<section id="sec-equiv" secid="5.2.5">
+<h3><span class="spec-secid" title="link to this section"><a href="#sec-equiv">5.2.5</a></span>equiv</h3>
+<p>Tests if two values are strictly equivalent</p>
+<pre><code>equiv 1 1        | returns true
+equiv "a" "a"    | returns true
+equiv true true  | returns true
+equiv 1 2        | returns false
+equiv "a" "b"    | returns false
 </code></pre>
 </section>
-<section id="sec-min" secid="5.2.6">
-<h3><span class="spec-secid" title="link to this section"><a href="#sec-min">5.2.6</a></span>min</h3>
-<p>Return the smaller of two numbers</p>
-<pre><code>min 5 10  | returns 5
-</code></pre>
-</section>
-<section id="sec-max" secid="5.2.7">
-<h3><span class="spec-secid" title="link to this section"><a href="#sec-max">5.2.7</a></span>max</h3>
-<p>Return the larger of two numbers</p>
-<pre><code>max 5 10  | returns 10
-</code></pre>
-</section>
-<section id="sec-range" secid="5.2.8">
-<h3><span class="spec-secid" title="link to this section"><a href="#sec-range">5.2.8</a></span>range</h3>
-<p>Produce a range list from start to end (exclusive) with step</p>
-<pre><code>range 1 10 2  | returns [1 3 5 7 9]
-</code></pre>
-</section>
-<section id="sec-map" secid="5.2.9">
-<h3><span class="spec-secid" title="link to this section"><a href="#sec-map">5.2.9</a></span>map</h3>
-<p>Apply a function to each element</p>
-<pre><code>map (&lt;x: add x 1&gt;) [1 2 3]  | returns [2 3 4]
-</code></pre>
-</section>
-<section id="sec-filter" secid="5.2.10">
-<h3><span class="spec-secid" title="link to this section"><a href="#sec-filter">5.2.10</a></span>filter</h3>
+<section id="sec-filter" secid="5.2.6">
+<h3><span class="spec-secid" title="link to this section"><a href="#sec-filter">5.2.6</a></span>filter</h3>
 <p>Filter elements matching predicate</p>
 <pre><code>filter (&lt;x: mod x 2&gt;) [1 2 3 4]  | returns [1 3]
 </code></pre>
 </section>
-<section id="sec-reduce" secid="5.2.11">
-<h3><span class="spec-secid" title="link to this section"><a href="#sec-reduce">5.2.11</a></span>reduce</h3>
-<p>Reduce a list to a single value, starting with an initial value</p>
-<pre><code>reduce (&lt;a b: add a b&gt;) 0 [1 2 3 4]  | returns 10
-</code></pre>
-</section>
-<section id="sec-hd" secid="5.2.12">
-<h3><span class="spec-secid" title="link to this section"><a href="#sec-hd">5.2.12</a></span>hd</h3>
-<p>Return the first item</p>
-<pre><code>hd [10 20 30]  | returns 10
-</code></pre>
-</section>
-<section id="sec-tl" secid="5.2.13">
-<h3><span class="spec-secid" title="link to this section"><a href="#sec-tl">5.2.13</a></span>tl</h3>
-<p>Return all but the first item</p>
-<pre><code>tl [10 20 30]  | returns [20 30]
-</code></pre>
-</section>
-<section id="sec-nth" secid="5.2.14">
-<h3><span class="spec-secid" title="link to this section"><a href="#sec-nth">5.2.14</a></span>nth</h3>
-<p>Get the nth item (0-based)</p>
-<pre><code>nth 1 [10 20 30]  | returns 20
-</code></pre>
-</section>
-<section id="sec-apply" secid="5.2.15">
-<h3><span class="spec-secid" title="link to this section"><a href="#sec-apply">5.2.15</a></span>apply</h3>
-<p>Apply a function to an argument list</p>
-<pre><code>apply add [1 2]  | returns 3
-</code></pre>
-</section>
-<section id="sec-isEmpty" secid="5.2.16">
-<h3><span class="spec-secid" title="link to this section"><a href="#sec-isEmpty">5.2.16</a></span>isEmpty</h3>
-<p>Return true if list is empty, otherwise return false</p>
-<pre><code>isEmpty []  | returns true
-</code></pre>
-</section>
-<section id="sec-get" secid="5.2.17">
-<h3><span class="spec-secid" title="link to this section"><a href="#sec-get">5.2.17</a></span>get</h3>
+<section id="sec-get" secid="5.2.7">
+<h3><span class="spec-secid" title="link to this section"><a href="#sec-get">5.2.7</a></span>get</h3>
 <p>Retrieve a record field</p>
 <pre><code>get "b" {a: 1, b: 2}  | returns 2
 </code></pre>
 </section>
-<section id="sec-set" secid="5.2.18">
-<h3><span class="spec-secid" title="link to this section"><a href="#sec-set">5.2.18</a></span>set</h3>
+<section id="sec-hd" secid="5.2.8">
+<h3><span class="spec-secid" title="link to this section"><a href="#sec-hd">5.2.8</a></span>hd</h3>
+<p>Return the first item</p>
+<pre><code>hd [10 20 30]  | returns 10
+</code></pre>
+</section>
+<section id="sec-isEmpty" secid="5.2.9">
+<h3><span class="spec-secid" title="link to this section"><a href="#sec-isEmpty">5.2.9</a></span>isEmpty</h3>
+<p>Return true if list is empty, otherwise return false</p>
+<pre><code>isEmpty []  | returns true
+</code></pre>
+</section>
+<section id="sec-map" secid="5.2.10">
+<h3><span class="spec-secid" title="link to this section"><a href="#sec-map">5.2.10</a></span>map</h3>
+<p>Apply a function to each element</p>
+<pre><code>map (&lt;x: add x 1&gt;) [1 2 3]  | returns [2 3 4]
+</code></pre>
+</section>
+<section id="sec-max" secid="5.2.11">
+<h3><span class="spec-secid" title="link to this section"><a href="#sec-max">5.2.11</a></span>max</h3>
+<p>Return the larger of two numbers</p>
+<pre><code>max 5 10  | returns 10
+</code></pre>
+</section>
+<section id="sec-min" secid="5.2.12">
+<h3><span class="spec-secid" title="link to this section"><a href="#sec-min">5.2.12</a></span>min</h3>
+<p>Return the smaller of two numbers</p>
+<pre><code>min 5 10  | returns 5
+</code></pre>
+</section>
+<section id="sec-mod" secid="5.2.13">
+<h3><span class="spec-secid" title="link to this section"><a href="#sec-mod">5.2.13</a></span>mod</h3>
+<p>Compute the remainder</p>
+<pre><code>mod 10 3  | returns 1
+</code></pre>
+</section>
+<section id="sec-mul" secid="5.2.14">
+<h3><span class="spec-secid" title="link to this section"><a href="#sec-mul">5.2.14</a></span>mul</h3>
+<p>Multiply two numbers</p>
+<pre><code>mul 4 3  | returns 12
+</code></pre>
+</section>
+<section id="sec-not" secid="5.2.15">
+<h3><span class="spec-secid" title="link to this section"><a href="#sec-not">5.2.15</a></span>not</h3>
+<p>Logical NOT that inverts a boolean value</p>
+<pre><code>not true   | returns false
+not false  | returns true
+</code></pre>
+</section>
+<section id="sec-nth" secid="5.2.16">
+<h3><span class="spec-secid" title="link to this section"><a href="#sec-nth">5.2.16</a></span>nth</h3>
+<p>Get the nth item (0-based)</p>
+<pre><code>nth 1 [10 20 30]  | returns 20
+</code></pre>
+</section>
+<section id="sec-or" secid="5.2.17">
+<h3><span class="spec-secid" title="link to this section"><a href="#sec-or">5.2.17</a></span>or</h3>
+<p>Logical OR operation</p>
+<pre><code>or false false  | returns false
+or false true   | returns true
+or true false   | returns true
+or true true    | returns true
+</code></pre>
+</section>
+<section id="sec-range" secid="5.2.18">
+<h3><span class="spec-secid" title="link to this section"><a href="#sec-range">5.2.18</a></span>range</h3>
+<p>Produce a range list from start to end (exclusive) with step</p>
+<pre><code>range 1 10 2  | returns [1 3 5 7 9]
+</code></pre>
+</section>
+<section id="sec-reduce" secid="5.2.19">
+<h3><span class="spec-secid" title="link to this section"><a href="#sec-reduce">5.2.19</a></span>reduce</h3>
+<p>Reduce a list to a single value, starting with an initial value</p>
+<pre><code>reduce (&lt;a b: add a b&gt;) 0 [1 2 3 4]  | returns 10
+</code></pre>
+</section>
+<section id="sec-set" secid="5.2.20">
+<h3><span class="spec-secid" title="link to this section"><a href="#sec-set">5.2.20</a></span>set</h3>
 <p>Return a new record with an updated field</p>
 <pre><code>set "a" 2 {a: 1}  | returns {a: 2}
+</code></pre>
+</section>
+<section id="sec-sub" secid="5.2.21">
+<h3><span class="spec-secid" title="link to this section"><a href="#sec-sub">5.2.21</a></span>sub</h3>
+<p>Subtract the second number from the first</p>
+<pre><code>sub 5 2  | returns 3
+</code></pre>
+</section>
+<section id="sec-tl" secid="5.2.22">
+<h3><span class="spec-secid" title="link to this section"><a href="#sec-tl">5.2.22</a></span>tl</h3>
+<p>Return all but the first item</p>
+<pre><code>tl [10 20 30]  | returns [20 30]
 </code></pre>
 </section>
 </section>
@@ -501,23 +565,27 @@ Written in <a href="https://spec-md.com" target="_blank">Spec Markdown</a>.</foo
 <input hidden class="toggle" type="checkbox" id="_toggle_5.2" /><label for="_toggle_5.2"></label>
 <ol>
 <li id="_sidebar_5.2.1"><a href="#sec-add"><span class="spec-secid">5.2.1</span>add</a></li>
-<li id="_sidebar_5.2.2"><a href="#sec-sub"><span class="spec-secid">5.2.2</span>sub</a></li>
-<li id="_sidebar_5.2.3"><a href="#sec-mul"><span class="spec-secid">5.2.3</span>mul</a></li>
+<li id="_sidebar_5.2.2"><a href="#sec-and"><span class="spec-secid">5.2.2</span>and</a></li>
+<li id="_sidebar_5.2.3"><a href="#sec-apply"><span class="spec-secid">5.2.3</span>apply</a></li>
 <li id="_sidebar_5.2.4"><a href="#sec-div"><span class="spec-secid">5.2.4</span>div</a></li>
-<li id="_sidebar_5.2.5"><a href="#sec-mod"><span class="spec-secid">5.2.5</span>mod</a></li>
-<li id="_sidebar_5.2.6"><a href="#sec-min"><span class="spec-secid">5.2.6</span>min</a></li>
-<li id="_sidebar_5.2.7"><a href="#sec-max"><span class="spec-secid">5.2.7</span>max</a></li>
-<li id="_sidebar_5.2.8"><a href="#sec-range"><span class="spec-secid">5.2.8</span>range</a></li>
-<li id="_sidebar_5.2.9"><a href="#sec-map"><span class="spec-secid">5.2.9</span>map</a></li>
-<li id="_sidebar_5.2.10"><a href="#sec-filter"><span class="spec-secid">5.2.10</span>filter</a></li>
-<li id="_sidebar_5.2.11"><a href="#sec-reduce"><span class="spec-secid">5.2.11</span>reduce</a></li>
-<li id="_sidebar_5.2.12"><a href="#sec-hd"><span class="spec-secid">5.2.12</span>hd</a></li>
-<li id="_sidebar_5.2.13"><a href="#sec-tl"><span class="spec-secid">5.2.13</span>tl</a></li>
-<li id="_sidebar_5.2.14"><a href="#sec-nth"><span class="spec-secid">5.2.14</span>nth</a></li>
-<li id="_sidebar_5.2.15"><a href="#sec-apply"><span class="spec-secid">5.2.15</span>apply</a></li>
-<li id="_sidebar_5.2.16"><a href="#sec-isEmpty"><span class="spec-secid">5.2.16</span>isEmpty</a></li>
-<li id="_sidebar_5.2.17"><a href="#sec-get"><span class="spec-secid">5.2.17</span>get</a></li>
-<li id="_sidebar_5.2.18"><a href="#sec-set"><span class="spec-secid">5.2.18</span>set</a></li>
+<li id="_sidebar_5.2.5"><a href="#sec-equiv"><span class="spec-secid">5.2.5</span>equiv</a></li>
+<li id="_sidebar_5.2.6"><a href="#sec-filter"><span class="spec-secid">5.2.6</span>filter</a></li>
+<li id="_sidebar_5.2.7"><a href="#sec-get"><span class="spec-secid">5.2.7</span>get</a></li>
+<li id="_sidebar_5.2.8"><a href="#sec-hd"><span class="spec-secid">5.2.8</span>hd</a></li>
+<li id="_sidebar_5.2.9"><a href="#sec-isEmpty"><span class="spec-secid">5.2.9</span>isEmpty</a></li>
+<li id="_sidebar_5.2.10"><a href="#sec-map"><span class="spec-secid">5.2.10</span>map</a></li>
+<li id="_sidebar_5.2.11"><a href="#sec-max"><span class="spec-secid">5.2.11</span>max</a></li>
+<li id="_sidebar_5.2.12"><a href="#sec-min"><span class="spec-secid">5.2.12</span>min</a></li>
+<li id="_sidebar_5.2.13"><a href="#sec-mod"><span class="spec-secid">5.2.13</span>mod</a></li>
+<li id="_sidebar_5.2.14"><a href="#sec-mul"><span class="spec-secid">5.2.14</span>mul</a></li>
+<li id="_sidebar_5.2.15"><a href="#sec-not"><span class="spec-secid">5.2.15</span>not</a></li>
+<li id="_sidebar_5.2.16"><a href="#sec-nth"><span class="spec-secid">5.2.16</span>nth</a></li>
+<li id="_sidebar_5.2.17"><a href="#sec-or"><span class="spec-secid">5.2.17</span>or</a></li>
+<li id="_sidebar_5.2.18"><a href="#sec-range"><span class="spec-secid">5.2.18</span>range</a></li>
+<li id="_sidebar_5.2.19"><a href="#sec-reduce"><span class="spec-secid">5.2.19</span>reduce</a></li>
+<li id="_sidebar_5.2.20"><a href="#sec-set"><span class="spec-secid">5.2.20</span>set</a></li>
+<li id="_sidebar_5.2.21"><a href="#sec-sub"><span class="spec-secid">5.2.21</span>sub</a></li>
+<li id="_sidebar_5.2.22"><a href="#sec-tl"><span class="spec-secid">5.2.22</span>tl</a></li>
 </ol>
 </li>
 </ol>

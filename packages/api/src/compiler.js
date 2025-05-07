@@ -78,6 +78,26 @@ export class Checker extends BasisChecker {
     });
   }
 
+  TITLE(node, options, resume) {
+    this.visit(node.elts[0], options, async (e0, v0) => {
+      this.visit(node.elts[1], options, async (e1, v1) => {
+        const err = [];
+        const val = node;
+        resume(err, val);
+      });
+    });
+  }
+
+  INSTRUCTIONS(node, options, resume) {
+    this.visit(node.elts[0], options, async (e0, v0) => {
+      this.visit(node.elts[1], options, async (e1, v1) => {
+        const err = [];
+        const val = node;
+        resume(err, val);
+      });
+    });
+  }
+
   CELLS(node, options, resume) {
     this.visit(node.elts[0], options, async (e0, v0) => {
       this.visit(node.elts[1], options, async (e1, v1) => {
@@ -112,6 +132,32 @@ export class Checker extends BasisChecker {
 const MAX_LIMIT = 249;
 
 export class Transformer extends BasisTransformer {
+  TITLE(node, options, resume) {
+    this.visit(node.elts[0], options, async (e0, v0) => {
+      this.visit(node.elts[1], options, async (e1, v1) => {
+        const err = [];
+        const val = {
+          title: v0,
+          ...v1,
+        };
+        resume(err, val);
+      });
+    });
+  }
+
+  INSTRUCTIONS(node, options, resume) {
+    this.visit(node.elts[0], options, async (e0, v0) => {
+      this.visit(node.elts[1], options, async (e1, v1) => {
+        const err = [];
+        const val = {
+          instructions: v0,
+          ...v1,
+        };
+        resume(err, val);
+      });
+    });
+  }
+
   CELLS(node, options, resume) {
     this.visit(node.elts[0], options, async (e0, v0) => {
       this.visit(node.elts[1], options, async (e1, v1) => {
@@ -322,8 +368,14 @@ t;
       const data = options?.data || {};
       const err = e0;
       v0 = v0.pop();  // Get last expression.
-      const { templateVariablesRecords, ...tableData } = v0;
+      console.log(
+        "PROG()",
+        "v0=" + JSON.stringify(v0, null, 2),
+      );
+      const { templateVariablesRecords, title, instructions, ...tableData } = v0;
       const val = {
+        title,
+        instructions,
         templateVariablesRecords,
         validation: getValidation(v0),
         interaction: {

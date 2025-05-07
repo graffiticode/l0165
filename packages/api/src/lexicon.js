@@ -1,4 +1,18 @@
 export const lexicon = {
+  "title" : {
+    "tk": 1,
+    "name": "TITLE",
+    "cls": "function",
+    "length": 2,
+    "arity": 2,
+  },
+  "instructions" : {
+    "tk": 1,
+    "name": "INSTRUCTIONS",
+    "cls": "function",
+    "length": 2,
+    "arity": 2,
+  },
   "params" : {
     "tk": 1,
     "name": "PARAMS",
