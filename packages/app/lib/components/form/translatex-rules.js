@@ -1,5 +1,9 @@
 export const evalRules = {
   "types": {
+    "args": [
+      "\\type{cellName}:\\type{cellName}",
+      "?,?"
+    ],
     "cellName": [
       "\\type{variable}\\type{integer}"
     ],
@@ -8,7 +12,8 @@ export const evalRules = {
     ],
     "fn": [
       "sum",
-      "mul"
+      "mul",
+      "round"
     ]
   },
   "rules": {
@@ -18,7 +23,9 @@ export const evalRules = {
     "=?": [
       {
         "%2": {
-          "\\type{fn}(\\type{cellRange})": "$fn",
+          "\\type{fn}(\\type{args})": "$fn",
+          "\\type{fn}(?,?)": "$fn",
+          "\\type{fn}(?)": "$fn",
           "?+?": "$add",
           "?-?": "$minus",
           "?*?": "$multiply",
@@ -30,6 +37,9 @@ export const evalRules = {
     ],
     "\\type{cellRange}": [
       "$range"
+    ],
+    "\\type{args}": [
+      "%1,%2"
     ],
     "\\type{cellName}": [
       "%1%2"
@@ -46,7 +56,7 @@ export const evalRules = {
     "?": [
       "%1"
     ]
-  },
+  }
 };
 
 export const cellNameRules = {

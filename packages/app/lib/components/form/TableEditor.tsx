@@ -74,6 +74,11 @@ import { MenuView } from './MenuView';
 
 import { TransLaTeX } from "@artcompiler/translatex";
 import { evalRules, cellNameRules, formatRules, normalizeRules } from './translatex-rules.js';
+
+console.log(
+  "evalRules=" + JSON.stringify(evalRules, null, 2),
+);
+
 import Decimal from 'decimal.js';
 
 const isValidDecimal = val => {
@@ -688,6 +693,11 @@ const evalCell = ({ env, name }) => {
       ...evalRules,
     };
     if (text && text.length > 0 && text.indexOf("=") === 0) {
+      console.log(
+        "evalCell()",
+        "options=" + JSON.stringify(options, null, 2),
+        "text=" + text,
+      );
       TransLaTeX.translate(
         options,
         text, (err, val) => {
