@@ -8,7 +8,7 @@ export async function compile({ auth, authToken, code, data, config }) {
   return await new Promise((resolve, reject) =>
     compiler.compile(code, data, config, (err, data) => {
       if (err && err.length) {
-        reject({error: err});
+        resolve({error: err});
       } else {
         resolve(data);
       }

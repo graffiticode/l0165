@@ -62,7 +62,7 @@ export const createApp = ({ authUrl } = {}) => {
 
   // Error handling
   app.use((err, req, res, next) => {
-    console.error(err);
+    console.error("app.js", err);
     res.sendStatus(500);
   });
 
