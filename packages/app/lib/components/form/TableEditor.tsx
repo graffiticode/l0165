@@ -92,10 +92,10 @@ const isQuoteChar = c => (
 );
 
 const toUpperCase = text => (
-  text.split("").reduce((acc, c) => ({
+  text && text.split("").reduce((acc, c) => ({
     inString: isQuoteChar(c) ? !acc.inString : acc.inString,
     text: acc.text + (acc.inString && c || c.toUpperCase()),
-  }), {inString: false, text: ""}).text
+  }), {inString: false, text: ""}).text || text
 )
 
 const normalizeValue = text => {
