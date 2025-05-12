@@ -91,13 +91,12 @@ const isQuoteChar = c => (
   ["\"", "'", "`"].includes(c)
 );
 
-const toUpperCase = text => {
-  let inString = false;
-  return text.split("").map(c => {
-    inString = isQuoteChar(c) ? !inString : inString;
-    return inString && c || c.toUpperCase();
-  }).join("");
-}
+const toUpperCase = text => (
+  text.split("").reduce((acc, c) => ({
+    inString: isQuoteChar(c) ? !acc.inString : acc.inString,
+    text: acc.text + (acc.inString && c || c.toUpperCase()),
+  }), {inString: false, text: ""}).text
+)
 
 const normalizeValue = text => {
   text = toUpperCase(text);
@@ -679,7 +678,7 @@ const replaceCellContent = (editorView, name, newText, doMoveCursor = false) => 
 }
 
 const evalCell = ({ env, name }) => {
-  const text = toUpperCase(env.cells[name]?.text || "");
+  const text = env.cells[name]?.text || "";
   let result = {
     formula: text,
     val: text
@@ -693,7 +692,7 @@ const evalCell = ({ env, name }) => {
     if (text && text.length > 0 && text.indexOf("=") === 0) {
       TransLaTeX.translate(
         options,
-        text, (err, val) => {
+        toUpperCase(text), (err, val) => {
           if (err && err.length) {
             console.error(err);
           }
