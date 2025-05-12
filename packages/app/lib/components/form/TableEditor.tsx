@@ -75,10 +75,6 @@ import { MenuView } from './MenuView';
 import { TransLaTeX } from "@artcompiler/translatex";
 import { evalRules, cellNameRules, formatRules, normalizeRules } from './translatex-rules.js';
 
-console.log(
-  "evalRules=" + JSON.stringify(evalRules, null, 2),
-);
-
 import Decimal from 'decimal.js';
 
 const isValidDecimal = val => {
@@ -91,7 +87,20 @@ const isValidDecimal = val => {
   }
 };
 
+const isQuoteChar = c => (
+  ["\"", "'", "`"].includes(c)
+);
+
+const toUpperCase = text => {
+  let inString = false;
+  return text.split("").map(c => {
+    inString = isQuoteChar(c) ? !inString : inString;
+    return inString && c || c.toUpperCase();
+  }).join("");
+}
+
 const normalizeValue = text => {
+  text = toUpperCase(text);
   let result = [text];
   try {
     const options = {
@@ -212,11 +221,6 @@ const sortAssessRowsToMatchActual = ({ cells, range }) => {
   const order = getActualOrder({cells, primaryColumn});
   const dataMap = new Map(rows.map(row => [getExpectedCellValue(row[primaryColumn]), row]));
   const sortedRows = order.map(id => (id !== null ? dataMap.get(id) || null : null));
-  console.log(
-    "sortAssessRowsToMatchActual()",
-    "order=" + JSON.stringify(order, null, 2),
-    "sortedRows=" + JSON.stringify(sortedRows, null, 2),
-  );
   return sortedRows;
 }
 
@@ -388,12 +392,6 @@ const skipHeadersGoToNextCell = dir => (state, dispatch) => {
 
 export const getCellsValidation = ({ cells, validation }) => {
   const rangeValidations = getRangeValidations({cells, validation});
-  console.log(
-    "getCellsValidation()",
-    "cells=" + JSON.stringify(cells, null, 2),
-    "validation=" + JSON.stringify(validation, null, 2),
-    "rangeValidations=" + JSON.stringify(rangeValidations, null, 2),
-  );
   const cellsValidations = rangeValidations.map(rangeValidation => (
     getCellsValidationFromRangeValidation(rangeValidation)
   ));
@@ -681,7 +679,7 @@ const replaceCellContent = (editorView, name, newText, doMoveCursor = false) => 
 }
 
 const evalCell = ({ env, name }) => {
-  const text = env.cells[name]?.text || "";
+  const text = toUpperCase(env.cells[name]?.text || "");
   let result = {
     formula: text,
     val: text
@@ -693,11 +691,6 @@ const evalCell = ({ env, name }) => {
       ...evalRules,
     };
     if (text && text.length > 0 && text.indexOf("=") === 0) {
-      console.log(
-        "evalCell()",
-        "options=" + JSON.stringify(options, null, 2),
-        "text=" + text,
-      );
       TransLaTeX.translate(
         options,
         text, (err, val) => {

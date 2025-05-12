@@ -11,9 +11,9 @@ export const evalRules = {
       "\\type{cellName}:\\type{cellName}"
     ],
     "fn": [
-      "sum",
-      "mul",
-      "round"
+      "SUM",
+      "MULL",
+      "ROUND"
     ]
   },
   "rules": {
@@ -68,8 +68,9 @@ export const cellNameRules = {
       "\\type{cellName}:\\type{cellName}"
     ],
     "fn": [
-      "sum",
-      "mul"
+      "SUM",
+      "MUL",
+      "ROUND"
     ]
   },
   "rules": {
@@ -126,8 +127,9 @@ export const normalizeRules = {
       "\\type{cellName}:\\type{cellName}"
     ],
     "fn": [
-      "sum",
-      "mul"
+      "SUM",
+      "MUL",
+      "ROUND",
     ]
   },
   "rules": {
