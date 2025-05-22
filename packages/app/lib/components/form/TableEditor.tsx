@@ -435,13 +435,13 @@ const applyModelRules = (cellExprs, state, value, validation) => {
       readonly: cell.readonly,
       border: (
         cell.col === 1 && cell.row === 1 &&
-          "border: 1px solid #ddd; border-right: 1px solid #aaa; border-bottom: 1px solid #aaa;" ||
+          `border: 1px solid #ddd; border-right: 1px solid #aaa; border-bottom: ${cell.underline ? '2px solid #333' : '1px solid #aaa'};` ||
           cell.col === 1 &&
-          "text-align: center; border: 1px solid #ddd; border-right: 1px solid #aaa;" ||
-          cell.row === 1 && "text-align: center; border: 1px solid #ddd; border-bottom: 1px solid #aaa;" ||
+          `text-align: center; border: 1px solid #ddd; border-right: 1px solid #aaa; border-bottom: ${cell.underline ? '2px solid #333' : '1px solid #ddd'};` ||
+          cell.row === 1 && `text-align: center; border: 1px solid #ddd; border-bottom: ${cell.underline ? '2px solid #333' : '1px solid #aaa'};` ||
           selection.anchor > cell.from && selection.anchor < cell.to &&
-          `font-weight: ${cell.fontWeight || "normal"}; text-align: ${cell.justify || "right"}; border: 2px solid royalblue;` ||
-          `font-weight: ${cell.fontWeight || "normal"}; text-align: ${cell.justify || "right"}; border: 1px solid #ddd;`
+          `font-weight: ${cell.fontWeight || "normal"}; text-align: ${cell.justify || "right"}; border: 2px solid royalblue; border-bottom: ${cell.underline ? '2px solid #333' : '2px solid royalblue'};` ||
+          `font-weight: ${cell.fontWeight || "normal"}; text-align: ${cell.justify || "right"}; border: 1px solid #ddd; border-bottom: ${cell.underline ? '2px solid #333' : '1px solid #ddd'};`
       ),
       color: (cell.col === 1 || cell.row === 1) && "#f8f8f8" || // Light gray background for headers
         cellColors[cell.row][cell.col] || "#fff"
@@ -481,11 +481,12 @@ const getCells = (cellExprs, state) => {
         formula,
         from: pos,
         to: pos + node.nodeSize,
-        justify: node.attrs.justify,
+        justify: node.attrs.justify || node.attrs.align,
         background: node.attrs.background,
         fontWeight: node.attrs.fontWeight,
         format: node.attrs.format,
         assess: node.attrs.assess,
+        underline: node.attrs.underline,
       });
     }
   });
@@ -589,6 +590,16 @@ const schema = new Schema({
           setDOMAttr(value, attrs) {
             if (value)
               attrs.style = (attrs.style || '') + `height: ${"24px"};`;
+          },
+        },
+        underline: {
+          default: null,
+          getFromDOM(dom) {
+            return dom.style.borderBottom || null;
+          },
+          setDOMAttr(value, attrs) {
+            if (value)
+              attrs.style = (attrs.style || '') + `border-bottom: 1px solid black;`;
           },
         },
       },
@@ -1240,7 +1251,7 @@ const buildCell = ({ col, row, attrs, colsAttrs }) => {
   let content;
   let colspan = 1;
   let rowspan = 1;
-  const colwidth = col === "_" && [40] || [colsAttrs[col]?.width];
+  const colwidth = col === "_" && [40] || (colsAttrs[col]?.width ? [colsAttrs[col].width] : null);
   let background = attrs.color;
   const { text } = cell;
   content = [
@@ -1339,7 +1350,16 @@ const getCell = (row, col, cells) => (
   } ||
   (row !== 0 && col !== "_" && cells[`${col}${row}`]) && {
     type: "td",
-    ...cells[`${col}${row}`],
+    text: cells[`${col}${row}`].text,
+    attrs: {
+      ...cells[`${col}${row}`].attrs,
+      underline: cells[`${col}${row}`].underline,
+      fontWeight: cells[`${col}${row}`].fontWeight,
+      background: cells[`${col}${row}`].background,
+      justify: cells[`${col}${row}`].justify,
+      format: cells[`${col}${row}`].format,
+      assess: cells[`${col}${row}`].assess,
+    },
   } || {}
 );
 
