@@ -999,6 +999,18 @@ const buildCellPlugin = formState => {
             dispatch(tr);
           }
           const cells = {...pluginState.cells};
+          const { columns } = formState.data.interaction;
+          // Merge column formatting into cells for formatCellValue
+          Object.keys(cells).forEach(cellName => {
+            const colName = cellName.slice(0, 1); // Extract column letter (A, B, C, etc.)
+            const columnAttrs = columns && columns[colName];
+            if (columnAttrs && columnAttrs.format && !cells[cellName].format) {
+              cells[cellName] = {
+                ...cells[cellName],
+                format: columnAttrs.format,
+              };
+            }
+          });
           pluginState.dirtyCells.forEach(name => {
             cells[name] = {
               ...cells[name],
@@ -1357,9 +1369,10 @@ const getCell = (row, col, cells) => (
   } ||
   (row !== 0 && col !== "_" && cells[`${col}${row}`]) && {
     type: "td",
-    text: cells[`${col}${row}`].text,
+    ...cells[`${col}${row}`],
     attrs: {
       ...cells[`${col}${row}`].attrs,
+      // Extract top-level attributes and put them in attrs for ProseMirror
       underline: cells[`${col}${row}`].underline,
       fontWeight: cells[`${col}${row}`].fontWeight,
       background: cells[`${col}${row}`].background,
