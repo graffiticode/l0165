@@ -728,13 +728,19 @@ const fixText = text => (
 
 const formatCellValue = ({ env, name }) => {
   const { val, format } = env.cells[name] || {};
+  console.log(
+    "formatCellValue()",
+    "name=" + name,
+    "val=" + JSON.stringify(val, null, 2),
+    "format=" + JSON.stringify(format, null, 2),
+  );
   let result = val;
   try {
     if (format && val.length > 0) {
       const options = {
         allowInterval: true,
         RHS: false,
-        env: {format},
+        env: {format: format},
         ...formatRules,
       };
       TransLaTeX.translate(
@@ -752,6 +758,7 @@ const formatCellValue = ({ env, name }) => {
   }
   return result;
 }
+
 
 const getSingleCellDependencies = ({ env, name }) => {
   const text = env.cells[name]?.text || "";
