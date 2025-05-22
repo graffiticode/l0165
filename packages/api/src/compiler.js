@@ -137,8 +137,8 @@ export class Transformer extends BasisTransformer {
       this.visit(node.elts[1], options, async (e1, v1) => {
         const err = [];
         const val = {
-          title: v0,
           ...v1,
+          title: v0,
         };
         resume(err, val);
       });
@@ -150,8 +150,8 @@ export class Transformer extends BasisTransformer {
       this.visit(node.elts[1], options, async (e1, v1) => {
         const err = [];
         const val = {
-          instructions: v0,
           ...v1,
+          instructions: v0,
         };
         resume(err, val);
       });
@@ -161,10 +161,15 @@ export class Transformer extends BasisTransformer {
   CELLS(node, options, resume) {
     this.visit(node.elts[0], options, async (e0, v0) => {
       this.visit(node.elts[1], options, async (e1, v1) => {
+        console.log(
+          "CELLS()",
+          "v0=" + JSON.stringify(v0, null, 2),
+          "v1=" + JSON.stringify(v1, null, 2),
+        );
         const err = [];
         const val = {
-          cells: v0,
           ...v1,
+          cells: v0,
         };
         resume(err, val);
       });
@@ -176,8 +181,8 @@ export class Transformer extends BasisTransformer {
       this.visit(node.elts[1], options, async (e1, v1) => {
         const err = [];
         const val = {
-          rows: v0,
           ...v1,
+          rows: v0,
         };
         resume(err, val);
       });
@@ -189,8 +194,8 @@ export class Transformer extends BasisTransformer {
       this.visit(node.elts[1], options, async (e1, v1) => {
         const err = [];
         const val = {
-          columns: v0,
           ...v1,
+          columns: v0,
         };
         resume(err, val);
       });
