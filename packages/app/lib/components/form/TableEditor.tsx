@@ -1000,15 +1000,20 @@ const buildCellPlugin = formState => {
           }
           const cells = {...pluginState.cells};
           const { columns } = formState.data.interaction;
-          // Merge column formatting into cells for formatCellValue
+          // Merge column attributes into cells
           Object.keys(cells).forEach(cellName => {
             const colName = cellName.slice(0, 1); // Extract column letter (A, B, C, etc.)
             const columnAttrs = columns && columns[colName];
-            if (columnAttrs && columnAttrs.format && !cells[cellName].format) {
-              cells[cellName] = {
-                ...cells[cellName],
-                format: columnAttrs.format,
-              };
+            if (columnAttrs) {
+              // Merge any column attributes that aren't already set on the cell
+              Object.keys(columnAttrs).forEach(attr => {
+                if (columnAttrs[attr] && !cells[cellName][attr]) {
+                  cells[cellName] = {
+                    ...cells[cellName],
+                    [attr]: columnAttrs[attr],
+                  };
+                }
+              });
             }
           });
           pluginState.dirtyCells.forEach(name => {
@@ -1351,37 +1356,50 @@ const applyRules = ({ cols, rows }) => {
   return rowAttrs;
 };
 
-const getCell = (row, col, cells) => (
-  (row === 0 && col === "_") && {
-    type: "th",
-    text: "",  // Empty text for top-left corner
-    attrs: { readonly: "true" }
-  } ||
-  (col === "_" && row !== 0) && {
-    type: "th",
-    text: row,
-    attrs: { readonly: "true" }
-  } ||
-  (row === 0 && col !== "_") && {
-    type: "th",
-    text: col,
-    attrs: { readonly: "true" }
-  } ||
-  (row !== 0 && col !== "_" && cells[`${col}${row}`]) && {
-    type: "td",
-    ...cells[`${col}${row}`],
-    attrs: {
-      ...cells[`${col}${row}`].attrs,
-      // Extract top-level attributes and put them in attrs for ProseMirror
-      underline: cells[`${col}${row}`].underline,
-      fontWeight: cells[`${col}${row}`].fontWeight,
-      background: cells[`${col}${row}`].background,
-      justify: cells[`${col}${row}`].justify,
-      format: cells[`${col}${row}`].format,
-      assess: cells[`${col}${row}`].assess,
-    },
-  } || {}
-);
+const getCell = (row, col, cells, columns) => {
+  if (row === 0 && col === "_") {
+    return {
+      type: "th",
+      text: "",  // Empty text for top-left corner
+      attrs: { readonly: "true" }
+    };
+  }
+  if (col === "_" && row !== 0) {
+    return {
+      type: "th",
+      text: row,
+      attrs: { readonly: "true" }
+    };
+  }
+  if (row === 0 && col !== "_") {
+    return {
+      type: "th",
+      text: col,
+      attrs: { readonly: "true" }
+    };
+  }
+  if (row !== 0 && col !== "_") {
+    const cellData = cells[`${col}${row}`] || {};
+    const columnData = columns && columns[col] || {};
+    // Merge column attributes with cell data, cell data takes precedence
+    const mergedData = { ...columnData, ...cellData };
+    return {
+      type: "td",
+      ...mergedData,
+      attrs: {
+        ...mergedData.attrs,
+        // Extract top-level attributes and put them in attrs for ProseMirror
+        underline: mergedData.underline,
+        fontWeight: mergedData.fontWeight,
+        background: mergedData.background,
+        justify: mergedData.justify,
+        format: mergedData.format,
+        assess: mergedData.assess,
+      },
+    };
+  }
+  return {};
+};
 
 const makeEditorState = ({ type, columns, cells }) => {
   //x = x > 26 && 26 || x;  // Max col count is 26.
@@ -1400,7 +1418,7 @@ const makeEditorState = ({ type, columns, cells }) => {
       cols.reduce((rows, col) =>
         ({
           ...rows,
-          [col]: getCell(row, col, cells || {})
+          [col]: getCell(row, col, cells || {}, columns)
         }), {}
       )
     );
