@@ -442,8 +442,9 @@ const applyModelRules = (cellExprs, state, value, validation) => {
     }
     cellColors[row][col] = color;
   });
-  const coloredCells = cells.map(cell => (
-    {
+  const coloredCells = cells.map(cell => {
+    const isFocused = selection.anchor > cell.from && selection.anchor < cell.to;
+    return {
       ...cell,
       readonly: cell.readonly,
       border: (
@@ -452,14 +453,14 @@ const applyModelRules = (cellExprs, state, value, validation) => {
           cell.col === 1 &&
           `text-align: center; border: 1px solid #ddd; border-right: 1px solid #aaa; border-bottom: ${cell.underline ? '2px solid #333' : '1px solid #ddd'};` ||
           cell.row === 1 && `text-align: center; border: 1px solid #ddd; border-bottom: ${cell.underline ? '2px solid #333' : '1px solid #aaa'};` ||
-          selection.anchor > cell.from && selection.anchor < cell.to &&
+          isFocused &&
           `font-weight: ${cell.fontWeight || "normal"}; text-align: ${cell.justify || "right"}; border: 2px solid royalblue; border-bottom: ${cell.underline ? '2px solid #333' : '2px solid royalblue'};` ||
           `font-weight: ${cell.fontWeight || "normal"}; text-align: ${cell.justify || "right"}; border: 1px solid #ddd; border-bottom: ${cell.underline ? '2px solid #333' : '1px solid #ddd'};`
       ),
       color: (cell.col === 1 || cell.row === 1) && "#f8f8f8" || // Light gray background for headers
         cellColors[cell.row][cell.col] || "#fff"
-    }
-  ));
+    };
+  });
   return applyDecoration({doc, cells: coloredCells});
 }
 
@@ -500,6 +501,7 @@ const getCells = (cellExprs, state) => {
         format: node.attrs.format,
         assess: node.attrs.assess,
         underline: node.attrs.underline,
+        protected: node.attrs.protected,
       });
     }
   });
@@ -615,6 +617,20 @@ const schema = new Schema({
               attrs.style = (attrs.style || '') + `border-bottom: 1px solid black;`;
           },
         },
+        protected: {
+          default: false,
+          getFromDOM(dom) {
+            return dom.dataset.protected === 'true';
+          },
+          setDOMAttr(value, attrs) {
+            if (value) {
+              attrs['data-protected'] = 'true';
+              // Add a CSS class to visually indicate protected status and hide cursor
+              attrs.class = (attrs.class || '') + ' protected-cell';
+              attrs.style = (attrs.style || '') + 'caret-color: transparent;';
+            }
+          },
+        },
       },
     }),
   ),
@@ -693,6 +709,8 @@ const replaceCellContent = (editorView, name, newText, doMoveCursor = false) => 
         state.schema.node("paragraph", null, state.schema.text(newText)) ||
         state.schema.node("paragraph");
   const tr = state.tr;
+  // Mark this as a system formatting update, not user input
+  tr.setMeta("systemFormatting", true);
   tr.replaceWith(contentStart, contentEnd, paragraphNode);
   if (doMoveCursor) {
     let cursorPos = contentStart + 1;
@@ -984,6 +1002,120 @@ function isInsideTableHeader(state) {
   const { selection } = state;
   return isPosInHeader(state, selection.$anchor.pos);
 }
+
+// Helper function to check if current selection is inside a protected cell
+function isInsideProtectedCell(state) {
+  const { selection } = state;
+  const $pos = state.doc.resolve(selection.$anchor.pos);
+  for (let depth = $pos.depth; depth > 0; depth--) {
+    const node = $pos.node(depth);
+    if (node.type.name === "table_cell" && node.attrs.protected === true) {
+      return true;
+    }
+  }
+  return false;
+}
+
+const makeProtectedCellsPlugin = new Plugin({
+  props: {
+    handleDOMEvents: {
+      beforeinput(view, event) {
+        if (isInsideProtectedCell(view.state)) {
+          event.preventDefault();
+          return true;
+        }
+        return false;
+      },
+      input(view, event) {
+        if (isInsideProtectedCell(view.state)) {
+          event.preventDefault();
+          return true;
+        }
+        return false;
+      },
+      keypress(view, event) {
+        if (isInsideProtectedCell(view.state)) {
+          event.preventDefault();
+          return true;
+        }
+        return false;
+      },
+      keydown(view, event) {
+        if (isInsideProtectedCell(view.state)) {
+          // Allow navigation keys but block content modification
+          const allowedKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Tab', 'Enter', 'Escape', 'Home', 'End', 'PageUp', 'PageDown'];
+          const isNavigationKey = allowedKeys.includes(event.key);
+          const isModifierKey = event.metaKey || event.ctrlKey || event.altKey;
+          // Allow navigation keys and modifier combinations (like Ctrl+C)
+          if (!isNavigationKey && !isModifierKey) {
+            event.preventDefault();
+            return true;
+          }
+          // Allow specific modifier combinations for copy operations
+          if (isModifierKey && ['c', 'C', 'v', 'V', 'x', 'X', 'a', 'A', 'z', 'Z', 'y', 'Y'].includes(event.key)) {
+            // Allow copy (Ctrl+C), but prevent paste (Ctrl+V), cut (Ctrl+X), and undo/redo
+            if (['v', 'V', 'x', 'X', 'z', 'Z', 'y', 'Y'].includes(event.key)) {
+              event.preventDefault();
+              return true;
+            }
+          }
+        }
+        return false;
+      },
+      paste(view, event) {
+        if (isInsideProtectedCell(view.state)) {
+          event.preventDefault();
+          return true;
+        }
+        return false;
+      },
+      cut(view, event) {
+        if (isInsideProtectedCell(view.state)) {
+          event.preventDefault();
+          return true;
+        }
+        return false;
+      },
+      drop(view, event) {
+        if (isInsideProtectedCell(view.state)) {
+          event.preventDefault();
+          return true;
+        }
+        return false;
+      }
+    }
+  },
+
+  filterTransaction(tr, state) {
+    // Allow system formatting updates for protected cells
+    if (tr.getMeta("systemFormatting")) {
+      return true;
+    }
+    // Check if this transaction would modify content inside a protected cell
+    if (tr.steps.length > 0) {
+      // Check if any step would affect a protected cell
+      for (let step of tr.steps) {
+        const stepJSON = step.toJSON();
+        // Block any content modification steps when in a protected cell
+        if (stepJSON.stepType !== "setSelection" && isInsideProtectedCell(state)) {
+          return false;
+        }
+        // Also check if the step would modify a protected cell position
+        if (stepJSON.stepType === "replace" && stepJSON.from !== undefined) {
+          const $pos = state.doc.resolve(stepJSON.from);
+          for (let depth = $pos.depth; depth > 0; depth--) {
+            const node = $pos.node(depth);
+            if (node.type.name === "table_cell" && node.attrs.protected === true) {
+              return false;
+            }
+          }
+        }
+      }
+    }
+
+    return true;
+  }
+});
 
 
 const getResponses = cells => (
@@ -1408,6 +1540,7 @@ const getCell = (row, col, cells, columns) => {
         justify: mergedData.justify,
         format: mergedData.format,
         assess: mergedData.assess,
+        protected: mergedData.protected,
       },
     };
   }
@@ -1473,6 +1606,7 @@ export const TableEditor = ({ state }) => {
     menuPlugin,
     //  modelBackgroundPlugin(),
     makeTableHeadersReadOnlyPlugin,
+    makeProtectedCellsPlugin,
     cellPlugin,
   ]);
   const editorRef = useRef(null);
