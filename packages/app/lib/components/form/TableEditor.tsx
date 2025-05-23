@@ -70,6 +70,7 @@ import { Plugin } from 'prosemirror-state';
 import { Decoration, DecorationSet } from "prosemirror-view";
 import ReactDOM from 'react-dom/client';
 import { MenuView } from './MenuView';
+import { ProtectedCellTooltip } from './ProtectedCellTooltip';
 //import { debounce } from "lodash";
 
 import { TransLaTeX } from "@artcompiler/translatex";
@@ -1016,12 +1017,13 @@ function isInsideProtectedCell(state) {
   return false;
 }
 
-const makeProtectedCellsPlugin = new Plugin({
+const makeProtectedCellsPlugin = (tooltipHandler) => new Plugin({
   props: {
     handleDOMEvents: {
       beforeinput(view, event) {
         if (isInsideProtectedCell(view.state)) {
           event.preventDefault();
+          tooltipHandler?.showTooltip(event);
           return true;
         }
         return false;
@@ -1036,6 +1038,7 @@ const makeProtectedCellsPlugin = new Plugin({
       keypress(view, event) {
         if (isInsideProtectedCell(view.state)) {
           event.preventDefault();
+          tooltipHandler?.showTooltip(event);
           return true;
         }
         return false;
@@ -1049,6 +1052,7 @@ const makeProtectedCellsPlugin = new Plugin({
           // Allow navigation keys and modifier combinations (like Ctrl+C)
           if (!isNavigationKey && !isModifierKey) {
             event.preventDefault();
+            tooltipHandler?.showTooltip(event);
             return true;
           }
           // Allow specific modifier combinations for copy operations
@@ -1056,6 +1060,7 @@ const makeProtectedCellsPlugin = new Plugin({
             // Allow copy (Ctrl+C), but prevent paste (Ctrl+V), cut (Ctrl+X), and undo/redo
             if (['v', 'V', 'x', 'X', 'z', 'Z', 'y', 'Y'].includes(event.key)) {
               event.preventDefault();
+              tooltipHandler?.showTooltip(event);
               return true;
             }
           }
@@ -1065,6 +1070,7 @@ const makeProtectedCellsPlugin = new Plugin({
       paste(view, event) {
         if (isInsideProtectedCell(view.state)) {
           event.preventDefault();
+          tooltipHandler?.showTooltip(event);
           return true;
         }
         return false;
@@ -1072,6 +1078,7 @@ const makeProtectedCellsPlugin = new Plugin({
       cut(view, event) {
         if (isInsideProtectedCell(view.state)) {
           event.preventDefault();
+          tooltipHandler?.showTooltip(event);
           return true;
         }
         return false;
@@ -1079,6 +1086,7 @@ const makeProtectedCellsPlugin = new Plugin({
       drop(view, event) {
         if (isInsideProtectedCell(view.state)) {
           event.preventDefault();
+          tooltipHandler?.showTooltip(event);
           return true;
         }
         return false;
@@ -1589,9 +1597,35 @@ const makeEditorState = ({ type, columns, cells }) => {
 
 export const TableEditor = ({ state, onEditorViewChange }) => {
   const [ editorView, setEditorView ] = useState(null);
+  const [ tooltipState, setTooltipState ] = useState({ visible: false, x: 0, y: 0 });
+  const tooltipHandler = {
+    showTooltip: (event) => {
+      // Try to get position from mouse event or element
+      let x = 0, y = 0;
+      if (event.clientX && event.clientY) {
+        // Mouse event with coordinates
+        x = event.clientX;
+        y = event.clientY;
+      } else {
+        // Fallback to element bounds
+        const rect = event.target?.getBoundingClientRect?.() || { left: 0, top: 0, width: 0 };
+        x = rect.left + (rect.width / 2);
+        y = rect.top;
+      }
+      setTooltipState({
+        visible: true,
+        x,
+        y,
+      });
+      // Auto-hide tooltip after 4 seconds
+      setTimeout(() => {
+        setTooltipState(prev => ({ ...prev, visible: false }));
+      }, 4000);
+    }
+  };
   const cellPlugin = buildCellPlugin(state);
   const menuPlugin = buildMenuPlugin(state);
-  const [ plugins ] = useState([
+  const plugins = [
     columnResizing(),
     tableEditing(),
     history(),
@@ -1606,9 +1640,9 @@ export const TableEditor = ({ state, onEditorViewChange }) => {
     menuPlugin,
     //  modelBackgroundPlugin(),
     makeTableHeadersReadOnlyPlugin,
-    makeProtectedCellsPlugin,
+    makeProtectedCellsPlugin(tooltipHandler),
     cellPlugin,
-  ]);
+  ];
   const editorRef = useRef(null);
   useEffect(() => {
     if (!editorRef.current) {
@@ -1662,9 +1696,16 @@ export const TableEditor = ({ state, onEditorViewChange }) => {
     }
   }, [editorView, columns, cells]);
   return (
-    <div
-      ref={editorRef}
-      className="border border-gray-300 p-2 bg-white text-xs font-sans"
-    />
+    <>
+      <div
+        ref={editorRef}
+        className="border border-gray-300 p-2 bg-white text-xs font-sans"
+      />
+      <ProtectedCellTooltip
+        visible={tooltipState.visible}
+        x={tooltipState.x}
+        y={tooltipState.y}
+      />
+    </>
   );
 };
