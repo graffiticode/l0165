@@ -15,30 +15,49 @@ const updateTextNode = ({ editorView, from, text }) => {
 }
 
 export const FormulaBar = ({ editorView }) => {
-  const { state } = editorView || {};
   const [ value, setValue ] = useState("");
-  useEffect(() => {
-    if (state) {
-      const { from } = state.selection;
-      const pos = state.doc.resolve(from);
-      
-      // Find the table cell that contains the cursor
-      let cellNode = null;
-      for (let depth = pos.depth; depth > 0; depth--) {
-        const node = pos.node(depth);
-        if (node.type.name === "table_cell") {
-          cellNode = node;
-          break;
-        }
-      }
-      
-      const value = cellNode?.textContent || "";
-      setValue(value);
+  const updateFormulaBar = () => {
+    if (editorView?.state) {
+      const { from } = editorView.state.selection;
+      const pos = editorView.state.doc.resolve(from);
+      const node = editorView.state.doc.nodeAt(pos.pos - 1);
+      const newValue = node?.textContent || "";
+      setValue(newValue);
     }
-  }, [state?.selection?.from, state?.doc]);
+  };
+
+  useEffect(() => {
+    if (!editorView) return;
+    // Initial update
+    updateFormulaBar();
+    // Add event listeners to detect selection changes
+    const handleSelectionChange = () => {
+      updateFormulaBar();
+    };
+    const handleKeyDown = () => {
+      // Use setTimeout to let the selection update first
+      setTimeout(updateFormulaBar, 0);
+    };
+    const handleClick = () => {
+      // Use setTimeout to let the selection update first
+      setTimeout(updateFormulaBar, 0);
+    };
+    if (editorView.dom) {
+      editorView.dom.addEventListener('keydown', handleKeyDown);
+      editorView.dom.addEventListener('click', handleClick);
+      document.addEventListener('selectionchange', handleSelectionChange);
+    }
+    return () => {
+      if (editorView.dom) {
+        editorView.dom.removeEventListener('keydown', handleKeyDown);
+        editorView.dom.removeEventListener('click', handleClick);
+        document.removeEventListener('selectionchange', handleSelectionChange);
+      }
+    };
+  }, [editorView]);
   const handleChange = value => {
     setValue(value);
-    const { from } = state.selection;
+    const { from } = editorView.state.selection;
     updateTextNode({editorView, from, text: value});
   };
   return (
