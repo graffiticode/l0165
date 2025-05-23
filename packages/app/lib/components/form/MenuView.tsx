@@ -30,7 +30,7 @@ const isMarkActive = ({ state, mark }) => {
   }
 }
 
-export const MenuView = ({ className, editorView }) => {
+export const MenuView = ({ className, editorView, hideMenu = false }) => {
   // const toggle = item => {
   //   item.selected = !item.selected;
   //   item.command(editorView.state.schema)(editorView.state, editorView.dispatch);
@@ -41,6 +41,10 @@ export const MenuView = ({ className, editorView }) => {
       mark: item.mark(editorView.state.schema)
     })
   );
+  // Don't render anything if hideMenu is true
+  if (hideMenu) {
+    return null;
+  }
   return (
     <div
       className={classNames(

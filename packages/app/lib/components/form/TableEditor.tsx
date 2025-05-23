@@ -144,25 +144,38 @@ const scoreCell = ({ method, expected, points = 1 }, {val, formula} = {val:undef
   0
 );
 
-const menuPlugin = new Plugin({
-  view(editorView) {
-    const menuDiv = document.createElement('div');
-    const root = ReactDOM.createRoot(menuDiv!);
-    editorView.dom.parentNode.insertBefore(menuDiv, editorView.dom);
-    const update = () => {
-      root.render(
-        <MenuView className="" editorView={editorView} />,
-      );
-    };
-    update();
-    return {
-      update,
-      destroy() {
-        root.unmount();
-      }
-    };
-  }
-});
+const buildMenuPlugin = (formState) => {
+  let currentHideMenu = formState.data.interaction?.hideMenu || false;
+  return new Plugin({
+    view(editorView) {
+      const menuDiv = document.createElement('div');
+      const root = ReactDOM.createRoot(menuDiv!);
+      editorView.dom.parentNode.insertBefore(menuDiv, editorView.dom);
+      const update = () => {
+        const hideMenu = formState.data.interaction?.hideMenu || false;
+        root.render(
+          <MenuView className="" editorView={editorView} hideMenu={hideMenu} />,
+        );
+      };
+      update();
+      return {
+        update() {
+          // Check if hideMenu value has changed
+          const hideMenu = formState.data.interaction?.hideMenu || false;
+          if (hideMenu !== currentHideMenu) {
+            currentHideMenu = hideMenu;
+            root.render(
+              <MenuView className="" editorView={editorView} hideMenu={hideMenu} />,
+            );
+          }
+        },
+        destroy() {
+          root.unmount();
+        }
+      };
+    }
+  });
+};
 
 const applyDecoration = ({ doc, cells }) => {
   const decorations = [];
@@ -1444,6 +1457,7 @@ const makeEditorState = ({ type, columns, cells }) => {
 export const TableEditor = ({ state }) => {
   const [ editorView, setEditorView ] = useState(null);
   const cellPlugin = buildCellPlugin(state);
+  const menuPlugin = buildMenuPlugin(state);
   const [ plugins ] = useState([
     columnResizing(),
     tableEditing(),
