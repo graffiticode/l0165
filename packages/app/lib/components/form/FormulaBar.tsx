@@ -21,11 +21,21 @@ export const FormulaBar = ({ editorView }) => {
     if (state) {
       const { from } = state.selection;
       const pos = state.doc.resolve(from);
-      const node = state.doc.nodeAt(pos.pos - 1);
-      const value = node?.textContent || "";
+      
+      // Find the table cell that contains the cursor
+      let cellNode = null;
+      for (let depth = pos.depth; depth > 0; depth--) {
+        const node = pos.node(depth);
+        if (node.type.name === "table_cell") {
+          cellNode = node;
+          break;
+        }
+      }
+      
+      const value = cellNode?.textContent || "";
       setValue(value);
     }
-  }, [state]);
+  }, [state?.selection?.from, state?.doc]);
   const handleChange = value => {
     setValue(value);
     const { from } = state.selection;

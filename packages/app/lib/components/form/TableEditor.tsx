@@ -1587,7 +1587,7 @@ const makeEditorState = ({ type, columns, cells }) => {
   }
 };
 
-export const TableEditor = ({ state }) => {
+export const TableEditor = ({ state, onEditorViewChange }) => {
   const [ editorView, setEditorView ] = useState(null);
   const cellPlugin = buildCellPlugin(state);
   const menuPlugin = buildMenuPlugin(state);
@@ -1635,6 +1635,7 @@ export const TableEditor = ({ state }) => {
       }
     });
     setEditorView(editorView);
+    onEditorViewChange?.(editorView);
     return () => {
       if (editorView) {
         editorView.destroy();
