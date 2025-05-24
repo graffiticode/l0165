@@ -1160,10 +1160,13 @@ const buildCellPlugin = formState => {
             if (columnAttrs) {
               // Merge any column attributes that aren't already set on the cell
               Object.keys(columnAttrs).forEach(attr => {
-                if (columnAttrs[attr] && !cells[cellName][attr]) {
+                if (columnAttrs[attr] !== undefined && !cells[cellName].attrs?.[attr]) {
                   cells[cellName] = {
                     ...cells[cellName],
-                    [attr]: columnAttrs[attr],
+                    attrs: {
+                      ...cells[cellName].attrs,
+                      [attr]: columnAttrs[attr],
+                    },
                   };
                 }
               });
@@ -1535,20 +1538,19 @@ const getCell = (row, col, cells, columns) => {
     const cellData = cells[`${col}${row}`] || {};
     const columnData = columns && columns[col] || {};
     // Merge column attributes with cell data, cell data takes precedence
-    const mergedData = { ...columnData, ...cellData };
+    const mergedAttrs = { ...columnData, ...cellData.attrs };
     return {
       type: "td",
-      ...mergedData,
+      ...cellData,
       attrs: {
-        ...mergedData.attrs,
-        // Extract attributes from nested attrs structure for ProseMirror
-        underline: mergedData.attrs?.underline,
-        fontWeight: mergedData.attrs?.fontWeight,
-        background: mergedData.attrs?.background,
-        justify: mergedData.attrs?.justify,
-        format: mergedData.attrs?.format,
-        assess: mergedData.attrs?.assess,
-        protected: mergedData.attrs?.protected,
+        // Extract attributes from merged attrs structure for ProseMirror
+        underline: mergedAttrs?.underline,
+        fontWeight: mergedAttrs?.fontWeight,
+        background: mergedAttrs?.background,
+        justify: mergedAttrs?.justify,
+        format: mergedAttrs?.format,
+        assess: mergedAttrs?.assess,
+        protected: mergedAttrs?.protected,
       },
     };
   }
