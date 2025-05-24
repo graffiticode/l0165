@@ -1541,13 +1541,13 @@ const getCell = (row, col, cells, columns) => {
       ...mergedData,
       attrs: {
         ...mergedData.attrs,
-        // Extract top-level attributes and put them in attrs for ProseMirror
-        underline: mergedData.underline,
-        fontWeight: mergedData.fontWeight,
-        background: mergedData.background,
-        justify: mergedData.justify,
-        format: mergedData.format,
-        assess: mergedData.assess,
+        // Extract attributes from nested attrs structure for ProseMirror
+        underline: mergedData.attrs?.underline,
+        fontWeight: mergedData.attrs?.fontWeight,
+        background: mergedData.attrs?.background,
+        justify: mergedData.attrs?.justify,
+        format: mergedData.attrs?.format,
+        assess: mergedData.attrs?.assess,
         protected: mergedData.attrs?.protected,
       },
     };
