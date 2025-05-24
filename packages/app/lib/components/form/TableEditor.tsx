@@ -1548,7 +1548,7 @@ const getCell = (row, col, cells, columns) => {
         justify: mergedData.justify,
         format: mergedData.format,
         assess: mergedData.assess,
-        protected: mergedData.protected,
+        protected: mergedData.attrs?.protected,
       },
     };
   }
