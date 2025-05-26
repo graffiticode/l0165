@@ -443,21 +443,80 @@ const applyModelRules = (cellExprs, state, value, validation) => {
     }
     cellColors[row][col] = color;
   });
+  const getBorderStyle = (cell, isFocused) => {
+    // Parse custom border sides
+    const customBorderSides = cell.border && typeof cell.border === 'string'
+      ? cell.border.split(',').map(s => s.trim())
+      : [];
+    // Define default borders for different cell types
+    let defaultBorders = {
+      top: '1px solid #ddd',
+      right: '1px solid #ddd',
+      bottom: '1px solid #ddd',
+      left: '1px solid #ddd'
+    };
+    // Adjust defaults based on cell position and state
+    if (cell.col === 1 && cell.row === 1) {
+      defaultBorders.right = '1px solid #aaa';
+      defaultBorders.bottom = cell.underline ? '2px solid #333' : '1px solid #aaa';
+    } else if (cell.col === 1) {
+      defaultBorders.right = '1px solid #aaa';
+      defaultBorders.bottom = cell.underline ? '2px solid #333' : '1px solid #ddd';
+    } else if (cell.row === 1) {
+      defaultBorders.bottom = cell.underline ? '2px solid #333' : '1px solid #aaa';
+    } else if (isFocused) {
+      defaultBorders = {
+        top: '2px solid royalblue',
+        right: '2px solid royalblue',
+        bottom: cell.underline ? '2px solid #333' : '2px solid royalblue',
+        left: '2px solid royalblue'
+      };
+    } else {
+      defaultBorders.bottom = cell.underline ? '2px solid #333' : '1px solid #ddd';
+    }
+    // Override with custom borders
+    const finalBorders = { ...defaultBorders };
+    if (customBorderSides.includes('top')) finalBorders.top = '2px solid #666';
+    if (customBorderSides.includes('right')) finalBorders.right = '2px solid #666';
+    if (customBorderSides.includes('bottom')) finalBorders.bottom = '2px solid #666';
+    if (customBorderSides.includes('left')) finalBorders.left = '2px solid #666';
+    // Build style string with !important for custom borders
+    let styleStr = '';
+    if (customBorderSides.includes('top')) {
+      styleStr += `border-top: 2px solid #666 !important; `;
+    } else {
+      styleStr += `border-top: ${finalBorders.top}; `;
+    }
+    if (customBorderSides.includes('right')) {
+      styleStr += `border-right: 2px solid #666 !important; `;
+    } else {
+      styleStr += `border-right: ${finalBorders.right}; `;
+    }
+    if (customBorderSides.includes('bottom')) {
+      styleStr += `border-bottom: 2px solid #666 !important; `;
+    } else {
+      styleStr += `border-bottom: ${finalBorders.bottom}; `;
+    }
+    if (customBorderSides.includes('left')) {
+      styleStr += `border-left: 2px solid #666 !important; `;
+    } else {
+      styleStr += `border-left: ${finalBorders.left}; `;
+    }
+    // Add text alignment and font weight
+    if (cell.col === 1 || cell.row === 1) {
+      styleStr += 'text-align: center; ';
+    } else {
+      styleStr += `font-weight: ${cell.fontWeight || "normal"}; text-align: ${cell.justify || "right"}; `;
+    }
+    return styleStr;
+  };
+
   const coloredCells = cells.map(cell => {
     const isFocused = selection.anchor > cell.from && selection.anchor < cell.to;
     return {
       ...cell,
       readonly: cell.readonly,
-      border: (
-        cell.col === 1 && cell.row === 1 &&
-          `border: 1px solid #ddd; border-right: 1px solid #aaa; border-bottom: ${cell.underline ? '2px solid #333' : '1px solid #aaa'};` ||
-          cell.col === 1 &&
-          `text-align: center; border: 1px solid #ddd; border-right: 1px solid #aaa; border-bottom: ${cell.underline ? '2px solid #333' : '1px solid #ddd'};` ||
-          cell.row === 1 && `text-align: center; border: 1px solid #ddd; border-bottom: ${cell.underline ? '2px solid #333' : '1px solid #aaa'};` ||
-          isFocused &&
-          `font-weight: ${cell.fontWeight || "normal"}; text-align: ${cell.justify || "right"}; border: 2px solid royalblue; border-bottom: ${cell.underline ? '2px solid #333' : '2px solid royalblue'};` ||
-          `font-weight: ${cell.fontWeight || "normal"}; text-align: ${cell.justify || "right"}; border: 1px solid #ddd; border-bottom: ${cell.underline ? '2px solid #333' : '1px solid #ddd'};`
-      ),
+      border: getBorderStyle(cell, isFocused),
       color: (cell.col === 1 || cell.row === 1) && "#f8f8f8" || // Light gray background for headers
         cellColors[cell.row][cell.col] || "#fff"
     };
@@ -502,6 +561,7 @@ const getCells = (cellExprs, state) => {
         format: node.attrs.format,
         assess: node.attrs.assess,
         underline: node.attrs.underline,
+        border: node.attrs.border,
         protected: node.attrs.protected,
       });
     }
@@ -616,6 +676,24 @@ const schema = new Schema({
           setDOMAttr(value, attrs) {
             if (value)
               attrs.style = (attrs.style || '') + `border-bottom: 1px solid black;`;
+          },
+        },
+        border: {
+          default: null,
+          getFromDOM(dom) {
+            return dom.dataset.border || null;
+          },
+          setDOMAttr(value, attrs) {
+            if (value && typeof value === 'string') {
+              attrs['data-border'] = value;
+              const sides = value.split(',').map(s => s.trim());
+              let borderStyle = '';
+              if (sides.includes('top')) borderStyle += 'border-top: 2px solid #666; ';
+              if (sides.includes('right')) borderStyle += 'border-right: 2px solid #666; ';
+              if (sides.includes('bottom')) borderStyle += 'border-bottom: 2px solid #666; ';
+              if (sides.includes('left')) borderStyle += 'border-left: 2px solid #666; ';
+              attrs.style = (attrs.style || '') + borderStyle;
+            }
           },
         },
         protected: {
@@ -1545,6 +1623,7 @@ const getCell = (row, col, cells, columns) => {
       attrs: {
         // Extract attributes from merged attrs structure for ProseMirror
         underline: mergedAttrs?.underline,
+        border: mergedAttrs?.border,
         fontWeight: mergedAttrs?.fontWeight,
         background: mergedAttrs?.background,
         justify: mergedAttrs?.justify,
