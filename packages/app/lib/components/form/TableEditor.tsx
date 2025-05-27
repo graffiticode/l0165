@@ -180,12 +180,13 @@ const buildMenuPlugin = (formState) => {
 
 const applyDecoration = ({ doc, cells }) => {
   const decorations = [];
-  cells.forEach(({ from, to, color, border }) => {
+  cells.forEach(({ from, to, color, border, borderClass }) => {
     decorations.push(Decoration.node(from, to, {
       style: `
         background-color: ${color};
         ${border};
-      `
+      `,
+      class: borderClass || ""
     }));
   });
   return DecorationSet.create(doc, decorations);
@@ -448,6 +449,18 @@ const applyModelRules = (cellExprs, state, value, validation) => {
     const customBorderSides = cell.border && typeof cell.border === 'string'
       ? cell.border.split(',').map(s => s.trim())
       : [];
+    
+    // Generate CSS class for custom borders
+    let borderClass = '';
+    if (customBorderSides.length > 0) {
+      const classNames = [];
+      if (customBorderSides.includes('top')) classNames.push('custom-border-top');
+      if (customBorderSides.includes('right')) classNames.push('custom-border-right'); 
+      if (customBorderSides.includes('bottom')) classNames.push('custom-border-bottom');
+      if (customBorderSides.includes('left')) classNames.push('custom-border-left');
+      borderClass = classNames.join(' ');
+    }
+    
     // Define default borders for different cell types
     let defaultBorders = {
       top: '1px solid #ddd',
@@ -474,49 +487,39 @@ const applyModelRules = (cellExprs, state, value, validation) => {
     } else {
       defaultBorders.bottom = cell.underline ? '2px solid #333' : '1px solid #ddd';
     }
-    // Override with custom borders
-    const finalBorders = { ...defaultBorders };
-    if (customBorderSides.includes('top')) finalBorders.top = '2px solid #666';
-    if (customBorderSides.includes('right')) finalBorders.right = '2px solid #666';
-    if (customBorderSides.includes('bottom')) finalBorders.bottom = '2px solid #666';
-    if (customBorderSides.includes('left')) finalBorders.left = '2px solid #666';
-    // Build style string with !important for custom borders
+    
     let styleStr = '';
-    if (customBorderSides.includes('top')) {
-      styleStr += `border-top: 2px solid #666 !important; `;
-    } else {
-      styleStr += `border-top: ${finalBorders.top}; `;
+    
+    if (customBorderSides.length === 0) {
+      // No custom borders, use default borders
+      styleStr += `border-top: ${defaultBorders.top}; `;
+      styleStr += `border-right: ${defaultBorders.right}; `;
+      styleStr += `border-bottom: ${defaultBorders.bottom}; `;
+      styleStr += `border-left: ${defaultBorders.left}; `;
     }
-    if (customBorderSides.includes('right')) {
-      styleStr += `border-right: 2px solid #666 !important; `;
-    } else {
-      styleStr += `border-right: ${finalBorders.right}; `;
+    
+    // Add focus class if focused
+    if (isFocused) {
+      borderClass = borderClass ? borderClass + ' focus-border' : 'focus-border';
     }
-    if (customBorderSides.includes('bottom')) {
-      styleStr += `border-bottom: 2px solid #666 !important; `;
-    } else {
-      styleStr += `border-bottom: ${finalBorders.bottom}; `;
-    }
-    if (customBorderSides.includes('left')) {
-      styleStr += `border-left: 2px solid #666 !important; `;
-    } else {
-      styleStr += `border-left: ${finalBorders.left}; `;
-    }
+    
     // Add text alignment and font weight
     if (cell.col === 1 || cell.row === 1) {
       styleStr += 'text-align: center; ';
     } else {
       styleStr += `font-weight: ${cell.fontWeight || "normal"}; text-align: ${cell.justify || "right"}; `;
     }
-    return styleStr;
+    return { styleStr, borderClass };
   };
 
   const coloredCells = cells.map(cell => {
     const isFocused = selection.anchor > cell.from && selection.anchor < cell.to;
+    const { styleStr, borderClass } = getBorderStyle(cell, isFocused);
     return {
       ...cell,
       readonly: cell.readonly,
-      border: getBorderStyle(cell, isFocused),
+      border: styleStr,
+      borderClass: borderClass,
       color: (cell.col === 1 || cell.row === 1) && "#f8f8f8" || // Light gray background for headers
         cellColors[cell.row][cell.col] || "#fff"
     };
