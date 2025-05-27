@@ -99,22 +99,75 @@ const toUpperCase = text => (
   }), {inString: false, text: ""}).text || text
 )
 
+const isNumeric = text => {
+  if (!text || typeof text !== 'string') return false;
+  const trimmed = text.trim();
+  return !isNaN(Number(trimmed)) && !isNaN(parseFloat(trimmed));
+}
+
+const isDateLike = text => {
+  if (!text || typeof text !== 'string') return false;
+  const trimmed = text.trim();
+  // Check for common date patterns
+  const datePatterns = [
+    /^\d{1,2}\/\d{1,2}\/\d{2,4}$/,  // MM/DD/YYYY or M/D/YY
+    /^\d{1,2}-\d{1,2}-\d{2,4}$/,   // MM-DD-YYYY or M-D-YY
+    /^\d{4}-\d{1,2}-\d{1,2}$/,     // YYYY-MM-DD
+    /^\d{1,2}\/\d{1,2}$/,          // MM/DD
+    /^\d{1,2}-\d{1,2}$/,           // MM-DD
+  ];
+  return datePatterns.some(pattern => pattern.test(trimmed)) && !isNaN(Date.parse(trimmed));
+}
+
+const wrapPlainTextInLatex = text => {
+  if (!text || text.length === 0) {
+    return text;
+  }
+  // If it's a formula (starts with =), don't wrap
+  if (text.indexOf("=") === 0) {
+    return text;
+  }
+  // If it's already wrapped in \text{}, don't double wrap
+  if (text.trim().startsWith("\\text{") && text.trim().endsWith("}")) {
+    return text;
+  }
+  // If it contains LaTeX commands, don't wrap to avoid breaking them
+  if (text.includes("\\")) {
+    return text;
+  }
+  // If it's a number, don't wrap (Excel can format numbers)
+  if (isNumeric(text)) {
+    return text;
+  }
+  // If it's a date, don't wrap (Excel can format dates)
+  if (isDateLike(text)) {
+    return text;
+  }
+  // Wrap plain text in \text{}
+  return `\\text{${text}}`;
+}
+
 const normalizeValue = text => {
-  text = toUpperCase(text);
   let result = [text];
   try {
     const options = {
       allowThousandsSeparator: true,
+      keepTextWhitespace: true,
       ...normalizeRules,
     };
-    if (text && text.length > 0 && text.indexOf("=") === 0) {
+    if (text && text.length > 0) {
+      const processedText = text.indexOf("=") === 0 ? toUpperCase(text) : wrapPlainTextInLatex(text);
+      console.log(
+        "normalizeText()",
+        "processedText=" + processedText,
+      );
       TransLaTeX.translate(
         options,
-        text, (err, val) => {
+        processedText, (err, val) => {
           if (err && err.length) {
             console.error(err);
           }
-          result = val.split(",");
+          result = text.indexOf("=") === 0 ? val.split(",") : [val];
         }
       );
     }
@@ -449,18 +502,16 @@ const applyModelRules = (cellExprs, state, value, validation) => {
     const customBorderSides = cell.border && typeof cell.border === 'string'
       ? cell.border.split(',').map(s => s.trim())
       : [];
-    
     // Generate CSS class for custom borders
     let borderClass = '';
     if (customBorderSides.length > 0) {
       const classNames = [];
       if (customBorderSides.includes('top')) classNames.push('custom-border-top');
-      if (customBorderSides.includes('right')) classNames.push('custom-border-right'); 
+      if (customBorderSides.includes('right')) classNames.push('custom-border-right');
       if (customBorderSides.includes('bottom')) classNames.push('custom-border-bottom');
       if (customBorderSides.includes('left')) classNames.push('custom-border-left');
       borderClass = classNames.join(' ');
     }
-    
     // Define default borders for different cell types
     let defaultBorders = {
       top: '1px solid #ddd',
@@ -487,9 +538,7 @@ const applyModelRules = (cellExprs, state, value, validation) => {
     } else {
       defaultBorders.bottom = cell.underline ? '2px solid #333' : '1px solid #ddd';
     }
-    
     let styleStr = '';
-    
     if (customBorderSides.length === 0) {
       // No custom borders, use default borders
       styleStr += `border-top: ${defaultBorders.top}; `;
@@ -497,12 +546,10 @@ const applyModelRules = (cellExprs, state, value, validation) => {
       styleStr += `border-bottom: ${defaultBorders.bottom}; `;
       styleStr += `border-left: ${defaultBorders.left}; `;
     }
-    
     // Add focus class if focused
     if (isFocused) {
       borderClass = borderClass ? borderClass + ' focus-border' : 'focus-border';
     }
-    
     // Add text alignment and font weight
     if (cell.col === 1 || cell.row === 1) {
       styleStr += 'text-align: center; ';
@@ -810,13 +857,15 @@ const evalCell = ({ env, name }) => {
   try {
     const options = {
       allowThousandsSeparator: true,
+      keepTextWhitespace: true,
       env: env.cells,
       ...evalRules,
     };
-    if (text && text.length > 0 && text.indexOf("=") === 0) {
+    if (text && text.length > 0) {
+      const processedText = text.indexOf("=") === 0 ? toUpperCase(text) : wrapPlainTextInLatex(text);
       TransLaTeX.translate(
         options,
-        toUpperCase(text), (err, val) => {
+        processedText, (err, val) => {
           if (err && err.length) {
             console.error(err);
           }
@@ -849,16 +898,18 @@ const formatCellValue = ({ env, name }) => {
   );
   let result = val;
   try {
-    if (format && val.length > 0) {
+    if (format && val && val.length > 0) {
       const options = {
         allowInterval: true,
+        keepTextWhitespace: true,
         RHS: false,
         env: {format: format},
         ...formatRules,
       };
+      const processedVal = wrapPlainTextInLatex(val);
       TransLaTeX.translate(
         options,
-        val, (err, val) => {
+        processedVal, (err, val) => {
           if (err && err.length) {
             console.error(err);
           }
