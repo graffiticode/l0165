@@ -151,7 +151,7 @@ const normalizeValue = text => {
   let result = [text];
   try {
     const options = {
-      allowThousandsSeparator: true,
+      // allowThousandsSeparator: true,
       keepTextWhitespace: true,
       ...normalizeRules,
     };
@@ -852,7 +852,7 @@ const evalCell = ({ env, name }) => {
   };
   try {
     const options = {
-      allowThousandsSeparator: true,
+      // allowThousandsSeparator: true,
       keepTextWhitespace: true,
       env: env.cells,
       ...evalRules,
@@ -919,7 +919,7 @@ const getSingleCellDependencies = ({ env, name }) => {
   let result = text;
   try {
     const options = {
-      allowThousandsSeparator: true,
+      // allowThousandsSeparator: true,
       env: env.cells,
       ...cellNameRules,
     };

@@ -11,9 +11,9 @@ export const evalRules = {
       "\\type{cellName}:\\type{cellName}"
     ],
     "fn": [
-      "sum",
-      "mul",
-      "round"
+      "SUM",
+      "MUL",
+      "ROUND"
     ]
   },
   "rules": {
