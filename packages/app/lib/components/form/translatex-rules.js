@@ -31,7 +31,7 @@ export const evalRules = {
           "?*?": "$multiply",
           "?/?": "$divide",
           "?%": "$percent",
-          "-?": "$minus"
+          "-?": "$minus",
         }
       }
     ],
@@ -106,11 +106,15 @@ export const formatRules = {
     "??": [
       "%1%2"
     ],
-    "\\type{number}": [
-      "$fmt"
+    "-\\type{number}": [
+      {
+        "%1": {
+          "\\type{number}": "$fmt{isNegative:true}",
+        },
+      },
     ],
-    "-?": [
-      "-%1"
+    "\\type{number}": [
+      "$fmt{isNegative:false}"
     ],
     "?": [
       "%1"
