@@ -11,9 +11,9 @@ export const evalRules = {
       "\\type{cellName}:\\type{cellName}"
     ],
     "fn": [
-      "SUM",
-      "MULL",
-      "ROUND"
+      "sum",
+      "mul",
+      "round"
     ]
   },
   "rules": {
@@ -31,9 +31,12 @@ export const evalRules = {
           "?*?": "$multiply",
           "?/?": "$divide",
           "?%": "$percent",
-          "-?": "$minus",
+          "-?": "$minus"
         }
       }
+    ],
+    "-?": [
+      "-%1"
     ],
     "\\type{cellRange}": [
       "$range"

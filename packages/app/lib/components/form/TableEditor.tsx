@@ -157,10 +157,6 @@ const normalizeValue = text => {
     };
     if (text && text.length > 0) {
       const processedText = text.indexOf("=") === 0 ? toUpperCase(text) : wrapPlainTextInLatex(text);
-      console.log(
-        "normalizeText()",
-        "processedText=" + processedText,
-      );
       TransLaTeX.translate(
         options,
         processedText, (err, val) => {
@@ -890,12 +886,6 @@ const fixText = text => (
 
 const formatCellValue = ({ env, name }) => {
   const { val, format } = env.cells[name] || {};
-  console.log(
-    "formatCellValue()",
-    "name=" + name,
-    "val=" + JSON.stringify(val, null, 2),
-    "format=" + JSON.stringify(format, null, 2),
-  );
   let result = val;
   try {
     if (format && val && val.length > 0) {
