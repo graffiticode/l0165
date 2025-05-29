@@ -189,9 +189,16 @@ const equivValue = (actual, expected) => (
 );
 
 const scoreCell = ({ method, expected, points = 1 }, {val, formula} = {val:undefined, formula:undefined}) => (
-  method === "formula" && equivFormula(formula, expected) && points ||
-    method === "value" && equivValue(val, expected) && points ||
-  0
+  method === "formula" && equivFormula(formula, expected) && {
+    points,
+    isValid: true,
+  } || method === "value" && equivValue(val, expected) && {
+    points,
+    isValid: true,
+  } || {
+    points: 0,
+    isValid: false,
+  }
 );
 
 const buildMenuPlugin = (formState) => {
@@ -245,7 +252,7 @@ const getCellColor = (cell) => {
   const { row, col, name, background, lastFocusedCell, score } = cell;
   //const { expected } = assess || {};
   return row > 1 && col > 1 && score !== undefined && name !== lastFocusedCell && (
-    score > 0 &&
+    score.isValid === true &&
       "#efe" ||
       "#fee"
   ) || background || null;
