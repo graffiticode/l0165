@@ -44,19 +44,15 @@ const getValidation = ({rows = {}, cells = {}}) => (
     const row = obj.ranges[rowRange]?.rows[rowIndex] || {}
     // Replace the current row in rows
     const newRows = obj.ranges[rowRange]?.rows || [];
-    // const newRows = row.toSpliced(rowIndex, 1, {
-    //   ...row,
-    //   id: order !== "actual" && rowIndex + 1 || undefined,
-    //   [col]: cell,
-    // });
     newRows[rowIndex] = {
       ...row,
       id: order !== "actual" && rowIndex + 1 || undefined,
       [col]: cell,
     };
+    const points = cells[key]?.attrs?.assess && cells[key]?.attrs?.assess?.points;
     return {
       ...obj,
-      points: obj.points + (cells[key]?.attrs?.assess && (cells[key]?.attrs?.assess?.points || 1) || 0),
+      points: obj.points + (typeof points === "number" ? points : 0),
       ranges: {
         ...obj.ranges,
         [rowRange]: {
