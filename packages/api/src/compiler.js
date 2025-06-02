@@ -163,9 +163,31 @@ export class Transformer extends BasisTransformer {
           "v1=" + JSON.stringify(v1, null, 2),
         );
         const err = [];
+        // Normalize cell attributes - make textAlign and align into justify
+        const normalizedCells = {};
+        Object.keys(v0).forEach(cellKey => {
+          const cell = v0[cellKey];
+          const normalizedCell = { ...cell };
+          // If cell has attrs
+          if (normalizedCell.attrs) {
+            // If textAlign or align is present but justify is not, use it for justify
+            if ((normalizedCell.attrs.textAlign || normalizedCell.attrs.align) && !normalizedCell.attrs.justify) {
+              normalizedCell.attrs.justify = normalizedCell.attrs.textAlign || normalizedCell.attrs.align;
+            }
+            // If numberFormat is present but format is not, use it for format
+            if (normalizedCell.attrs.numberFormat && !normalizedCell.attrs.format) {
+              normalizedCell.attrs.format = normalizedCell.attrs.numberFormat;
+            }
+            // If backgroundColor is present but background is not, use it for background
+            if (normalizedCell.attrs.backgroundColor && !normalizedCell.attrs.background) {
+              normalizedCell.attrs.background = normalizedCell.attrs.backgroundColor;
+            }
+          }
+          normalizedCells[cellKey] = normalizedCell;
+        });
         const val = {
           ...v1,
-          cells: v0,
+          cells: normalizedCells,
         };
         resume(err, val);
       });
@@ -189,9 +211,28 @@ export class Transformer extends BasisTransformer {
     this.visit(node.elts[0], options, async (e0, v0) => {
       this.visit(node.elts[1], options, async (e1, v1) => {
         const err = [];
+        // Normalize column attributes - make textAlign and align into justify
+        const normalizedColumns = {};
+        Object.keys(v0).forEach(colKey => {
+          const column = v0[colKey];
+          const normalizedColumn = { ...column };
+          // If textAlign or align is present but justify is not, use it for justify
+          if ((column.textAlign || column.align) && !column.justify) {
+            normalizedColumn.justify = column.textAlign || column.align;
+          }
+          // If numberFormat is present but format is not, use it for format
+          if (column.numberFormat && !column.format) {
+            normalizedColumn.format = column.numberFormat;
+          }
+          // If backgroundColor is present but background is not, use it for background
+          if (column.backgroundColor && !column.background) {
+            normalizedColumn.background = column.backgroundColor;
+          }
+          normalizedColumns[colKey] = normalizedColumn;
+        });
         const val = {
           ...v1,
-          columns: v0,
+          columns: normalizedColumns,
         };
         resume(err, val);
       });

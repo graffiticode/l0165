@@ -658,17 +658,6 @@ const schema = new Schema({
             }
           },
         },
-        numberFormat: {
-          default: null,
-          getFromDOM(dom) {
-            return dom.dataset.numberFormat || null;
-          },
-          setDOMAttr(value, attrs) {
-            if (value) {
-              attrs.dataset = `data-numberFormat: ${value};`;
-            }
-          },
-        },
         assess: {
           default: null,
           getFromDOM(dom) {
@@ -904,17 +893,15 @@ const fixText = text => (
 );
 
 const formatCellValue = ({ env, name }) => {
-  const { val, format, numberFormat } = env.cells[name] || {};
-  // Use format or fall back to numberFormat if format isn't present
-  const formatToUse = format || numberFormat;
+  const { val, format } = env.cells[name] || {};
   let result = val;
   try {
-    if (formatToUse && val && val.length > 0) {
+    if (format && val && val.length > 0) {
       const options = {
         allowInterval: true,
         keepTextWhitespace: true,
         RHS: false,
-        env: {format: formatToUse},
+        env: {format},
         ...formatRules,
       };
       const processedVal = wrapPlainTextInLatex(val);
@@ -1693,7 +1680,6 @@ const getCell = (row, col, cells, columns) => {
         background: mergedAttrs?.background,
         justify: mergedAttrs?.justify,
         format: mergedAttrs?.format,
-        numberFormat: mergedAttrs?.numberFormat,
         assess: mergedAttrs?.assess,
         protected: mergedAttrs?.protected,
       },
