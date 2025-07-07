@@ -13,7 +13,8 @@ export const evalRules = {
     "fn": [
       "SUM",
       "MUL",
-      "ROUND"
+      "ROUND",
+      "IF"
     ]
   },
   "rules": {
@@ -73,7 +74,8 @@ export const cellNameRules = {
     "fn": [
       "SUM",
       "MUL",
-      "ROUND"
+      "ROUND",
+      "IF"
     ]
   },
   "rules": {
@@ -137,6 +139,7 @@ export const normalizeRules = {
       "SUM",
       "MUL",
       "ROUND",
+      "IF"
     ]
   },
   "rules": {

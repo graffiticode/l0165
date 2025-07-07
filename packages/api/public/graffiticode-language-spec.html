@@ -41,43 +41,57 @@ Date: 2025-04-30
 </li>
 </ol>
 </li>
-<li><a href="#sec-Semantics"><span class="spec-secid">4</span>Semantics</a><ol>
-<li><a href="#sec-Evaluation-Model"><span class="spec-secid">4.1</span>Evaluation Model</a></li>
-<li><a href="#sec-Functions"><span class="spec-secid">4.2</span>Functions</a></li>
-<li><a href="#sec-Scoping"><span class="spec-secid">4.3</span>Scoping</a></li>
-<li><a href="#sec-Errors"><span class="spec-secid">4.4</span>Errors</a></li>
+<li><a href="#sec-Type-System"><span class="spec-secid">4</span>Type System</a><ol>
+<li><a href="#sec-Primitive-Types"><span class="spec-secid">4.1</span>Primitive Types</a></li>
+<li><a href="#sec-Non-Nullable-Types"><span class="spec-secid">4.2</span>Non-Nullable Types</a></li>
+<li><a href="#sec-Composite-Types"><span class="spec-secid">4.3</span>Composite Types</a></li>
+<li><a href="#sec-Function-Types"><span class="spec-secid">4.4</span>Function Types</a></li>
+<li><a href="#sec-Tag-Value-Type"><span class="spec-secid">4.5</span>Tag Value Type</a><ol>
+<li><a href="#sec-Default-Type-tag-"><span class="spec-secid">4.5.1</span>Default Type: `tag`</a></li>
+<li><a href="#sec-Example"><span class="spec-secid">4.5.2</span>Example</a></li>
 </ol>
 </li>
-<li><a href="#sec-Base-Library"><span class="spec-secid">5</span>Base Library</a><ol>
-<li><a href="#sec-Types"><span class="spec-secid">5.1</span>Types</a></li>
-<li><a href="#sec-Built-in-Functions"><span class="spec-secid">5.2</span>Built-in Functions</a><ol>
-<li><a href="#sec-add"><span class="spec-secid">5.2.1</span>add</a></li>
-<li><a href="#sec-and"><span class="spec-secid">5.2.2</span>and</a></li>
-<li><a href="#sec-apply"><span class="spec-secid">5.2.3</span>apply</a></li>
-<li><a href="#sec-div"><span class="spec-secid">5.2.4</span>div</a></li>
-<li><a href="#sec-equiv"><span class="spec-secid">5.2.5</span>equiv</a></li>
-<li><a href="#sec-filter"><span class="spec-secid">5.2.6</span>filter</a></li>
-<li><a href="#sec-get"><span class="spec-secid">5.2.7</span>get</a></li>
-<li><a href="#sec-hd"><span class="spec-secid">5.2.8</span>hd</a></li>
-<li><a href="#sec-isEmpty"><span class="spec-secid">5.2.9</span>isEmpty</a></li>
-<li><a href="#sec-map"><span class="spec-secid">5.2.10</span>map</a></li>
-<li><a href="#sec-max"><span class="spec-secid">5.2.11</span>max</a></li>
-<li><a href="#sec-min"><span class="spec-secid">5.2.12</span>min</a></li>
-<li><a href="#sec-mod"><span class="spec-secid">5.2.13</span>mod</a></li>
-<li><a href="#sec-mul"><span class="spec-secid">5.2.14</span>mul</a></li>
-<li><a href="#sec-not"><span class="spec-secid">5.2.15</span>not</a></li>
-<li><a href="#sec-nth"><span class="spec-secid">5.2.16</span>nth</a></li>
-<li><a href="#sec-or"><span class="spec-secid">5.2.17</span>or</a></li>
-<li><a href="#sec-range"><span class="spec-secid">5.2.18</span>range</a></li>
-<li><a href="#sec-reduce"><span class="spec-secid">5.2.19</span>reduce</a></li>
-<li><a href="#sec-set"><span class="spec-secid">5.2.20</span>set</a></li>
-<li><a href="#sec-sub"><span class="spec-secid">5.2.21</span>sub</a></li>
-<li><a href="#sec-tl"><span class="spec-secid">5.2.22</span>tl</a></li>
+<li><a href="#sec-Example-Annotated-Definitions"><span class="spec-secid">4.6</span>Example: Annotated Definitions</a></li>
+</ol>
+</li>
+<li><a href="#sec-Semantics"><span class="spec-secid">5</span>Semantics</a><ol>
+<li><a href="#sec-Evaluation-Model"><span class="spec-secid">5.1</span>Evaluation Model</a></li>
+<li><a href="#sec-Functions"><span class="spec-secid">5.2</span>Functions</a></li>
+<li><a href="#sec-Scoping"><span class="spec-secid">5.3</span>Scoping</a></li>
+<li><a href="#sec-Errors"><span class="spec-secid">5.4</span>Errors</a></li>
+</ol>
+</li>
+<li><a href="#sec-Base-Library"><span class="spec-secid">6</span>Base Library</a><ol>
+<li><a href="#sec-Types"><span class="spec-secid">6.1</span>Types</a></li>
+<li><a href="#sec-Built-in-Functions"><span class="spec-secid">6.2</span>Built-in Functions</a><ol>
+<li><a href="#sec-add"><span class="spec-secid">6.2.1</span>add</a></li>
+<li><a href="#sec-and"><span class="spec-secid">6.2.2</span>and</a></li>
+<li><a href="#sec-apply"><span class="spec-secid">6.2.3</span>apply</a></li>
+<li><a href="#sec-div"><span class="spec-secid">6.2.4</span>div</a></li>
+<li><a href="#sec-equiv"><span class="spec-secid">6.2.5</span>equiv</a></li>
+<li><a href="#sec-filter"><span class="spec-secid">6.2.6</span>filter</a></li>
+<li><a href="#sec-get"><span class="spec-secid">6.2.7</span>get</a></li>
+<li><a href="#sec-hd"><span class="spec-secid">6.2.8</span>hd</a></li>
+<li><a href="#sec-isEmpty"><span class="spec-secid">6.2.9</span>isEmpty</a></li>
+<li><a href="#sec-log"><span class="spec-secid">6.2.10</span>log</a></li>
+<li><a href="#sec-map"><span class="spec-secid">6.2.11</span>map</a></li>
+<li><a href="#sec-max"><span class="spec-secid">6.2.12</span>max</a></li>
+<li><a href="#sec-min"><span class="spec-secid">6.2.13</span>min</a></li>
+<li><a href="#sec-mod"><span class="spec-secid">6.2.14</span>mod</a></li>
+<li><a href="#sec-mul"><span class="spec-secid">6.2.15</span>mul</a></li>
+<li><a href="#sec-not"><span class="spec-secid">6.2.16</span>not</a></li>
+<li><a href="#sec-nth"><span class="spec-secid">6.2.17</span>nth</a></li>
+<li><a href="#sec-or"><span class="spec-secid">6.2.18</span>or</a></li>
+<li><a href="#sec-range"><span class="spec-secid">6.2.19</span>range</a></li>
+<li><a href="#sec-reduce"><span class="spec-secid">6.2.20</span>reduce</a></li>
+<li><a href="#sec-set"><span class="spec-secid">6.2.21</span>set</a></li>
+<li><a href="#sec-sub"><span class="spec-secid">6.2.22</span>sub</a></li>
+<li><a href="#sec-tl"><span class="spec-secid">6.2.23</span>tl</a></li>
 </ol>
 </li>
 </ol>
 </li>
-<li><a href="#sec-Program-Examples"><span class="spec-secid">6</span>Program Examples</a></li>
+<li><a href="#sec-Program-Examples"><span class="spec-secid">7</span>Program Examples</a></li>
 <li><a href="#index"><span class="spec-secid">§</span>Index</a></li>
 </ol>
 </nav>
@@ -174,10 +188,93 @@ end
 </section>
 </section>
 </section>
-<section id="sec-Semantics" secid="4">
-<h1><span class="spec-secid" title="link to this section"><a href="#sec-Semantics">4</a></span>Semantics</h1>
-<section id="sec-Evaluation-Model" secid="4.1">
-<h2><span class="spec-secid" title="link to this section"><a href="#sec-Evaluation-Model">4.1</a></span>Evaluation Model</h2>
+<section id="sec-Type-System" secid="4">
+<h1><span class="spec-secid" title="link to this section"><a href="#sec-Type-System">4</a></span>Type System</h1>
+<p>Graffiticode includes a implicit structural type system. Every expression has a statically inferred type, and type errors are detected at compile time. Explicit type annotations are not included in the grammar.</p>
+<section id="sec-Primitive-Types" secid="4.1">
+<h2><span class="spec-secid" title="link to this section"><a href="#sec-Primitive-Types">4.1</a></span>Primitive Types</h2>
+<ul>
+<li><code>number</code> &ndash; Represents integers or floating-point numbers.</li>
+<li><code>string</code> &ndash; Represents UTF-8 strings.</li>
+<li><code>bool</code> &ndash; Represents Boolean values: <code>true</code> and <code>false</code>.</li>
+<li><code>json</code> &ndash; Represents any JSON-compatible value (opaque, untyped).</li>
+<li><code>any</code> &ndash; Used internally to denote an unconstrained type (e.g., during inference).</li>
+</ul>
+</section>
+<section id="sec-Non-Nullable-Types" secid="4.2">
+<h2><span class="spec-secid" title="link to this section"><a href="#sec-Non-Nullable-Types">4.2</a></span>Non-Nullable Types</h2>
+<p>Graffiticode types are nullable by default. To indicate that a value must not be <code>null</code>, append an exclamation mark (<code>!</code>) to the type name.</p>
+<pre data-language="gc"><code>string!     | a non-nullable string
+[number]!   | a non-nullable list of numbers
+</code></pre>
+<p>A non-nullable type is guaranteed to hold a value. Nullable types may be <code>null</code> or missing.</p>
+<p>In general:</p>
+<ul>
+<li><code>T</code> allows <code>null</code></li>
+<li><code>T!</code> disallows <code>null</code></li>
+</ul>
+<p>Type inference will propagate non-nullability when safe.</p>
+</section>
+<section id="sec-Composite-Types" secid="4.3">
+<h2><span class="spec-secid" title="link to this section"><a href="#sec-Composite-Types">4.3</a></span>Composite Types</h2>
+<ul>
+<li><strong>Lists</strong> &ndash; Written as <code>[T]</code> where <code>T</code> is any type. <code>gc   [string]       | list of strings   [number]       | list of numbers   [[bool]]       | list of lists of booleans   </code></li>
+<li><strong>Records</strong> &ndash; Key-value maps with known keys and types. <code>gc   { name: string, age: number }   </code></li>
+<li><strong>Tuples</strong> &ndash; Ordered, fixed-length collections with heterogeneous types. <code>gc   (number, string, bool)   </code></li>
+</ul>
+</section>
+<section id="sec-Function-Types" secid="4.4">
+<h2><span class="spec-secid" title="link to this section"><a href="#sec-Function-Types">4.4</a></span>Function Types</h2>
+<p>Functions are written using Graffiticode lambda signature syntax: <code>gc &lt;number number: number&gt;   | function taking two numbers and returning a number &lt;string: [string]&gt;        | function taking a string and returning a list of strings &lt;list record: record&gt;     | common signature for structural transformation </code></p>
+<p>Function types are curried by default. That means: <code>gc &lt;number number: number&gt; </code> is equivalent to a function that returns another function: <code>gc &lt;number: &lt;number: number&gt;&gt; </code></p>
+</section>
+<section id="sec-Tag-Value-Type" secid="4.5">
+<h2><span class="spec-secid" title="link to this section"><a href="#sec-Tag-Value-Type">4.5</a></span>Tag Value Type</h2>
+<p>Tag values are symbolic constants with no arguments or payload. They are considered members of an implicit <strong>tag set</strong>, and their type is usually inferred based on the context in which they appear&mdash;such as in pattern matching.</p>
+<section id="sec-Default-Type-tag-" secid="4.5.1">
+<h3><span class="spec-secid" title="link to this section"><a href="#sec-Default-Type-tag-">4.5.1</a></span>Default Type: `tag`</h3>
+<p>By default, a tag value has the type:</p>
+<pre data-language="gc"><code>tag
+</code></pre>
+<p>If your program uses a fixed set of tags in a certain context (e.g., <code>red</code>, <code>green</code>, <code>blue</code>), you can think of the type of those values as a discriminated union:</p>
+<pre data-language="gc"><code>tag ∈ { red, green, blue }
+</code></pre>
+<p>However, Graffiticode does not currently support enumerating or defining tag types explicitly. Instead:</p>
+<ul>
+<li>All tags are treated as having type <code>tag</code>.</li>
+<li>They are comparable for equality using <code>case</code> and pattern matching.</li>
+<li>Their type can unify with record fields, parameters, or variants if used consistently.</li>
+</ul>
+</section>
+<section id="sec-Example" secid="4.5.2">
+<h3><span class="spec-secid" title="link to this section"><a href="#sec-Example">4.5.2</a></span>Example</h3>
+<pre data-language="gc"><code>case color of
+  red: "warm"
+  blue: "cool"
+  _: "other"
+end
+</code></pre>
+<p>In this case, <code>color</code> is assumed to be of type <code>tag</code>.</p>
+</section>
+</section>
+<section id="sec-Example-Annotated-Definitions" secid="4.6">
+<h2><span class="spec-secid" title="link to this section"><a href="#sec-Example-Annotated-Definitions">4.6</a></span>Example: Annotated Definitions</h2>
+<pre data-language="gc"><code>let inc = &lt;x: add x 1&gt;  | type: &lt;number: number&gt;
+let greet = &lt;name: concat ["Hello, " name]&gt;  | type: &lt;string: string&gt;
+let zip = &lt;xs ys: zipLists xs ys&gt;  | type: &lt;[T] [U]: [(T, U)]&gt;
+</code></pre>
+<p>(Note: actual Graffiticode does not use type annotations in <code>let</code> bindings; types are inferred.) (for illustration)</p>
+<pre data-language="gc"><code>let inc = &lt;x: add x 1&gt;  | type: &lt;number: number&gt;
+let greet = &lt;name: concat ["Hello, " name]&gt;  | type: &lt;string: string&gt;
+let zip = &lt;xs ys: zipLists xs ys&gt;  | type: &lt;[T] [U]: [(T, U)]&gt;
+</code></pre>
+<p>(Note: actual Graffiticode does not use type annotations in <code>let</code> bindings; types are inferred.)</p>
+</section>
+</section>
+<section id="sec-Semantics" secid="5">
+<h1><span class="spec-secid" title="link to this section"><a href="#sec-Semantics">5</a></span>Semantics</h1>
+<section id="sec-Evaluation-Model" secid="5.1">
+<h2><span class="spec-secid" title="link to this section"><a href="#sec-Evaluation-Model">5.1</a></span>Evaluation Model</h2>
 <ul>
 <li><strong>Purely functional</strong>: no side effects</li>
 <li><strong>Strict evaluation</strong>: arguments evaluated before function application</li>
@@ -187,22 +284,22 @@ end
 <p>This style enables a declarative and order-independent composition of functions. Since each function call returns a new model, multiple calls can be reordered without changing the final result, provided the functional dependencies are preserved.</p>
 <p>This approach draws inspiration from <strong>Model-View-Update</strong> (MVU) architectures, in which the model represents the application state and functions describe pure, deterministic transformations of that state.</p>
 </section>
-<section id="sec-Functions" secid="4.2">
-<h2><span class="spec-secid" title="link to this section"><a href="#sec-Functions">4.2</a></span>Functions</h2>
+<section id="sec-Functions" secid="5.2">
+<h2><span class="spec-secid" title="link to this section"><a href="#sec-Functions">5.2</a></span>Functions</h2>
 <ul>
 <li><strong>Fixed arity</strong>: every function has a known number of parameters</li>
 <li><strong>Curried by default</strong>: partial application supported</li>
 </ul>
 </section>
-<section id="sec-Scoping" secid="4.3">
-<h2><span class="spec-secid" title="link to this section"><a href="#sec-Scoping">4.3</a></span>Scoping</h2>
+<section id="sec-Scoping" secid="5.3">
+<h2><span class="spec-secid" title="link to this section"><a href="#sec-Scoping">5.3</a></span>Scoping</h2>
 <ul>
 <li><strong>Lexical scoping</strong></li>
 <li><strong>Shadowing</strong> allowed within nested scopes</li>
 </ul>
 </section>
-<section id="sec-Errors" secid="4.4">
-<h2><span class="spec-secid" title="link to this section"><a href="#sec-Errors">4.4</a></span>Errors</h2>
+<section id="sec-Errors" secid="5.4">
+<h2><span class="spec-secid" title="link to this section"><a href="#sec-Errors">5.4</a></span>Errors</h2>
 <ul>
 <li><strong>Syntax errors</strong>: raised during parsing</li>
 <li><strong>Type errors</strong>: raised during compilation</li>
@@ -210,10 +307,10 @@ end
 </ul>
 </section>
 </section>
-<section id="sec-Base-Library" secid="5">
-<h1><span class="spec-secid" title="link to this section"><a href="#sec-Base-Library">5</a></span>Base Library</h1>
-<section id="sec-Types" secid="5.1">
-<h2><span class="spec-secid" title="link to this section"><a href="#sec-Types">5.1</a></span>Types</h2>
+<section id="sec-Base-Library" secid="6">
+<h1><span class="spec-secid" title="link to this section"><a href="#sec-Base-Library">6</a></span>Base Library</h1>
+<section id="sec-Types" secid="6.1">
+<h2><span class="spec-secid" title="link to this section"><a href="#sec-Types">6.1</a></span>Types</h2>
 <ul>
 <li><code>number</code></li>
 <li><code>string</code></li>
@@ -224,8 +321,8 @@ end
 <li><code>json</code></li>
 </ul>
 </section>
-<section id="sec-Built-in-Functions" secid="5.2">
-<h2><span class="spec-secid" title="link to this section"><a href="#sec-Built-in-Functions">5.2</a></span>Built-in Functions</h2>
+<section id="sec-Built-in-Functions" secid="6.2">
+<h2><span class="spec-secid" title="link to this section"><a href="#sec-Built-in-Functions">6.2</a></span>Built-in Functions</h2>
 <table>
 <thead>
 <tr>
@@ -279,6 +376,11 @@ end
 <td align="left"><code>isEmpty</code></td>
 <td align="left"><code>&lt;list: bool&gt;</code></td>
 <td align="left">Returns true if the list is empty</td>
+</tr>
+<tr>
+<td align="left"><code>log</code></td>
+<td align="left"><code>&lt;any: any&gt;</code></td>
+<td align="left">Logs the value to console and returns it (identity function)</td>
 </tr>
 <tr>
 <td align="left"><code>map</code></td>
@@ -347,14 +449,14 @@ end
 </tr>
 </tbody>
 </table>
-<section id="sec-add" secid="5.2.1">
-<h3><span class="spec-secid" title="link to this section"><a href="#sec-add">5.2.1</a></span>add</h3>
+<section id="sec-add" secid="6.2.1">
+<h3><span class="spec-secid" title="link to this section"><a href="#sec-add">6.2.1</a></span>add</h3>
 <p>Add two numbers.</p>
 <pre><code>add 2 3  | returns 5
 </code></pre>
 </section>
-<section id="sec-and" secid="5.2.2">
-<h3><span class="spec-secid" title="link to this section"><a href="#sec-and">5.2.2</a></span>and</h3>
+<section id="sec-and" secid="6.2.2">
+<h3><span class="spec-secid" title="link to this section"><a href="#sec-and">6.2.2</a></span>and</h3>
 <p>Logical AND operation</p>
 <pre><code>and false false  | returns false
 and false true   | returns false
@@ -362,20 +464,20 @@ and true false   | returns false
 and true true    | returns true
 </code></pre>
 </section>
-<section id="sec-apply" secid="5.2.3">
-<h3><span class="spec-secid" title="link to this section"><a href="#sec-apply">5.2.3</a></span>apply</h3>
+<section id="sec-apply" secid="6.2.3">
+<h3><span class="spec-secid" title="link to this section"><a href="#sec-apply">6.2.3</a></span>apply</h3>
 <p>Apply a function to an argument list</p>
 <pre><code>apply add [1 2]  | returns 3
 </code></pre>
 </section>
-<section id="sec-div" secid="5.2.4">
-<h3><span class="spec-secid" title="link to this section"><a href="#sec-div">5.2.4</a></span>div</h3>
+<section id="sec-div" secid="6.2.4">
+<h3><span class="spec-secid" title="link to this section"><a href="#sec-div">6.2.4</a></span>div</h3>
 <p>Divide the first number by the second</p>
 <pre><code>div 10 2  | returns 5
 </code></pre>
 </section>
-<section id="sec-equiv" secid="5.2.5">
-<h3><span class="spec-secid" title="link to this section"><a href="#sec-equiv">5.2.5</a></span>equiv</h3>
+<section id="sec-equiv" secid="6.2.5">
+<h3><span class="spec-secid" title="link to this section"><a href="#sec-equiv">6.2.5</a></span>equiv</h3>
 <p>Tests if two values are strictly equivalent</p>
 <pre><code>equiv 1 1        | returns true
 equiv "a" "a"    | returns true
@@ -384,75 +486,82 @@ equiv 1 2        | returns false
 equiv "a" "b"    | returns false
 </code></pre>
 </section>
-<section id="sec-filter" secid="5.2.6">
-<h3><span class="spec-secid" title="link to this section"><a href="#sec-filter">5.2.6</a></span>filter</h3>
+<section id="sec-filter" secid="6.2.6">
+<h3><span class="spec-secid" title="link to this section"><a href="#sec-filter">6.2.6</a></span>filter</h3>
 <p>Filter elements matching predicate</p>
 <pre><code>filter (&lt;x: mod x 2&gt;) [1 2 3 4]  | returns [1 3]
 </code></pre>
 </section>
-<section id="sec-get" secid="5.2.7">
-<h3><span class="spec-secid" title="link to this section"><a href="#sec-get">5.2.7</a></span>get</h3>
+<section id="sec-get" secid="6.2.7">
+<h3><span class="spec-secid" title="link to this section"><a href="#sec-get">6.2.7</a></span>get</h3>
 <p>Retrieve a record field</p>
 <pre><code>get "b" {a: 1, b: 2}  | returns 2
 </code></pre>
 </section>
-<section id="sec-hd" secid="5.2.8">
-<h3><span class="spec-secid" title="link to this section"><a href="#sec-hd">5.2.8</a></span>hd</h3>
+<section id="sec-hd" secid="6.2.8">
+<h3><span class="spec-secid" title="link to this section"><a href="#sec-hd">6.2.8</a></span>hd</h3>
 <p>Return the first item</p>
 <pre><code>hd [10 20 30]  | returns 10
 </code></pre>
 </section>
-<section id="sec-isEmpty" secid="5.2.9">
-<h3><span class="spec-secid" title="link to this section"><a href="#sec-isEmpty">5.2.9</a></span>isEmpty</h3>
+<section id="sec-isEmpty" secid="6.2.9">
+<h3><span class="spec-secid" title="link to this section"><a href="#sec-isEmpty">6.2.9</a></span>isEmpty</h3>
 <p>Return true if list is empty, otherwise return false</p>
 <pre><code>isEmpty []  | returns true
 </code></pre>
 </section>
-<section id="sec-map" secid="5.2.10">
-<h3><span class="spec-secid" title="link to this section"><a href="#sec-map">5.2.10</a></span>map</h3>
+<section id="sec-log" secid="6.2.10">
+<h3><span class="spec-secid" title="link to this section"><a href="#sec-log">6.2.10</a></span>log</h3>
+<p>Log a value to the console and return the value unchanged</p>
+<pre><code>log "Hello"  | prints "Hello" to console and returns "Hello"
+log (add 1 2)  | prints 3 to console and returns 3
+</code></pre>
+</section>
+<section id="sec-map" secid="6.2.11">
+<h3><span class="spec-secid" title="link to this section"><a href="#sec-map">6.2.11</a></span>map</h3>
 <p>Apply a function to each element</p>
 <pre><code>map (&lt;x: add x 1&gt;) [1 2 3]  | returns [2 3 4]
 </code></pre>
 </section>
-<section id="sec-max" secid="5.2.11">
-<h3><span class="spec-secid" title="link to this section"><a href="#sec-max">5.2.11</a></span>max</h3>
+<section id="sec-max" secid="6.2.12">
+<h3><span class="spec-secid" title="link to this section"><a href="#sec-max">6.2.12</a></span>max</h3>
 <p>Return the larger of two numbers</p>
 <pre><code>max 5 10  | returns 10
 </code></pre>
 </section>
-<section id="sec-min" secid="5.2.12">
-<h3><span class="spec-secid" title="link to this section"><a href="#sec-min">5.2.12</a></span>min</h3>
+<section id="sec-min" secid="6.2.13">
+<h3><span class="spec-secid" title="link to this section"><a href="#sec-min">6.2.13</a></span>min</h3>
 <p>Return the smaller of two numbers</p>
 <pre><code>min 5 10  | returns 5
 </code></pre>
 </section>
-<section id="sec-mod" secid="5.2.13">
-<h3><span class="spec-secid" title="link to this section"><a href="#sec-mod">5.2.13</a></span>mod</h3>
+<section id="sec-mod" secid="6.2.14">
+<h3><span class="spec-secid" title="link to this section"><a href="#sec-mod">6.2.14</a></span>mod</h3>
 <p>Compute the remainder</p>
 <pre><code>mod 10 3  | returns 1
 </code></pre>
 </section>
-<section id="sec-mul" secid="5.2.14">
-<h3><span class="spec-secid" title="link to this section"><a href="#sec-mul">5.2.14</a></span>mul</h3>
+<section id="sec-mul" secid="6.2.15">
+<h3><span class="spec-secid" title="link to this section"><a href="#sec-mul">6.2.15</a></span>mul</h3>
 <p>Multiply two numbers</p>
 <pre><code>mul 4 3  | returns 12
 </code></pre>
 </section>
-<section id="sec-not" secid="5.2.15">
-<h3><span class="spec-secid" title="link to this section"><a href="#sec-not">5.2.15</a></span>not</h3>
+<section id="sec-not" secid="6.2.16">
+<h3><span class="spec-secid" title="link to this section"><a href="#sec-not">6.2.16</a></span>not</h3>
 <p>Logical NOT that inverts a boolean value</p>
 <pre><code>not true   | returns false
 not false  | returns true
 </code></pre>
 </section>
-<section id="sec-nth" secid="5.2.16">
-<h3><span class="spec-secid" title="link to this section"><a href="#sec-nth">5.2.16</a></span>nth</h3>
+<section id="sec-nth" secid="6.2.17">
+<h3><span class="spec-secid" title="link to this section"><a href="#sec-nth">6.2.17</a></span>nth</h3>
 <p>Get the nth item (0-based)</p>
 <pre><code>nth 1 [10 20 30]  | returns 20
 </code></pre>
 </section>
-<section id="sec-or" secid="5.2.17">
-<h3><span class="spec-secid" title="link to this section"><a href="#sec-or">5.2.17</a></span>or</h3>
+<section id="sec-or" secid="6.2.18">
+<h3><span class="spec-secid" title="link to this section"><a href="#sec-or">6.2.18</a></span>or</h3>
 <p>Logical OR operation</p>
 <pre><code>or false false  | returns false
 or false true   | returns true
@@ -460,40 +569,40 @@ or true false   | returns true
 or true true    | returns true
 </code></pre>
 </section>
-<section id="sec-range" secid="5.2.18">
-<h3><span class="spec-secid" title="link to this section"><a href="#sec-range">5.2.18</a></span>range</h3>
+<section id="sec-range" secid="6.2.19">
+<h3><span class="spec-secid" title="link to this section"><a href="#sec-range">6.2.19</a></span>range</h3>
 <p>Produce a range list from start to end (exclusive) with step</p>
 <pre><code>range 1 10 2  | returns [1 3 5 7 9]
 </code></pre>
 </section>
-<section id="sec-reduce" secid="5.2.19">
-<h3><span class="spec-secid" title="link to this section"><a href="#sec-reduce">5.2.19</a></span>reduce</h3>
+<section id="sec-reduce" secid="6.2.20">
+<h3><span class="spec-secid" title="link to this section"><a href="#sec-reduce">6.2.20</a></span>reduce</h3>
 <p>Reduce a list to a single value, starting with an initial value</p>
 <pre><code>reduce (&lt;a b: add a b&gt;) 0 [1 2 3 4]  | returns 10
 </code></pre>
 </section>
-<section id="sec-set" secid="5.2.20">
-<h3><span class="spec-secid" title="link to this section"><a href="#sec-set">5.2.20</a></span>set</h3>
+<section id="sec-set" secid="6.2.21">
+<h3><span class="spec-secid" title="link to this section"><a href="#sec-set">6.2.21</a></span>set</h3>
 <p>Return a new record with an updated field</p>
 <pre><code>set "a" 2 {a: 1}  | returns {a: 2}
 </code></pre>
 </section>
-<section id="sec-sub" secid="5.2.21">
-<h3><span class="spec-secid" title="link to this section"><a href="#sec-sub">5.2.21</a></span>sub</h3>
+<section id="sec-sub" secid="6.2.22">
+<h3><span class="spec-secid" title="link to this section"><a href="#sec-sub">6.2.22</a></span>sub</h3>
 <p>Subtract the second number from the first</p>
 <pre><code>sub 5 2  | returns 3
 </code></pre>
 </section>
-<section id="sec-tl" secid="5.2.22">
-<h3><span class="spec-secid" title="link to this section"><a href="#sec-tl">5.2.22</a></span>tl</h3>
+<section id="sec-tl" secid="6.2.23">
+<h3><span class="spec-secid" title="link to this section"><a href="#sec-tl">6.2.23</a></span>tl</h3>
 <p>Return all but the first item</p>
 <pre><code>tl [10 20 30]  | returns [20 30]
 </code></pre>
 </section>
 </section>
 </section>
-<section id="sec-Program-Examples" secid="6">
-<h1><span class="spec-secid" title="link to this section"><a href="#sec-Program-Examples">6</a></span>Program Examples</h1>
+<section id="sec-Program-Examples" secid="7">
+<h1><span class="spec-secid" title="link to this section"><a href="#sec-Program-Examples">7</a></span>Program Examples</h1>
 <pre><code>let double = &lt;x: mul 2 x&gt;..
 map (double) [1 2 3]..
 </code></pre>
@@ -548,49 +657,67 @@ Written in <a href="https://spec-md.com" target="_blank">Spec Markdown</a>.</foo
 </li>
 </ol>
 </li>
-<li id="_sidebar_4"><a href="#sec-Semantics"><span class="spec-secid">4</span>Semantics</a>
+<li id="_sidebar_4"><a href="#sec-Type-System"><span class="spec-secid">4</span>Type System</a>
 <input hidden class="toggle" type="checkbox" id="_toggle_4" /><label for="_toggle_4"></label>
 <ol>
-<li id="_sidebar_4.1"><a href="#sec-Evaluation-Model"><span class="spec-secid">4.1</span>Evaluation Model</a></li>
-<li id="_sidebar_4.2"><a href="#sec-Functions"><span class="spec-secid">4.2</span>Functions</a></li>
-<li id="_sidebar_4.3"><a href="#sec-Scoping"><span class="spec-secid">4.3</span>Scoping</a></li>
-<li id="_sidebar_4.4"><a href="#sec-Errors"><span class="spec-secid">4.4</span>Errors</a></li>
+<li id="_sidebar_4.1"><a href="#sec-Primitive-Types"><span class="spec-secid">4.1</span>Primitive Types</a></li>
+<li id="_sidebar_4.2"><a href="#sec-Non-Nullable-Types"><span class="spec-secid">4.2</span>Non-Nullable Types</a></li>
+<li id="_sidebar_4.3"><a href="#sec-Composite-Types"><span class="spec-secid">4.3</span>Composite Types</a></li>
+<li id="_sidebar_4.4"><a href="#sec-Function-Types"><span class="spec-secid">4.4</span>Function Types</a></li>
+<li id="_sidebar_4.5"><a href="#sec-Tag-Value-Type"><span class="spec-secid">4.5</span>Tag Value Type</a>
+<input hidden class="toggle" type="checkbox" id="_toggle_4.5" /><label for="_toggle_4.5"></label>
+<ol>
+<li id="_sidebar_4.5.1"><a href="#sec-Default-Type-tag-"><span class="spec-secid">4.5.1</span>Default Type: `tag`</a></li>
+<li id="_sidebar_4.5.2"><a href="#sec-Example"><span class="spec-secid">4.5.2</span>Example</a></li>
 </ol>
 </li>
-<li id="_sidebar_5"><a href="#sec-Base-Library"><span class="spec-secid">5</span>Base Library</a>
+<li id="_sidebar_4.6"><a href="#sec-Example-Annotated-Definitions"><span class="spec-secid">4.6</span>Example: Annotated Definitions</a></li>
+</ol>
+</li>
+<li id="_sidebar_5"><a href="#sec-Semantics"><span class="spec-secid">5</span>Semantics</a>
 <input hidden class="toggle" type="checkbox" id="_toggle_5" /><label for="_toggle_5"></label>
 <ol>
-<li id="_sidebar_5.1"><a href="#sec-Types"><span class="spec-secid">5.1</span>Types</a></li>
-<li id="_sidebar_5.2"><a href="#sec-Built-in-Functions"><span class="spec-secid">5.2</span>Built-in Functions</a>
-<input hidden class="toggle" type="checkbox" id="_toggle_5.2" /><label for="_toggle_5.2"></label>
+<li id="_sidebar_5.1"><a href="#sec-Evaluation-Model"><span class="spec-secid">5.1</span>Evaluation Model</a></li>
+<li id="_sidebar_5.2"><a href="#sec-Functions"><span class="spec-secid">5.2</span>Functions</a></li>
+<li id="_sidebar_5.3"><a href="#sec-Scoping"><span class="spec-secid">5.3</span>Scoping</a></li>
+<li id="_sidebar_5.4"><a href="#sec-Errors"><span class="spec-secid">5.4</span>Errors</a></li>
+</ol>
+</li>
+<li id="_sidebar_6"><a href="#sec-Base-Library"><span class="spec-secid">6</span>Base Library</a>
+<input hidden class="toggle" type="checkbox" id="_toggle_6" /><label for="_toggle_6"></label>
 <ol>
-<li id="_sidebar_5.2.1"><a href="#sec-add"><span class="spec-secid">5.2.1</span>add</a></li>
-<li id="_sidebar_5.2.2"><a href="#sec-and"><span class="spec-secid">5.2.2</span>and</a></li>
-<li id="_sidebar_5.2.3"><a href="#sec-apply"><span class="spec-secid">5.2.3</span>apply</a></li>
-<li id="_sidebar_5.2.4"><a href="#sec-div"><span class="spec-secid">5.2.4</span>div</a></li>
-<li id="_sidebar_5.2.5"><a href="#sec-equiv"><span class="spec-secid">5.2.5</span>equiv</a></li>
-<li id="_sidebar_5.2.6"><a href="#sec-filter"><span class="spec-secid">5.2.6</span>filter</a></li>
-<li id="_sidebar_5.2.7"><a href="#sec-get"><span class="spec-secid">5.2.7</span>get</a></li>
-<li id="_sidebar_5.2.8"><a href="#sec-hd"><span class="spec-secid">5.2.8</span>hd</a></li>
-<li id="_sidebar_5.2.9"><a href="#sec-isEmpty"><span class="spec-secid">5.2.9</span>isEmpty</a></li>
-<li id="_sidebar_5.2.10"><a href="#sec-map"><span class="spec-secid">5.2.10</span>map</a></li>
-<li id="_sidebar_5.2.11"><a href="#sec-max"><span class="spec-secid">5.2.11</span>max</a></li>
-<li id="_sidebar_5.2.12"><a href="#sec-min"><span class="spec-secid">5.2.12</span>min</a></li>
-<li id="_sidebar_5.2.13"><a href="#sec-mod"><span class="spec-secid">5.2.13</span>mod</a></li>
-<li id="_sidebar_5.2.14"><a href="#sec-mul"><span class="spec-secid">5.2.14</span>mul</a></li>
-<li id="_sidebar_5.2.15"><a href="#sec-not"><span class="spec-secid">5.2.15</span>not</a></li>
-<li id="_sidebar_5.2.16"><a href="#sec-nth"><span class="spec-secid">5.2.16</span>nth</a></li>
-<li id="_sidebar_5.2.17"><a href="#sec-or"><span class="spec-secid">5.2.17</span>or</a></li>
-<li id="_sidebar_5.2.18"><a href="#sec-range"><span class="spec-secid">5.2.18</span>range</a></li>
-<li id="_sidebar_5.2.19"><a href="#sec-reduce"><span class="spec-secid">5.2.19</span>reduce</a></li>
-<li id="_sidebar_5.2.20"><a href="#sec-set"><span class="spec-secid">5.2.20</span>set</a></li>
-<li id="_sidebar_5.2.21"><a href="#sec-sub"><span class="spec-secid">5.2.21</span>sub</a></li>
-<li id="_sidebar_5.2.22"><a href="#sec-tl"><span class="spec-secid">5.2.22</span>tl</a></li>
+<li id="_sidebar_6.1"><a href="#sec-Types"><span class="spec-secid">6.1</span>Types</a></li>
+<li id="_sidebar_6.2"><a href="#sec-Built-in-Functions"><span class="spec-secid">6.2</span>Built-in Functions</a>
+<input hidden class="toggle" type="checkbox" id="_toggle_6.2" /><label for="_toggle_6.2"></label>
+<ol>
+<li id="_sidebar_6.2.1"><a href="#sec-add"><span class="spec-secid">6.2.1</span>add</a></li>
+<li id="_sidebar_6.2.2"><a href="#sec-and"><span class="spec-secid">6.2.2</span>and</a></li>
+<li id="_sidebar_6.2.3"><a href="#sec-apply"><span class="spec-secid">6.2.3</span>apply</a></li>
+<li id="_sidebar_6.2.4"><a href="#sec-div"><span class="spec-secid">6.2.4</span>div</a></li>
+<li id="_sidebar_6.2.5"><a href="#sec-equiv"><span class="spec-secid">6.2.5</span>equiv</a></li>
+<li id="_sidebar_6.2.6"><a href="#sec-filter"><span class="spec-secid">6.2.6</span>filter</a></li>
+<li id="_sidebar_6.2.7"><a href="#sec-get"><span class="spec-secid">6.2.7</span>get</a></li>
+<li id="_sidebar_6.2.8"><a href="#sec-hd"><span class="spec-secid">6.2.8</span>hd</a></li>
+<li id="_sidebar_6.2.9"><a href="#sec-isEmpty"><span class="spec-secid">6.2.9</span>isEmpty</a></li>
+<li id="_sidebar_6.2.10"><a href="#sec-log"><span class="spec-secid">6.2.10</span>log</a></li>
+<li id="_sidebar_6.2.11"><a href="#sec-map"><span class="spec-secid">6.2.11</span>map</a></li>
+<li id="_sidebar_6.2.12"><a href="#sec-max"><span class="spec-secid">6.2.12</span>max</a></li>
+<li id="_sidebar_6.2.13"><a href="#sec-min"><span class="spec-secid">6.2.13</span>min</a></li>
+<li id="_sidebar_6.2.14"><a href="#sec-mod"><span class="spec-secid">6.2.14</span>mod</a></li>
+<li id="_sidebar_6.2.15"><a href="#sec-mul"><span class="spec-secid">6.2.15</span>mul</a></li>
+<li id="_sidebar_6.2.16"><a href="#sec-not"><span class="spec-secid">6.2.16</span>not</a></li>
+<li id="_sidebar_6.2.17"><a href="#sec-nth"><span class="spec-secid">6.2.17</span>nth</a></li>
+<li id="_sidebar_6.2.18"><a href="#sec-or"><span class="spec-secid">6.2.18</span>or</a></li>
+<li id="_sidebar_6.2.19"><a href="#sec-range"><span class="spec-secid">6.2.19</span>range</a></li>
+<li id="_sidebar_6.2.20"><a href="#sec-reduce"><span class="spec-secid">6.2.20</span>reduce</a></li>
+<li id="_sidebar_6.2.21"><a href="#sec-set"><span class="spec-secid">6.2.21</span>set</a></li>
+<li id="_sidebar_6.2.22"><a href="#sec-sub"><span class="spec-secid">6.2.22</span>sub</a></li>
+<li id="_sidebar_6.2.23"><a href="#sec-tl"><span class="spec-secid">6.2.23</span>tl</a></li>
 </ol>
 </li>
 </ol>
 </li>
-<li id="_sidebar_6"><a href="#sec-Program-Examples"><span class="spec-secid">6</span>Program Examples</a></li>
+<li id="_sidebar_7"><a href="#sec-Program-Examples"><span class="spec-secid">7</span>Program Examples</a></li>
 <li id="_sidebar_index"><a href="#index"><span class="spec-secid">§</span>Index</a></li>
 </ol>
 </div>
