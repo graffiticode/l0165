@@ -4,20 +4,6 @@
   [ ] Sort dependency tree & check for cycles
   [ ] Make expanderBuilders a module parameter
   [ ] BUG fix updating cells when clicking on headers
-  [ ] Format numbers and dates using format patterns
-  [x] Handle $ sign
-  [x] Add dependencies of changed cells to dirty list
-  [x] Add dependencies on init
-  [x] Cache cell value when computing functions
-  [x] Expand cell names using translatex to get dependencies
-  [x] Support '=a1' and '=a1+b2' syntax
-  [x] Fix bug focusing cell with text shorter than value
-  [x] Support literals in expressions. E.g. =b2*0.14
-  [x] Parse cell names in parselatex to fix '=a1*a2' and '=a1/a2'
-  [x] Make row and column headings read only
-  [x] Select cell adjacent to selected header
-  [x] Handle unary `-` and `%`
-  [x] Scoring by formula and text (vs value)
 */
 
 import assert from "assert";
@@ -146,6 +132,126 @@ const wrapPlainTextInLatex = text => {
   // Wrap plain text in \text{}
   return `\\text{${text}}`;
 }
+
+/**
+ * Normalizes number input from various formats (e.g., "1,234.56", "$1234.56", "1.234,56")
+ * into a standard numeric value
+ * @param {string} text - The user input text
+ * @returns {number|null} - The normalized number or null if not a valid number
+ */
+const normalizeNumberInput = (text) => {
+  // TODO: Implement number normalization logic
+  // - Handle thousand separators (comma vs period)
+  // - Handle decimal separators (period vs comma)
+  // - Handle currency symbols ($, €, £, etc.)
+  // - Handle percentage symbols (%)
+  // - Handle negative numbers with various formats (-, parentheses)
+  console.log('[normalizeNumberInput] TODO: Implement number normalization for:', text);
+  return null;
+};
+
+/**
+ * Converts a Date object to Excel serial number
+ * Uses the 1904 date system (Mac Excel) to avoid the 1900 leap year bug
+ * Excel serial dates start from January 1, 1904 as day 1
+ * @param {Date} date - The date to convert
+ * @returns {number} - The Excel serial number
+ */
+const dateToSerial = (date) => {
+  const excelEpoch = new Date(1904, 0, 1);
+  const msPerDay = 24 * 60 * 60 * 1000;
+  const daysSinceEpoch = Math.floor((date.getTime() - excelEpoch.getTime()) / msPerDay);
+  return daysSinceEpoch + 1;
+};
+
+/**
+ * Normalizes date input from various formats into a serial number
+ * @param {string} text - The user input text
+ * @returns {number|null} - The date serial number or null if not a valid date
+ */
+const normalizeDateInput = (text) => {
+  if (!text || typeof text !== 'string') {
+    return null;
+  }
+  const trimmed = text.trim();
+  if (!trimmed) {
+    return null;
+  }
+  // Handle relative dates
+  const today = new Date();
+  const lowerText = trimmed.toLowerCase();
+  if (lowerText === 'today') {
+    return dateToSerial(new Date(today.getFullYear(), today.getMonth(), today.getDate()));
+  }
+  if (lowerText === 'tomorrow') {
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+    return dateToSerial(new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate()));
+  }
+  if (lowerText === 'yesterday') {
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+    return dateToSerial(new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate()));
+  }
+  // Check if it's just a number (not a date)
+  // This includes integers, decimals, and negative numbers
+  if (/^-?\d+(\.\d+)?$/.test(trimmed)) {
+    return null;
+  }
+  // Try to parse various date formats
+  // First, try native Date parsing for ISO and common formats
+  const parsed = Date.parse(trimmed);
+  if (!isNaN(parsed)) {
+    return dateToSerial(new Date(parsed));
+  }
+  // Handle MM/DD/YYYY, MM-DD-YYYY, MM.DD.YYYY
+  const usDatePattern = /^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})$/;
+  const usMatch = trimmed.match(usDatePattern);
+  if (usMatch) {
+    const month = parseInt(usMatch[1], 10);
+    const day = parseInt(usMatch[2], 10);
+    const year = parseInt(usMatch[3], 10);
+    if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+      return dateToSerial(new Date(year, month - 1, day));
+    }
+  }
+  // Handle DD/MM/YYYY, DD-MM-YYYY, DD.MM.YYYY (European format)
+  // Note: This could conflict with US format for ambiguous dates like 01/02/2023
+  // You may want to make this configurable based on locale
+  const euDatePattern = /^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})$/;
+  const euMatch = trimmed.match(euDatePattern);
+  if (euMatch) {
+    const day = parseInt(euMatch[1], 10);
+    const month = parseInt(euMatch[2], 10);
+    const year = parseInt(euMatch[3], 10);
+    if (month >= 1 && month <= 12 && day >= 1 && day <= 31 && day > 12) {
+      // Only use EU format if day > 12 to avoid ambiguity
+      return dateToSerial(new Date(year, month - 1, day));
+    }
+  }
+  // Handle MM/DD or MM-DD (current year implied)
+  const partialDatePattern = /^(\d{1,2})[\/\-](\d{1,2})$/;
+  const partialMatch = trimmed.match(partialDatePattern);
+  if (partialMatch) {
+    const month = parseInt(partialMatch[1], 10);
+    const day = parseInt(partialMatch[2], 10);
+    if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+      return dateToSerial(new Date(today.getFullYear(), month - 1, day));
+    }
+  }
+  // Handle YYYY-MM-DD (ISO format)
+  const isoPattern = /^(\d{4})-(\d{1,2})-(\d{1,2})$/;
+  const isoMatch = trimmed.match(isoPattern);
+  if (isoMatch) {
+    const year = parseInt(isoMatch[1], 10);
+    const month = parseInt(isoMatch[2], 10);
+    const day = parseInt(isoMatch[3], 10);
+    if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+      return dateToSerial(new Date(year, month - 1, day));
+    }
+  }
+  return null;
+};
 
 const normalizeValue = text => {
   let result = [text];
@@ -853,20 +959,45 @@ const replaceCellContent = (editorView, name, newText, doMoveCursor = false) => 
 }
 
 const evalCell = ({ env, name }) => {
-  const text = env.cells[name]?.text || "";
+  const cell = env.cells[name];
+  const text = cell?.text || "";
+  const format = cell?.format || "";
   let result = {
     formula: text,
-    val: text
+    val: text,
+    format: format,
   };
+  // Apply normalization for non-formula input
+  if (text && !text.startsWith('=')) {
+    // Try to normalize as date first
+    const normalizedDate = normalizeDateInput(text);
+    console.log(
+      "evalCell()",
+      "text=" + text,
+      "normalizedDate=" + normalizedDate,
+    );
+    if (normalizedDate) {
+      // Use normalized value for calculations
+      result.val = normalizedDate;
+    } else {
+      // Try to normalize as number
+      const normalizedNumber = normalizeNumberInput(text);
+      if (normalizedNumber !== null) {
+        // Use normalized value for calculations
+        result.val = normalizedNumber;
+      }
+    }
+  }
   try {
-    const options = {
-      // allowThousandsSeparator: true,
-      keepTextWhitespace: true,
-      env: env.cells,
-      ...evalRules,
-    };
-    if (text && text.length > 0) {
-      const processedText = text.indexOf("=") === 0 ? toUpperCase(text) : wrapPlainTextInLatex(text);
+    // Only process formulas through TransLaTeX
+    if (text && text.length > 0 && text.indexOf("=") === 0) {
+      const options = {
+        // allowThousandsSeparator: true,
+        keepTextWhitespace: true,
+        env: env.cells,
+        ...evalRules,
+      };
+      const processedText = toUpperCase(text);
       TransLaTeX.translate(
         options,
         processedText, (err, val) => {
@@ -886,17 +1017,55 @@ const evalCell = ({ env, name }) => {
   return result;
 }
 
-const fixText = text => (
-  text
+const fixText = text => {
+  // Convert to string if not already
+  const str = typeof text === 'string' ? text : String(text || '');
+  return str
     .replace(new RegExp("\\{\\{", "g"), "[[")
-    .replace(new RegExp("\\}\\}", "g"), "]]")
-);
+    .replace(new RegExp("\\}\\}", "g"), "]]");
+};
 
 const formatCellValue = ({ env, name }) => {
-  const { val, format } = env.cells[name] || {};
+  const cell = env.cells[name] || {};
+  const val = cell.val;
+  const format = cell.format || "";
   let result = val;
+  // Handle date serial numbers based on format
+  // Common date format patterns
+  const dateFormatPatterns = [
+    'MM/DD/YYYY', 'DD/MM/YYYY', 'YYYY-MM-DD',
+    'MM-DD-YYYY', 'DD-MM-YYYY', 'M/D/YY', 'D/M/YY',
+    'MMM DD, YYYY', 'DD MMM YYYY', 'date'
+  ];
+  const isDateFormat = format && dateFormatPatterns.some(pattern =>
+    format.toLowerCase().includes(pattern.toLowerCase())
+  );
+  if (typeof val === 'number' && isDateFormat) {
+    const excelEpoch = new Date(1904, 0, 1);
+    const msPerDay = 24 * 60 * 60 * 1000;
+    const date = new Date(excelEpoch.getTime() + (val - 1) * msPerDay);
+    // Apply specific date format
+    if (format.includes('DD/MM/YYYY') || format.includes('DD-MM-YYYY')) {
+      const day = date.getDate().toString().padStart(2, '0');
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const year = date.getFullYear();
+      result = `${day}/${month}/${year}`;
+    } else if (format.includes('YYYY-MM-DD')) {
+      const year = date.getFullYear();
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const day = date.getDate().toString().padStart(2, '0');
+      result = `${year}-${month}-${day}`;
+    } else {
+      // Default to MM/DD/YYYY
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const day = date.getDate().toString().padStart(2, '0');
+      const year = date.getFullYear();
+      result = `${month}/${day}/${year}`;
+    }
+  }
   try {
-    if (format && val && val.length > 0) {
+    // Only process string values with format rules
+    if (format && result && typeof result === 'string' && result.length > 0) {
       const options = {
         allowInterval: true,
         keepTextWhitespace: true,
@@ -904,7 +1073,7 @@ const formatCellValue = ({ env, name }) => {
         env: {format},
         ...formatRules,
       };
-      const processedVal = wrapPlainTextInLatex(val);
+      const processedVal = wrapPlainTextInLatex(result);
       TransLaTeX.translate(
         options,
         processedVal, (err, val) => {
@@ -1282,8 +1451,21 @@ const buildCellPlugin = formState => {
             dispatch(tr);
           }
           const cells = {...pluginState.cells};
-          const { columns } = formState.data.interaction;
-          // Merge column attributes into cells
+          const { columns, cells: interactionCells } = formState.data.interaction;
+          // First merge cell attributes from formState
+          if (interactionCells) {
+            Object.keys(cells).forEach(cellName => {
+              const interactionCell = interactionCells[cellName];
+              const format = interactionCell?.attrs?.format;
+              if (format) {
+                cells[cellName] = {
+                  ...cells[cellName],
+                  format: format,
+                };
+              }
+            });
+          }
+          // Then merge column attributes into cells
           Object.keys(cells).forEach(cellName => {
             const colName = cellName.slice(0, 1); // Extract column letter (A, B, C, etc.)
             const columnAttrs = columns && columns[colName];
@@ -1499,6 +1681,8 @@ const buildCellPlugin = formState => {
                 ...evalCell({env: value, name}),
                 text,
                 formula: text,
+                // TODO: Add normalized value to cell state
+                // normalizedValue,
               },
             },
           };
