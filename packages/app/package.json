@@ -25,7 +25,7 @@
   },
   "dependencies": {
     "@artcompiler/parselatex": "^1.7.6",
-    "@artcompiler/translatex": "file:../../../../artcompiler/translatex",
+    "@artcompiler/translatex": "^0.21.4",
     "assert": "^2.1.0",
     "bent": "^7.3.12",
     "prosemirror-example-setup": "^1.2.3",
