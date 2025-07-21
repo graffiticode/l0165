@@ -999,6 +999,10 @@ const evalCell = ({ env, name }) => {
           if (err && err.length) {
             console.error(err);
           }
+          // Convert string numbers to actual numbers for date-formatted cells
+          if (isDateFormat(format) && typeof val === 'string' && !isNaN(parseFloat(val))) {
+            val = parseFloat(val);
+          }
           result = {
             ...result,
             val,
@@ -1020,22 +1024,25 @@ const fixText = text => {
     .replace(new RegExp("\\}\\}", "g"), "]]");
 };
 
+const isDateFormat = (format) => {
+  const dateFormatPatterns = [
+    'MM/DD/YYYY', 'DD/MM/YYYY', 'YYYY-MM-DD',
+    'MM-DD-YYYY', 'DD-MM-YYYY', 'M/D/YY', 'D/M/YY',
+    'MMM DD, YYYY', 'DD MMM YYYY', 'date'
+  ];
+  return format && dateFormatPatterns.some(pattern =>
+    format.toLowerCase().includes(pattern.toLowerCase())
+  );
+};
+
 const formatCellValue = ({ env, name }) => {
   const cell = env.cells[name] || {};
   const val = cell.val;
   const format = cell.format || "";
   let result = val;
   // Handle date serial numbers based on format
-  // Common date format patterns
-  const dateFormatPatterns = [
-    'MM/DD/YYYY', 'DD/MM/YYYY', 'YYYY-MM-DD',
-    'MM-DD-YYYY', 'DD-MM-YYYY', 'M/D/YY', 'D/M/YY',
-    'MMM DD, YYYY', 'DD MMM YYYY', 'date'
-  ];
-  const isDateFormat = format && dateFormatPatterns.some(pattern =>
-    format.toLowerCase().includes(pattern.toLowerCase())
-  );
-  if (typeof val === 'number' && isDateFormat) {
+  const isDateFormatted = isDateFormat(format);
+  if (typeof val === 'number' && isDateFormatted) {
     const excelEpoch = new Date(1904, 0, 1);
     const msPerDay = 24 * 60 * 60 * 1000;
     const date = new Date(excelEpoch.getTime() + (val - 1) * msPerDay);
@@ -1071,7 +1078,7 @@ const formatCellValue = ({ env, name }) => {
     // FIXME date formatting in translatex assumes input is a formatted string,
     // not a date serial number. For now, only process string values with format
     // rules (skip if we already formatted a date)
-    if (format && result && typeof result === 'string' && result.length > 0 && !isDateFormat) {
+    if (format && result && typeof result === 'string' && result.length > 0 && !isDateFormatted) {
       const options = {
         allowInterval: true,
         keepTextWhitespace: true,
