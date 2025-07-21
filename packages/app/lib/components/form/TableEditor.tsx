@@ -971,11 +971,6 @@ const evalCell = ({ env, name }) => {
   if (text && !text.startsWith('=')) {
     // Try to normalize as date first
     const normalizedDate = normalizeDateInput(text);
-    console.log(
-      "evalCell()",
-      "text=" + text,
-      "normalizedDate=" + normalizedDate,
-    );
     if (normalizedDate) {
       // Use normalized value for calculations
       result.val = normalizedDate;
@@ -1006,7 +1001,7 @@ const evalCell = ({ env, name }) => {
           }
           result = {
             ...result,
-            val
+            val,
           };
         }
       );
@@ -1045,27 +1040,38 @@ const formatCellValue = ({ env, name }) => {
     const msPerDay = 24 * 60 * 60 * 1000;
     const date = new Date(excelEpoch.getTime() + (val - 1) * msPerDay);
     // Apply specific date format
-    if (format.includes('DD/MM/YYYY') || format.includes('DD-MM-YYYY')) {
-      const day = date.getDate().toString().padStart(2, '0');
-      const month = (date.getMonth() + 1).toString().padStart(2, '0');
-      const year = date.getFullYear();
-      result = `${day}/${month}/${year}`;
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    const year = date.getFullYear();
+    const yearShort = year.toString().slice(-2);
+    if (format.includes('DD/MM/YYYY')) {
+      result = `${day.toString().padStart(2, '0')}/${month.toString().padStart(2, '0')}/${year}`;
+    } else if (format.includes('DD-MM-YYYY')) {
+      result = `${day.toString().padStart(2, '0')}-${month.toString().padStart(2, '0')}-${year}`;
     } else if (format.includes('YYYY-MM-DD')) {
-      const year = date.getFullYear();
-      const month = (date.getMonth() + 1).toString().padStart(2, '0');
-      const day = date.getDate().toString().padStart(2, '0');
-      result = `${year}-${month}-${day}`;
+      result = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+    } else if (format.includes('MM-DD-YYYY')) {
+      result = `${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}-${year}`;
+    } else if (format.includes('M/D/YY')) {
+      result = `${month}/${day}/${yearShort}`;
+    } else if (format.includes('D/M/YY')) {
+      result = `${day}/${month}/${yearShort}`;
+    } else if (format.includes('MMM DD, YYYY')) {
+      result = `${monthNames[date.getMonth()]} ${day.toString().padStart(2, '0')}, ${year}`;
+    } else if (format.includes('DD MMM YYYY')) {
+      result = `${day.toString().padStart(2, '0')} ${monthNames[date.getMonth()]} ${year}`;
     } else {
       // Default to MM/DD/YYYY
-      const month = (date.getMonth() + 1).toString().padStart(2, '0');
-      const day = date.getDate().toString().padStart(2, '0');
-      const year = date.getFullYear();
-      result = `${month}/${day}/${year}`;
+      result = `${month.toString().padStart(2, '0')}/${day.toString().padStart(2, '0')}/${year}`;
     }
   }
   try {
-    // Only process string values with format rules
-    if (format && result && typeof result === 'string' && result.length > 0) {
+    // FIXME date formatting in translatex assumes input is a formatted string,
+    // not a date serial number. For now, only process string values with format
+    // rules (skip if we already formatted a date)
+    if (format && result && typeof result === 'string' && result.length > 0 && !isDateFormat) {
       const options = {
         allowInterval: true,
         keepTextWhitespace: true,
