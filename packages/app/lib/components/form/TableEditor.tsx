@@ -140,14 +140,83 @@ const wrapPlainTextInLatex = text => {
  * @returns {number|null} - The normalized number or null if not a valid number
  */
 const normalizeNumberInput = (text) => {
-  // TODO: Implement number normalization logic
-  // - Handle thousand separators (comma vs period)
-  // - Handle decimal separators (period vs comma)
-  // - Handle currency symbols ($, €, £, etc.)
-  // - Handle percentage symbols (%)
-  // - Handle negative numbers with various formats (-, parentheses)
-  console.log('[normalizeNumberInput] TODO: Implement number normalization for:', text);
-  return null;
+  if (!text || typeof text !== 'string') {
+    return null;
+  }
+  let normalized = text.trim();
+  if (!normalized) {
+    return null;
+  }
+  // Save original for parentheses check before removing them
+  const originalNormalized = normalized;
+  // Remove currency symbols
+  const currencySymbols = ['$', '€', '£', '¥', '₹', '₽', 'R$', 'C$', 'A$', 'NZ$', 'HK$', 'S$'];
+  currencySymbols.forEach(symbol => {
+    // Escape special regex characters
+    const escapedSymbol = symbol.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    normalized = normalized.replace(new RegExp(escapedSymbol, 'g'), '');
+  });
+  // Handle percentage (convert to decimal)
+  const isPercentage = normalized.includes('%');
+  normalized = normalized.replace(/%/g, '');
+  // Handle negative numbers in parentheses e.g., (1,234.56) or ($1,234.56)
+  const isNegativeParentheses = /^\s*\([^)]+\)\s*$/.test(originalNormalized) &&
+        /\d/.test(originalNormalized);
+  if (isNegativeParentheses) {
+    normalized = normalized.replace(/[()]/g, '');
+  }
+  // Remove spaces
+  normalized = normalized.replace(/\s/g, '');
+  // Handle negative sign
+  const isNegative = normalized.startsWith('-');
+  if (isNegative) {
+    normalized = normalized.substring(1);
+  }
+  // Determine decimal separator by analyzing the pattern
+  const commaCount = (normalized.match(/,/g) || []).length;
+  const periodCount = (normalized.match(/\./g) || []).length;
+  const lastComma = normalized.lastIndexOf(',');
+  const lastPeriod = normalized.lastIndexOf('.');
+  let cleanedNumber;
+  if (commaCount === 0 && periodCount === 0) {
+    // No separators, just a plain number
+    cleanedNumber = normalized;
+  } else if (commaCount === 0 && periodCount === 1) {
+    // Only one period, it's a decimal separator
+    cleanedNumber = normalized;
+  } else if (commaCount === 1 && periodCount === 0) {
+    // Only one comma, check if it's likely a decimal
+    const afterComma = normalized.substring(lastComma + 1);
+    if (afterComma.length === 3 && normalized.length > 4) {
+      // Likely thousand separator (e.g., "1,234")
+      cleanedNumber = normalized.replace(/,/g, '');
+    } else {
+      // Likely decimal separator (e.g., "1,23" or "123,45")
+      cleanedNumber = normalized.replace(',', '.');
+    }
+  } else if (lastComma > lastPeriod) {
+    // Comma is after period, European format (e.g., "1.234,56")
+    cleanedNumber = normalized.replace(/\./g, '').replace(',', '.');
+  } else {
+    // Period is after comma, US format (e.g., "1,234.56")
+    cleanedNumber = normalized.replace(/,/g, '');
+  }
+  // Check if the result is a valid number
+  const num = parseFloat(cleanedNumber);
+  if (isNaN(num)) {
+    return null;
+  }
+  // Apply modifiers
+  let result = num;
+  // Apply negative
+  if (isNegative || isNegativeParentheses) {
+    result = -Math.abs(result);
+  }
+  // Apply percentage conversion
+  if (isPercentage) {
+    result = result / 100;
+  }
+  return result;
 };
 
 /**
@@ -196,6 +265,12 @@ const normalizeDateInput = (text) => {
   // Check if it's just a number (not a date)
   // This includes integers, decimals, and negative numbers
   if (/^-?\d+(\.\d+)?$/.test(trimmed)) {
+    return null;
+  }
+  // Check if it looks like a number with thousand separators or currency
+  // e.g., "1,234" or "$1,234.56" or "€1.234,56"
+  const currencyPattern = /^[$€£¥₹₽]?\s*-?\d{1,3}([,.]?\d{3})*([,.]\d+)?$|^-?\d{1,3}([,.]?\d{3})*([,.]\d+)?\s*[$€£¥₹₽%]?$/;
+  if (currencyPattern.test(trimmed)) {
     return null;
   }
   // Try to parse various date formats
@@ -1075,6 +1150,10 @@ const formatCellValue = ({ env, name }) => {
     }
   }
   try {
+    // Convert numbers to strings for TransLaTeX formatting
+    if (typeof result === 'number' && format && !isDateFormatted) {
+      result = result.toString();
+    }
     // FIXME date formatting in translatex assumes input is a formatted string,
     // not a date serial number. For now, only process string values with format
     // rules (skip if we already formatted a date)
