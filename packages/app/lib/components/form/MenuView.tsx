@@ -82,7 +82,9 @@ export const MenuView = ({ className, editorView, hideMenu = false }) => {
         }
         </div>
        */}
-      <FormulaBar editorView={editorView} />
+      <FormulaBar
+        editorView={editorView}
+      />
     </div>
   );
 };

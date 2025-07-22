@@ -1,7 +1,7 @@
 /*
   TODO
   [ ] Handle single and double click and tab in cells
-  [ ] Sort dependency tree & check for cycles
+  [x] Sort dependency tree & check for cycles
   [ ] Make expanderBuilders a module parameter
   [ ] BUG fix updating cells when clicking on headers
 */
@@ -392,7 +392,11 @@ const buildMenuPlugin = (formState) => {
       const update = () => {
         const hideMenu = formState.data.interaction?.hideMenu || false;
         root.render(
-          <MenuView className="" editorView={editorView} hideMenu={hideMenu} />,
+          <MenuView
+            className=""
+            editorView={editorView}
+            hideMenu={hideMenu}
+          />,
         );
       };
       update();
@@ -403,7 +407,11 @@ const buildMenuPlugin = (formState) => {
           if (hideMenu !== currentHideMenu) {
             currentHideMenu = hideMenu;
             root.render(
-              <MenuView className="" editorView={editorView} hideMenu={hideMenu} />,
+              <MenuView
+                className=""
+                editorView={editorView}
+                hideMenu={hideMenu}
+              />,
             );
           }
         },
@@ -1042,6 +1050,40 @@ const evalCell = ({ env, name }) => {
     val: text,
     format: format,
   };
+
+  // Check for undefined function references and cycles before evaluation for formulas
+  if (text && text.length > 0 && text.indexOf("=") === 0) {
+    // Check for undefined function references
+    const supportedFunctions = evalRules.types.fn;
+    const functionPattern = /([A-Za-z][A-Za-z0-9_]*)\s*\(/g;
+    let match;
+    const undefinedFunctions = [];
+    while ((match = functionPattern.exec(text)) !== null) {
+      const functionName = match[1].toUpperCase();
+      if (!supportedFunctions.includes(functionName)) {
+        undefinedFunctions.push(match[1]); // Keep original case for error message
+      }
+    }
+    if (undefinedFunctions.length > 0) {
+      return {
+        formula: text,
+        val: "#ERROR!",
+        format: format,
+        error: `Undefined function${undefinedFunctions.length > 1 ? 's' : ''}: ${undefinedFunctions.join(', ')}. Supported functions: ${supportedFunctions.join(', ')}`
+      };
+    }
+
+    const cycleCheck = detectCycles({ env, startCell: name });
+    if (cycleCheck.hasCycle) {
+      return {
+        formula: text,
+        val: "#CYCLE!",
+        format: format,
+        error: `Circular dependency: ${cycleCheck.cyclePath?.join(' → ')}`
+      };
+    }
+  }
+
   // Apply normalization for non-formula input
   if (text && !text.startsWith('=')) {
     // Try to normalize as date first
@@ -1212,18 +1254,76 @@ const getSingleCellDependencies = ({ env, name }) => {
   return result;
 };
 
-const getCellDependencies = ({ env, names }) => {
-  // Get the cells that `names` depend on.
-  const deps = names.reduce((deps, name) => {
-    const names = getSingleCellDependencies({env, name});
-    return [...new Set([
-      ...deps,
-      ...names,
-      ...getCellDependencies({env, names})
-    ])];
-  }, []);
-  return deps;
+// Cycle detection using DFS with three-color approach
+interface CycleDetectionResult {
+  hasCycle: boolean;
+  cyclePath?: string[];
+  dependencies: string[];
+}
+
+const detectCycles = ({ env, startCell }: { env: any; startCell: string }): CycleDetectionResult => {
+  const GRAY = 1, BLACK = 2;
+  const colors = new Map<string, number>();
+  const dependencies = new Set<string>();
+  let cyclePath: string[] = [];
+  let hasCycle = false;
+
+  const dfs = (cell: string, path: string[]): boolean => {
+    if (colors.get(cell) === GRAY) {
+      // Found a back edge - cycle detected
+      const cycleStart = path.indexOf(cell);
+      cyclePath = path.slice(cycleStart).concat([cell]);
+      return true;
+    }
+
+    if (colors.get(cell) === BLACK) {
+      // Already processed, no cycle in this path
+      return false;
+    }
+
+    // Mark as currently being processed
+    colors.set(cell, GRAY);
+    // Get direct dependencies of this cell
+    const cellDeps = getSingleCellDependencies({ env, name: cell });
+    for (const dep of cellDeps) {
+      dependencies.add(dep);
+      if (dfs(dep, [...path, cell])) {
+        return true; // Cycle found
+      }
+    }
+
+    // Mark as completely processed
+    colors.set(cell, BLACK);
+    return false;
+  };
+
+  hasCycle = dfs(startCell, []);
+
+  return {
+    hasCycle,
+    cyclePath: hasCycle ? cyclePath : undefined,
+    dependencies: Array.from(dependencies)
+  };
 };
+
+const getCellDependencies = ({ env, names }) => {
+  // Get the cells that `names` depend on with cycle detection
+  const allDeps = new Set<string>();
+  for (const name of names) {
+    const result = detectCycles({ env, startCell: name });
+    if (result.hasCycle) {
+      console.error(`Circular dependency detected in cell ${name}: ${result.cyclePath?.join(' → ')}`);
+      // Continue processing other cells but don't add dependencies for cyclic cells
+      continue;
+    }
+    result.dependencies.forEach(dep => allDeps.add(dep));
+  }
+  return Array.from(allDeps);
+};
+
+
+
+
 
 const makeTableHeadersReadOnlyPlugin = new Plugin({
   props: {

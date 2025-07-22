@@ -2,6 +2,11 @@ import React from "react"; React;
 import { useEffect, useState } from "react";
 
 const updateTextNode = ({ editorView, from, text }) => {
+  console.log(
+    "updateTextNode()",
+    "text=" + text,
+  );
+
   const { doc, tr } = editorView.state;
   const resolvedPos = doc.resolve(from);
   const start = resolvedPos.start(resolvedPos.depth)
