@@ -1053,23 +1053,33 @@ const evalCell = ({ env, name }) => {
 
   // Check for undefined function references and cycles before evaluation for formulas
   if (text && text.length > 0 && text.indexOf("=") === 0) {
-    // Check for undefined function references
+    // Check for undefined name references (functions or variables)
     const supportedFunctions = evalRules.types.fn;
-    const functionPattern = /([A-Za-z][A-Za-z0-9_]*)\s*\(/g;
+    const namePattern = /([A-Za-z][A-Za-z0-9_]*)/g;
+    const cellNamePattern = /^[A-Za-z]+[0-9]+$/; // Pattern for valid cell names like A1, B2, AA10
     let match;
-    const undefinedFunctions = [];
-    while ((match = functionPattern.exec(text)) !== null) {
-      const functionName = match[1].toUpperCase();
-      if (!supportedFunctions.includes(functionName)) {
-        undefinedFunctions.push(match[1]); // Keep original case for error message
+    const undefinedNames = [];
+    while ((match = namePattern.exec(text)) !== null) {
+      const name = match[1];
+      const nameUpper = name.toUpperCase();
+      // Skip if it's a valid cell reference (letters followed by numbers)
+      if (cellNamePattern.test(name)) {
+        continue;
       }
+      // Skip if it's a supported function
+      if (supportedFunctions.includes(nameUpper)) {
+        continue;
+      }
+      // It's an undefined name
+      undefinedNames.push(name);
     }
-    if (undefinedFunctions.length > 0) {
+    if (undefinedNames.length > 0) {
+      const uniqueNames = [...new Set(undefinedNames)]; // Remove duplicates
       return {
         formula: text,
-        val: "#ERROR!",
+        val: "#NAME!",
         format: format,
-        error: `Undefined function${undefinedFunctions.length > 1 ? 's' : ''}: ${undefinedFunctions.join(', ')}. Supported functions: ${supportedFunctions.join(', ')}`
+        error: `Undefined name${uniqueNames.length > 1 ? 's' : ''}: ${uniqueNames.join(', ')}`
       };
     }
 
