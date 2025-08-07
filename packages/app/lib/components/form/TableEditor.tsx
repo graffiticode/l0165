@@ -366,7 +366,7 @@ const equivFormula = (actual, expected) => {
 };
 
 const equivValue = (actual, expected) => (
-  actual !== undefined && actual === expected || false
+  actual !== undefined && String(actual) === String(expected) || false
 );
 
 const scoreCell = ({ method, expected, points = 1 }, {val, formula} = {val:undefined, formula:undefined}) => (
