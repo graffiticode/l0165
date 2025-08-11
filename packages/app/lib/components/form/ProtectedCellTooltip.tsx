@@ -7,11 +7,11 @@ interface ProtectedCellTooltipProps {
   message?: string;
 }
 
-export const ProtectedCellTooltip: React.FC<ProtectedCellTooltipProps> = ({ 
-  visible, 
-  x, 
-  y, 
-  message = "This cell is protected and cannot be edited" 
+export const ProtectedCellTooltip: React.FC<ProtectedCellTooltipProps> = ({
+  visible,
+  x,
+  y,
+  message = "This cell is protected and cannot be edited"
 }) => {
   if (!visible) return null;
 
@@ -27,7 +27,7 @@ export const ProtectedCellTooltip: React.FC<ProtectedCellTooltipProps> = ({
       <div className="relative">
         {message}
         {/* Arrow pointing down */}
-        <div 
+        <div
           className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0"
           style={{
             borderLeft: '4px solid transparent',

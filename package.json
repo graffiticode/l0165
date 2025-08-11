@@ -9,8 +9,8 @@
     "build": "npm run -w packages/app build; npm run -w packages/api build",
     "dev": "npm run -w packages/api dev",
     "start": "npm run -w packages/api start",
-    "lint": "eslint test/",
-    "lint:fix": "eslint --fix test/",
+    "lint": "npm run -w packages/api lint; npm run -w packages/app lint",
+    "lint:fix": "npm run -w packages/api lint:fix; npm run -w packages/app lint:fix",
     "pack": "rm *.tgz; npm -w packages/app pack",
     "publish": "npm -w packages/app publish --access=public"
   },

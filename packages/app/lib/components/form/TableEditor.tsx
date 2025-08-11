@@ -121,11 +121,37 @@ const wrapPlainTextInLatex = text => {
   if (text.includes("\\")) {
     return text;
   }
-  // If it's a number, don't wrap (Excel can format numbers)
+
+  // Check if text has numeric/date prefix with additional text
+  // Examples: "35% of total", "100 items", "2024 forecast"
+  const trimmed = text.trim();
+
+  // Check for percentage with additional text
+  if (/%\s+\S/.test(trimmed)) {
+    // Has percentage followed by more text, wrap it
+    return `\\text{${text}}`;
+  }
+
+  // Check for number followed by text (not just units)
+  // Match: number (with optional decimals/commas) followed by space and text
+  const numberWithTextPattern = /^[\d,.$€£¥₹₽-]+\s+[a-zA-Z]{4,}/;
+  if (numberWithTextPattern.test(trimmed)) {
+    // Has number followed by significant text (4+ chars to avoid units), wrap it
+    return `\\text{${text}}`;
+  }
+
+  // Check for date-like pattern followed by text
+  const dateWithTextPattern = /^(\d{1,4}[-\/]\d{1,2}[-\/]\d{1,4}|\d{1,2}[-\/]\d{1,2}[-\/]\d{2,4})\s+\S/;
+  if (dateWithTextPattern.test(trimmed)) {
+    // Has date followed by text, wrap it
+    return `\\text{${text}}`;
+  }
+
+  // If it's a pure number, don't wrap (Excel can format numbers)
   if (isNumeric(text)) {
     return text;
   }
-  // If it's a date, don't wrap (Excel can format dates)
+  // If it's a pure date, don't wrap (Excel can format dates)
   if (isDateLike(text)) {
     return text;
   }
@@ -147,6 +173,22 @@ const normalizeNumberInput = (text) => {
   if (!normalized) {
     return null;
   }
+
+  // Check if this looks like text with a numeric prefix
+  // e.g., "35% of total", "100 items", etc.
+  // These should be treated as text, not numbers
+  if (/%\s+\S/.test(normalized)) {
+    // Has percentage followed by more text
+    return null;
+  }
+
+  // Check for number followed by non-unit text
+  const numberWithTextPattern = /^[\d,.$€£¥₹₽-]+\s+[a-zA-Z]{4,}/;
+  if (numberWithTextPattern.test(normalized)) {
+    // Has number followed by significant text (not just units)
+    return null;
+  }
+
   // Save original for parentheses check before removing them
   const originalNormalized = normalized;
   // Remove currency symbols

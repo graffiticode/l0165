@@ -1,11 +1,13 @@
 module.exports = {
   root: true,
-  env: { browser: true, es2020: true, node: true },
+  env: { browser: true, es2020: true },
+  parser: '@typescript-eslint/parser',
   parserOptions: {
     ecmaVersion: 2020,
-    sourceType: 'module'
+    sourceType: 'module',
+    project: false
   },
-  ignorePatterns: ['dist', '.eslintrc.cjs', 'public', 'node_modules'],
+  ignorePatterns: ['dist', '.eslintrc.cjs', 'node_modules'],
   rules: {
     // Only check for trailing spaces
     'no-trailing-spaces': 'error',

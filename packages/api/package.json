@@ -10,7 +10,7 @@
     "start": "node -r @graffiticode/tracing src/main.js",
     "coverage": "nyc npm run test",
     "lint": "eslint src/ tools/",
-    "lint:fix": "eslint --fix src/ tools/",
+    "lint:fix": "eslint src/ tools/ --fix",
     "build-spec": "npx spec-md ./spec/spec.md > ./public/spec.html",
     "watch-spec": "npx nodemon --exec 'npx spec-md > ./public/spec.html' ./spec/spec.md"
   },
