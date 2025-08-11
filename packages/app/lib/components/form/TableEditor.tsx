@@ -62,17 +62,7 @@ import { ProtectedCellTooltip } from './ProtectedCellTooltip';
 import { TransLaTeX } from "@artcompiler/translatex";
 import { evalRules, cellNameRules, formatRules, normalizeRules } from './translatex-rules.js';
 
-import Decimal from 'decimal.js';
-
-const isValidDecimal = val => {
-  try {
-    new Decimal(val);
-    return true;
-  } catch (x) {
-    x = x
-    return false;
-  }
-};
+// Removed unused Decimal import and isValidDecimal function
 
 const isQuoteChar = c => (
   ["\"", "'", "`"].includes(c)
@@ -418,12 +408,7 @@ const normalizeValue = value => {
   return result;
 };
 
-const equivFormula = (actual, expected, actualType, expectedType) => {
-  // First check if types match (if types are provided)
-  if (actualType && expectedType && actualType !== expectedType) {
-    return false;
-  }
-
+const equivFormula = (actual, expected) => {
   const normalizedActual = normalizeValue(actual);
   const normalizedExpected = normalizeValue(expected);
 
@@ -432,27 +417,10 @@ const equivFormula = (actual, expected, actualType, expectedType) => {
     return false;
   }
 
+  // Simple string comparison for formula text
   return normalizedActual.every((val, index) => {
     const expectedVal = normalizedExpected[index];
-
-    // Handle undefined/null cases
-    if (expectedVal === undefined || expectedVal === null) {
-      return false;
-    }
-
-    // Type-based comparison
-    // If both are numbers, compare as numbers
-    if (typeof val === 'number' && typeof expectedVal === 'number') {
-      // Use a small epsilon for floating point comparison
-      return Math.abs(val - expectedVal) < 1e-10;
-    }
-
-    // If both are valid decimal strings, use Decimal for precise comparison
-    if (isValidDecimal(val) && isValidDecimal(expectedVal)) {
-      return new Decimal(val).equals(new Decimal(expectedVal));
-    }
-
-    // Fall back to strict equality for other types
+    // Just compare as strings since we're comparing formula text
     return val === expectedVal;
   });
 };
@@ -499,8 +467,8 @@ const scoreCell = ({ method, expected, points = 1 }, {val, formula, type} = {val
       return { points, isValid: true };
     }
   }
-  // For formula assessment, pass the types along
-  else if (method === "formula" && equivFormula(formula, expected, type, 'text')) {
+  // For formula assessment, just compare the formula text
+  else if (method === "formula" && equivFormula(formula, expected)) {
     return { points, isValid: true };
   }
 
