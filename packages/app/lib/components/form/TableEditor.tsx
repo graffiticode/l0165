@@ -78,12 +78,16 @@ const isQuoteChar = c => (
   ["\"", "'", "`"].includes(c)
 );
 
-const toUpperCase = text => (
-  text && text.split("").reduce((acc, c) => ({
+const toUpperCase = text => {
+  // Convert to string if it's not already
+  if (typeof text !== 'string') {
+    text = text == null ? '' : String(text);
+  }
+  return text && text.split("").reduce((acc, c) => ({
     inString: isQuoteChar(c) ? !acc.inString : acc.inString,
     text: acc.text + (acc.inString && c || c.toUpperCase()),
-  }), {inString: false, text: ""}).text || text
-)
+  }), {inString: false, text: ""}).text || text;
+}
 
 const isNumeric = text => {
   if (!text || typeof text !== 'string') return false;
@@ -106,6 +110,11 @@ const isDateLike = text => {
 }
 
 const wrapPlainTextInLatex = text => {
+  // Convert to string if it's not already
+  if (typeof text !== 'string') {
+    text = text == null ? '' : String(text);
+  }
+  
   if (!text || text.length === 0) {
     return text;
   }
@@ -370,8 +379,21 @@ const normalizeDateInput = (text) => {
   return null;
 };
 
-const normalizeValue = text => {
+const normalizeValue = value => {
+  // Handle non-string values (numbers, dates as serial numbers)
+  if (typeof value === 'number') {
+    return [value];
+  }
+
+  // Handle null/undefined
+  if (value == null) {
+    return [value];
+  }
+
+  // Convert to string for processing
+  const text = String(value);
   let result = [text];
+
   try {
     const options = {
       // allowThousandsSeparator: true,
@@ -396,33 +418,94 @@ const normalizeValue = text => {
   return result;
 };
 
-const equivFormula = (actual, expected) => {
+const equivFormula = (actual, expected, actualType, expectedType) => {
+  // First check if types match (if types are provided)
+  if (actualType && expectedType && actualType !== expectedType) {
+    return false;
+  }
+
   const normalizedActual = normalizeValue(actual);
   const normalizedExpected = normalizeValue(expected);
-  return normalizedActual.every((val, index) => (
-    isValidDecimal(val) &&
-      isValidDecimal(normalizedExpected[index]) &&
-      new Decimal(val).equals(new Decimal(normalizedExpected[index])) ||
-      val === normalizedExpected[index]
-  ));
+
+  // Check if arrays have same length
+  if (normalizedActual.length !== normalizedExpected.length) {
+    return false;
+  }
+
+  return normalizedActual.every((val, index) => {
+    const expectedVal = normalizedExpected[index];
+
+    // Handle undefined/null cases
+    if (expectedVal === undefined || expectedVal === null) {
+      return false;
+    }
+
+    // Type-based comparison
+    // If both are numbers, compare as numbers
+    if (typeof val === 'number' && typeof expectedVal === 'number') {
+      // Use a small epsilon for floating point comparison
+      return Math.abs(val - expectedVal) < 1e-10;
+    }
+
+    // If both are valid decimal strings, use Decimal for precise comparison
+    if (isValidDecimal(val) && isValidDecimal(expectedVal)) {
+      return new Decimal(val).equals(new Decimal(expectedVal));
+    }
+
+    // Fall back to strict equality for other types
+    return val === expectedVal;
+  });
 };
 
-const equivValue = (actual, expected) => (
-  actual !== undefined && String(actual) === String(expected) || false
-);
-
-const scoreCell = ({ method, expected, points = 1 }, {val, formula} = {val:undefined, formula:undefined}) => (
-  method === "formula" && equivFormula(formula, expected) && {
-    points,
-    isValid: true,
-  } || method === "value" && equivValue(val, expected) && {
-    points,
-    isValid: true,
-  } || {
-    points: 0,
-    isValid: false,
+const equivValue = (actual, expected, actualType, expectedType) => {
+  // First check type compatibility
+  if (actualType && expectedType && actualType !== expectedType) {
+    return false;
   }
-);
+  
+  // Both values should be strings now, so direct comparison works
+  return actual !== undefined && actual === expected;
+};
+
+const scoreCell = ({ method, expected, points = 1 }, {val, formula, type} = {val:undefined, formula:undefined, type:undefined}) => {
+  // For assessment by value, also consider the type
+  if (method === "value") {
+    // Parse expected value to determine its type if not provided
+    let expectedType = 'text';
+    let expectedVal = expected;
+
+    if (expected != null) {
+      const expectedStr = String(expected);
+      // Check if it's a date
+      const normalizedDate = normalizeDateInput(expectedStr);
+      if (normalizedDate) {
+        expectedType = 'date';
+        // Store as string to match how we store val
+        expectedVal = String(normalizedDate);
+      }
+      // Check if it's a number
+      else {
+        const normalizedNumber = normalizeNumberInput(expectedStr);
+        if (normalizedNumber !== null) {
+          expectedType = 'number';
+          // Store as string to match how we store val
+          expectedVal = String(normalizedNumber);
+        }
+      }
+    }
+
+    // Compare values and types (both are strings now)
+    if (equivValue(val, expectedVal, type, expectedType)) {
+      return { points, isValid: true };
+    }
+  }
+  // For formula assessment, pass the types along
+  else if (method === "formula" && equivFormula(formula, expected, type, 'text')) {
+    return { points, isValid: true };
+  }
+
+  return { points: 0, isValid: false };
+};
 
 const buildMenuPlugin = (formState) => {
   let currentHideMenu = formState.data.interaction?.hideMenu || false;
@@ -830,6 +913,7 @@ const getCells = (cellExprs, state) => {
       const text = cellExprs && name && cellExprs.cells[name]?.text || node.textContent;
       const val = cellExprs && name && cellExprs.cells[name]?.val;
       const formula = cellExprs && name && cellExprs.cells[name]?.formula;
+      const type = cellExprs && name && cellExprs.cells[name]?.type || 'text';
       cells.push({
         row,
         col,
@@ -837,6 +921,7 @@ const getCells = (cellExprs, state) => {
         text,
         val,
         formula,
+        type,
         from: pos,
         to: pos + node.nodeSize,
         justify: node.attrs.justify || node.attrs.align,
@@ -1091,6 +1176,7 @@ const evalCell = ({ env, name }) => {
     formula: text,
     val: text,
     format: format,
+    type: 'text', // Default type is text
   };
 
   // Check for undefined function references and cycles before evaluation for formulas
@@ -1121,6 +1207,7 @@ const evalCell = ({ env, name }) => {
         formula: text,
         val: "#NAME!",
         format: format,
+        type: 'error',
         error: `Undefined name${uniqueNames.length > 1 ? 's' : ''}: ${uniqueNames.join(', ')}`
       };
     }
@@ -1131,6 +1218,7 @@ const evalCell = ({ env, name }) => {
         formula: text,
         val: "#CYCLE!",
         format: format,
+        type: 'error',
         error: `Circular dependency: ${cycleCheck.cyclePath?.join(' → ')}`
       };
     }
@@ -1141,14 +1229,16 @@ const evalCell = ({ env, name }) => {
     // Try to normalize as date first
     const normalizedDate = normalizeDateInput(text);
     if (normalizedDate) {
-      // Use normalized value for calculations
-      result.val = normalizedDate;
+      // Store as string but mark type as date
+      result.val = String(normalizedDate);
+      result.type = 'date';
     } else {
       // Try to normalize as number
       const normalizedNumber = normalizeNumberInput(text);
       if (normalizedNumber !== null) {
-        // Use normalized value for calculations
-        result.val = normalizedNumber;
+        // Store as string but mark type as number
+        result.val = String(normalizedNumber);
+        result.type = 'number';
       }
     }
   }
@@ -1168,14 +1258,47 @@ const evalCell = ({ env, name }) => {
           if (err && err.length) {
             console.error(err);
           }
-          // Convert string numbers to actual numbers for date-formatted cells
-          if (isDateFormat(format) && typeof val === 'string' && !isNaN(parseFloat(val))) {
-            val = parseFloat(val);
-          }
-          result = {
-            ...result,
-            val,
+          // Store val as string but set appropriate type
+          // Helper to check if a value is truly numeric
+          const isNumericValue = (v) => {
+            if (typeof v === 'number') return true;
+            if (typeof v === 'string') {
+              const trimmed = v.trim();
+              if (trimmed === '') return false;
+              // Use Number() for the conversion which handles the full string
+              const num = Number(trimmed);
+              // Check if it's a valid number and the conversion consumed the whole string
+              return !isNaN(num) && isFinite(num);
+            }
+            return false;
           };
+          
+          // Check if it's a date format first
+          if (isDateFormat(format) && isNumericValue(val)) {
+            // Keep as string but mark as date type
+            result = {
+              ...result,
+              val: String(val),
+              type: 'date', // Formula result is a date
+            };
+          } 
+          // Check if it's a number
+          else if (isNumericValue(val)) {
+            // Convert to string for storage but mark as number type
+            result = {
+              ...result,
+              val: String(val),
+              type: 'number', // Formula result is a number
+            };
+          } 
+          // Otherwise it's text
+          else {
+            result = {
+              ...result,
+              val: String(val),
+              type: 'text', // Formula result is text
+            };
+          }
         }
       );
     }
@@ -1207,14 +1330,19 @@ const isDateFormat = (format) => {
 const formatCellValue = ({ env, name }) => {
   const cell = env.cells[name] || {};
   const val = cell.val;
+  const type = cell.type || 'text';
   const format = cell.format || "";
   let result = val;
-  // Handle date serial numbers based on format
+  
+  // Handle date serial numbers based on type and format
   const isDateFormatted = isDateFormat(format);
-  if (typeof val === 'number' && isDateFormatted) {
-    const excelEpoch = new Date(1904, 0, 1);
-    const msPerDay = 24 * 60 * 60 * 1000;
-    const date = new Date(excelEpoch.getTime() + (val - 1) * msPerDay);
+  // Convert string val to number if it's a date type
+  if ((type === 'date' || isDateFormatted) && val) {
+    const numVal = typeof val === 'string' ? parseFloat(val) : val;
+    if (!isNaN(numVal)) {
+      const excelEpoch = new Date(1904, 0, 1);
+      const msPerDay = 24 * 60 * 60 * 1000;
+      const date = new Date(excelEpoch.getTime() + (numVal - 1) * msPerDay);
     // Apply specific date format
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
                        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -1241,6 +1369,7 @@ const formatCellValue = ({ env, name }) => {
     } else {
       // Default to MM/DD/YYYY
       result = `${month.toString().padStart(2, '0')}/${day.toString().padStart(2, '0')}/${year}`;
+    }
     }
   }
   try {
