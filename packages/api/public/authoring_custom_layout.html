@@ -15,22 +15,55 @@
             
             // Handle messages from Graffiticode
             window.addEventListener('message', function(event) {
+                // Filter out MetaMask noise
+                if (event.data) {
+                    // Check if it's a direct MetaMask message
+                    if (event.data.target === 'metamask-inpage') {
+                        return;
+                    }
+                    
+                    // Check if it's a string containing MetaMask error
+                    if (typeof event.data === 'string' && event.data.includes('metamask')) {
+                        return;
+                    }
+                    
+                    // Check if it's an object with MetaMask error
+                    if (typeof event.data === 'object' && event.data.error && 
+                        typeof event.data.error === 'string' && event.data.error.includes('metamask')) {
+                        return;
+                    }
+                }
+                
+                // Log ALL incoming messages for debugging
+                console.log('📨 Message received from:', event.origin);
+                console.log('   Message type:', event.data.type);
+                console.log('   Full message data:', JSON.stringify(event.data, null, 2));
+                
                 // Verify origin for security (allow both production and local)
                 if (event.origin !== 'https://graffiticode.com' && event.origin !== 'http://localhost:3000') {
+                    console.log('   ⚠️ Message rejected - invalid origin');
                     return;
                 }
+                
+                console.log('   ✅ Message accepted - valid origin');
                 
                 // Handle different message types from Graffiticode
                 if (event.data.type === 'graffiticode-ready') {
                     // Graffiticode editor is ready
+                    console.log('🚀 Graffiticode editor is ready');
                 } else if (event.data.type === 'item-created') {
+                    console.log('📝 Processing item-created message');
+                    console.log('   Item ID:', event.data.itemId);
+                    
                     // Prevent processing the same message twice
                     if (lastProcessedItemId === event.data.itemId) {
+                        console.log('   ⏭️ Skipping - already processed this item ID');
                         return;
                     }
                     lastProcessedItemId = event.data.itemId;
                     
                     // New item was created in Graffiticode
+                    console.log('   ✨ Creating new item in Learnosity')
                     
                     // Initialize data structure
                     let currentData = {
@@ -38,6 +71,7 @@
                         validation: { points: 0, ranges: {}, cells: {} },
                         interaction: { type: "table", v: "0.0.1", cells: {}, columns: {} }
                     };
+                    console.log('   📦 Initial data structure:', JSON.stringify(currentData, null, 2));
                     
                     // Find the actual data input field
                     const dataContainer = document.querySelector('[data-lrn-qe-input="data"]');
@@ -51,16 +85,22 @@
                     }
                     
                     if (dataInput) {
+                        console.log('   📝 Found data input field:', dataInput.tagName, dataInput.id || '(no id)');
                         dataInput.value = JSON.stringify(currentData);
+                        console.log('   📤 Updated data field with:', dataInput.value);
                         
                         // Trigger events to notify Learnosity of the change
                         dataInput.dispatchEvent(new Event('input', { bubbles: true }));
                         dataInput.dispatchEvent(new Event('change', { bubbles: true }));
+                        console.log('   🔔 Dispatched input and change events');
                     } else {
-                        console.error('Could not find data input field');
+                        console.error('   ❌ Could not find data input field');
                     }
                 } else if (event.data.type === 'data-updated') {
                     // Compiled data was updated in Graffiticode editor
+                    console.log('🔄 Processing data-updated message');
+                    console.log('   Item ID:', event.data.itemId);
+                    console.log('   Received data:', JSON.stringify(event.data.data, null, 2))
                     
                     // Find the actual visible input element
                     const dataContainer = document.querySelector('[data-lrn-qe-input="data"]');
@@ -107,19 +147,23 @@
                     }
                     
                     if (dataInput) {
-                        console.log('Data input found. Type:', dataInput.tagName, 'Current value:', dataInput.value);
+                        console.log('   ✅ Data input found. Type:', dataInput.tagName);
+                        console.log('   Current value:', dataInput.value);
                         
                         let currentData = {};
                         
                         // Try to parse existing data
                         try {
                             currentData = dataInput.value ? JSON.parse(dataInput.value) : {};
+                            console.log('   📊 Parsed existing data:', JSON.stringify(currentData, null, 2));
                         } catch (e) {
+                            console.log('   ⚠️ Could not parse existing data, using empty object');
                             currentData = {};
                         }
                         
                         // Merge the compiled data while preserving gcItemId
                         if (event.data.data) {
+                            console.log('   🔀 Merging with new data from Graffiticode');
                             currentData = {
                                 ...currentData,
                                 ...event.data.data
@@ -130,10 +174,12 @@
                         if (event.data.itemId) {
                             currentData.gcItemId = event.data.itemId;
                         }
+                        console.log('   📦 Merged data:', JSON.stringify(currentData, null, 2));
                         
                         
                         // Update the input field
                         const newValue = JSON.stringify(currentData);
+                        console.log('   📝 Preparing to update field with:', newValue);
                         
                         // Update the input field
                         
@@ -183,55 +229,78 @@
                             
                             // Verify the value stuck
                             if (dataInput.value !== newValue) {
+                                console.log('   ⚠️ Value did not stick, trying execCommand');
                                 // Try using execCommand as last resort
                                 dataInput.focus();
                                 dataInput.select();
                                 document.execCommand('selectAll');
                                 document.execCommand('insertText', false, newValue);
                                 dataInput.blur();
+                            } else {
+                                console.log('   ✅ Value successfully updated');
                             }
                         }, 100);
                     } else {
-                        console.error('ERROR: Could not find data input field');
-                        console.error('Document ready state:', document.readyState);
+                        console.error('   ❌ ERROR: Could not find data input field');
+                        console.error('   Document ready state:', document.readyState);
+                        console.error('   Available inputs:', document.querySelectorAll('input, textarea').length);
                     }
                 } else if (event.data.type === 'item-updated') {
                     // Existing item was updated in Graffiticode
+                    console.log('♻️ Processing item-updated message');
+                    console.log('   Updated data:', JSON.stringify(event.data.data, null, 2));
+                    
                     // Update the data field with latest info
                     const dataInput = document.querySelector('[data-lrn-qe-input="data"]');
                     if (dataInput && event.data.data) {
                         dataInput.value = JSON.stringify(event.data.data);
+                        console.log('   📤 Updated data field');
+                        
                         // Trigger change event for Learnosity
                         const changeEvent = new Event('change', { bubbles: true });
                         dataInput.dispatchEvent(changeEvent);
+                        console.log('   🔔 Dispatched change event');
+                    } else {
+                        console.log('   ⚠️ Could not update - missing data input or data');
                     }
+                } else {
+                    console.log('   ❓ Unknown message type:', event.data.type);
                 }
             });
             
             // Handle button click
             document.getElementById('editQuestionBtn').addEventListener('click', function() {
+                console.log('🖱️ Edit Question button clicked');
+                
                 // Get current data to check if we have an existing item
                 const dataInput = document.querySelector('[data-lrn-qe-input="data"]');
                 let currentData = {};
                 let gcItemId = null;
                 
+                console.log('📥 Checking for existing data...');
                 if (dataInput && dataInput.value) {
                     try {
                         currentData = JSON.parse(dataInput.value);
                         gcItemId = currentData.gcItemId || null;
+                        console.log('   Current data:', JSON.stringify(currentData, null, 2));
+                        console.log('   Existing gcItemId:', gcItemId);
                     } catch (e) {
-                        console.error('Failed to parse current data:', e);
+                        console.error('   ❌ Failed to parse current data:', e);
                     }
+                } else {
+                    console.log('   No existing data found');
                 }
                 
                 // Only open Graffiticode for new questions (no gcItemId)
                 if (gcItemId) {
+                    console.log('   ⚠️ Question already has Graffiticode item:', gcItemId);
                     alert('This question already has a Graffiticode item associated with it.');
                     return;
                 }
                 
                 // Check if window is already open
                 if (graffiticodeWindow && !graffiticodeWindow.closed) {
+                    console.log('   🔄 Graffiticode window already open, focusing...');
                     graffiticodeWindow.focus();
                     return;
                 }
@@ -243,17 +312,27 @@
                     origin: window.location.origin
                 });
                 
+                console.log('🌐 Opening Graffiticode with parameters:');
+                console.log('   Language:', LANG);
+                console.log('   Mode: learnosity');
+                console.log('   Origin:', window.location.origin);
+                
                 // Open Graffiticode with parameters
                 // Automatically detect if running locally
                 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
                 const baseUrl = isLocal ? 'http://localhost:3000/learnosity' : 'https://graffiticode.com/learnosity';
                 const fullUrl = `${baseUrl}?${params.toString()}`;
                 
+                console.log('   Is local environment:', isLocal);
+                console.log('   Full URL:', fullUrl);
+                
                 graffiticodeWindow = window.open(
                     fullUrl,
                     'graffiticode',
                     'width=1200,height=800'
                 );
+                
+                console.log('   ✅ Graffiticode window opened');
             });
         })();
     </script>
