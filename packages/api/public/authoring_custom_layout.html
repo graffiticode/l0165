@@ -2,11 +2,261 @@
     <!-- Graffiticode Link -->
     <div class="lrn-qe-row-flex lrn-qe-margin-bottom-md">
         <div class="lrn-qe-col-xs-12">
-            <button type="button" onclick="window.open('https://graffiticode.com', 'graffiticode', 'width=1200,height=800')" style="display: inline-block; padding: 8px 16px; background-color: #007bff; color: white; text-decoration: none; border-radius: 4px; font-weight: 500; border: none; cursor: pointer;">
-                Open Graffiticode →
+            <button type="button" id="editQuestionBtn" style="display: inline-block; padding: 8px 16px; background-color: #007bff; color: white; text-decoration: none; border-radius: 4px; font-weight: 500; border: none; cursor: pointer;">
+                Edit Question →
             </button>
         </div>
     </div>
+    <script>
+        (function() {
+            let graffiticodeWindow = null;
+            const LANG = '0165'; // Fixed language for this question type
+            let lastProcessedItemId = null; // Track last processed item to avoid duplicates
+            
+            // Handle messages from Graffiticode
+            window.addEventListener('message', function(event) {
+                // Verify origin for security (allow both production and local)
+                if (event.origin !== 'https://graffiticode.com' && event.origin !== 'http://localhost:3000') {
+                    return;
+                }
+                
+                // Handle different message types from Graffiticode
+                if (event.data.type === 'graffiticode-ready') {
+                    // Graffiticode editor is ready
+                } else if (event.data.type === 'item-created') {
+                    // Prevent processing the same message twice
+                    if (lastProcessedItemId === event.data.itemId) {
+                        return;
+                    }
+                    lastProcessedItemId = event.data.itemId;
+                    
+                    // New item was created in Graffiticode
+                    
+                    // Initialize data structure
+                    let currentData = {
+                        gcItemId: event.data.itemId,
+                        validation: { points: 0, ranges: {}, cells: {} },
+                        interaction: { type: "table", v: "0.0.1", cells: {}, columns: {} }
+                    };
+                    
+                    // Find the actual data input field
+                    const dataContainer = document.querySelector('[data-lrn-qe-input="data"]');
+                    let dataInput = null;
+                    
+                    if (dataContainer) {
+                        dataInput = dataContainer.querySelector('input, textarea');
+                        if (!dataInput && dataContainer.value !== undefined) {
+                            dataInput = dataContainer;
+                        }
+                    }
+                    
+                    if (dataInput) {
+                        dataInput.value = JSON.stringify(currentData);
+                        
+                        // Trigger events to notify Learnosity of the change
+                        dataInput.dispatchEvent(new Event('input', { bubbles: true }));
+                        dataInput.dispatchEvent(new Event('change', { bubbles: true }));
+                    } else {
+                        console.error('Could not find data input field');
+                    }
+                } else if (event.data.type === 'data-updated') {
+                    // Compiled data was updated in Graffiticode editor
+                    
+                    // Find the actual visible input element
+                    const dataContainer = document.querySelector('[data-lrn-qe-input="data"]');
+                    
+                    // Look for all possible input elements
+                    let dataInput = null;
+                    
+                    // Method 1: Look inside the container for actual input/textarea
+                    if (dataContainer) {
+                        const inputs = dataContainer.querySelectorAll('input, textarea');
+                        // Use the first visible input/textarea
+                        dataInput = Array.from(inputs).find(input => input.offsetParent !== null) || inputs[0];
+                    }
+                    
+                    // Method 2: Look for nearby inputs that might be the actual field
+                    if (!dataInput) {
+                        // Get the parent of the container and look for inputs there
+                        const parent = dataContainer?.parentElement;
+                        if (parent) {
+                            const nearbyInputs = parent.querySelectorAll('input, textarea');
+                            dataInput = Array.from(nearbyInputs).find(input => input.offsetParent !== null);
+                        }
+                    }
+                    
+                    // Method 3: Look for any visible text input with a label containing "data"
+                    if (!dataInput) {
+                        const allVisibleInputs = Array.from(document.querySelectorAll('input[type="text"], textarea')).filter(input => input.offsetParent !== null);
+                        
+                        // Check if any of them are near a label with "data" or "spreadsheet"
+                        for (let input of allVisibleInputs) {
+                            const label = document.querySelector(`label[for="${input.id}"]`) || 
+                                        input.closest('div')?.querySelector('label');
+                            if (label && (label.textContent.toLowerCase().includes('data') || 
+                                         label.textContent.toLowerCase().includes('spreadsheet'))) {
+                                dataInput = input;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    // Last resort: use the container itself if it has a value property
+                    if (!dataInput && dataContainer && dataContainer.value !== undefined) {
+                        dataInput = dataContainer;
+                    }
+                    
+                    if (dataInput) {
+                        console.log('Data input found. Type:', dataInput.tagName, 'Current value:', dataInput.value);
+                        
+                        let currentData = {};
+                        
+                        // Try to parse existing data
+                        try {
+                            currentData = dataInput.value ? JSON.parse(dataInput.value) : {};
+                        } catch (e) {
+                            currentData = {};
+                        }
+                        
+                        // Merge the compiled data while preserving gcItemId
+                        if (event.data.data) {
+                            currentData = {
+                                ...currentData,
+                                ...event.data.data
+                            };
+                        }
+                        
+                        // Make sure gcItemId is still set
+                        if (event.data.itemId) {
+                            currentData.gcItemId = event.data.itemId;
+                        }
+                        
+                        
+                        // Update the input field
+                        const newValue = JSON.stringify(currentData);
+                        
+                        // Update the input field
+                        
+                        // Focus the field
+                        dataInput.focus();
+                        
+                        // Clear and set the value using the most compatible method
+                        if (dataInput instanceof HTMLInputElement || dataInput instanceof HTMLTextAreaElement) {
+                            // Use native setter for React compatibility
+                            try {
+                                const proto = dataInput instanceof HTMLInputElement ? 
+                                    window.HTMLInputElement.prototype : 
+                                    window.HTMLTextAreaElement.prototype;
+                                const nativeSetter = Object.getOwnPropertyDescriptor(proto, "value").set;
+                                
+                                if (nativeSetter) {
+                                    // Clear first
+                                    nativeSetter.call(dataInput, '');
+                                    dataInput.dispatchEvent(new Event('input', { bubbles: true }));
+                                    
+                                    // Set new value
+                                    nativeSetter.call(dataInput, newValue);
+                                }
+                            } catch (e) {
+                                dataInput.value = newValue;
+                            }
+                        } else {
+                            // Fallback to direct assignment
+                            dataInput.value = newValue;
+                        }
+                        
+                        // Dispatch a single input event
+                        const inputEvent = new InputEvent('input', {
+                            bubbles: true,
+                            cancelable: true,
+                            inputType: 'insertReplacementText',
+                            data: newValue
+                        });
+                        dataInput.dispatchEvent(inputEvent);
+                        
+                        // Dispatch change event
+                        dataInput.dispatchEvent(new Event('change', { bubbles: true }));
+                        
+                        // Blur after a short delay to finalize
+                        setTimeout(() => {
+                            dataInput.blur();
+                            
+                            // Verify the value stuck
+                            if (dataInput.value !== newValue) {
+                                // Try using execCommand as last resort
+                                dataInput.focus();
+                                dataInput.select();
+                                document.execCommand('selectAll');
+                                document.execCommand('insertText', false, newValue);
+                                dataInput.blur();
+                            }
+                        }, 100);
+                    } else {
+                        console.error('ERROR: Could not find data input field');
+                        console.error('Document ready state:', document.readyState);
+                    }
+                } else if (event.data.type === 'item-updated') {
+                    // Existing item was updated in Graffiticode
+                    // Update the data field with latest info
+                    const dataInput = document.querySelector('[data-lrn-qe-input="data"]');
+                    if (dataInput && event.data.data) {
+                        dataInput.value = JSON.stringify(event.data.data);
+                        // Trigger change event for Learnosity
+                        const changeEvent = new Event('change', { bubbles: true });
+                        dataInput.dispatchEvent(changeEvent);
+                    }
+                }
+            });
+            
+            // Handle button click
+            document.getElementById('editQuestionBtn').addEventListener('click', function() {
+                // Get current data to check if we have an existing item
+                const dataInput = document.querySelector('[data-lrn-qe-input="data"]');
+                let currentData = {};
+                let gcItemId = null;
+                
+                if (dataInput && dataInput.value) {
+                    try {
+                        currentData = JSON.parse(dataInput.value);
+                        gcItemId = currentData.gcItemId || null;
+                    } catch (e) {
+                        console.error('Failed to parse current data:', e);
+                    }
+                }
+                
+                // Only open Graffiticode for new questions (no gcItemId)
+                if (gcItemId) {
+                    alert('This question already has a Graffiticode item associated with it.');
+                    return;
+                }
+                
+                // Check if window is already open
+                if (graffiticodeWindow && !graffiticodeWindow.closed) {
+                    graffiticodeWindow.focus();
+                    return;
+                }
+                
+                // Build URL with parameters for new item
+                const params = new URLSearchParams({
+                    lang: LANG,
+                    mode: 'learnosity',
+                    origin: window.location.origin
+                });
+                
+                // Open Graffiticode with parameters
+                // Automatically detect if running locally
+                const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                const baseUrl = isLocal ? 'http://localhost:3000/learnosity' : 'https://graffiticode.com/learnosity';
+                const fullUrl = `${baseUrl}?${params.toString()}`;
+                
+                graffiticodeWindow = window.open(
+                    fullUrl,
+                    'graffiticode',
+                    'width=1200,height=800'
+                );
+            });
+        })();
+    </script>
     <span data-lrn-qe-label="stimulus"></span>
     <span data-lrn-qe-input="stimulus" class="lrn-qe-ckeditor-lg"></span>
     <!-- Validation -->
