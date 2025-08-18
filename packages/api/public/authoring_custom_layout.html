@@ -1,6 +1,7 @@
 <div class="lrn-qe-edit-form">
   <script>
     (function() {
+      console.log('Graffiticode integration script starting');
       let graffiticodeWindow = null;
       const LANG = '0165'; // Fixed language for this question type
       let lastProcessedItemId = null; // Track last processed item to avoid duplicates
@@ -13,13 +14,16 @@
           questionEditor = window.questionEditorApp;
         }
         // Method 2: Through parent window's authorApp
-        if (!questionEditor && window.parent && window.parent.authorApp) {
+        if (!questionEditor) {
           try {
-            const widget = window.parent.authorApp.getWidget();
-            if (widget && widget.questionEditorApp) {
-              questionEditor = widget.questionEditorApp();
+            if (window.parent && window.parent !== window && window.parent.authorApp) {
+              const widget = window.parent.authorApp.getWidget();
+              if (widget && widget.questionEditorApp) {
+                questionEditor = widget.questionEditorApp();
+              }
             }
           } catch (e) {
+            // Cross-origin or access error
           }
         }
         // Method 3: Through global LearnosityQuestionEditor
@@ -470,18 +474,33 @@
       window.addEventListener('message', handleGraffiticodeMessage);
 
       // Also listen on parent and top windows if we're in an iframe
-      if (window.parent && window.parent !== window) {
-        window.parent.addEventListener('message', handleGraffiticodeMessage);
-      }
-      if (window.top && window.top !== window) {
-        try {
-          window.top.addEventListener('message', handleGraffiticodeMessage);
-        } catch (e) {
-          // Cross-origin access denied, that's ok
+      // Wrap in try-catch to avoid cross-origin errors
+      try {
+        if (window.parent && window.parent !== window) {
+          window.parent.addEventListener('message', handleGraffiticodeMessage);
         }
+      } catch (e) {
+        // Cross-origin access denied, that's ok
       }
-      // Handle button click
-      document.getElementById('editQuestionBtn').addEventListener('click', function() {
+      try {
+        if (window.top && window.top !== window) {
+          window.top.addEventListener('message', handleGraffiticodeMessage);
+        }
+      } catch (e) {
+        // Cross-origin access denied, that's ok
+      }
+      // Wait for DOM to be ready before attaching button handler
+      function attachButtonHandler() {
+        const editBtn = document.getElementById('editQuestionBtn');
+        if (!editBtn) {
+          console.error('Create/Edit Spreadsheet button not found, retrying...');
+          // Try again after a short delay
+          setTimeout(attachButtonHandler, 500);
+          return;
+        }
+        console.log('Found button, attaching click handler');
+        editBtn.addEventListener('click', function(e) {
+          console.log('Button clicked');
         // Get current data to check if we have an existing item
         const dataContainer = document.querySelector('[data-lrn-qe-input="data"]');
         let currentData = {};
@@ -542,7 +561,7 @@
         // Add a target parameter to help Graffiticode know where to send messages
         // Since we're in an iframe, we need to specify the parent origin
         try {
-          if (window.parent && window.parent !== window) {
+          if (window.parent && window.parent !== window && window.parent.location) {
             params.append('parentOrigin', window.parent.location.origin);
           }
         } catch (e) {
@@ -583,8 +602,12 @@
 
         // Store reference globally so parent frames can access it
         window.graffiticodeWindow = graffiticodeWindow;
-        if (window.parent && window.parent !== window) {
-          window.parent.graffiticodeWindow = graffiticodeWindow;
+        try {
+          if (window.parent && window.parent !== window) {
+            window.parent.graffiticodeWindow = graffiticodeWindow;
+          }
+        } catch (e) {
+          // Cross-origin access denied, that's ok
         }
 
         // Send a message to Graffiticode once it's loaded to establish communication
@@ -605,6 +628,10 @@
           setTimeout(() => clearInterval(checkLoaded), 10000);
         }
       });
+      }
+      
+      // Start attaching button handler
+      attachButtonHandler();
     })();
   </script>
   <style>
