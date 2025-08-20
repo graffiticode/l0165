@@ -541,15 +541,10 @@
           } else {
           }
         }
-        // Check if window is already open
-        if (graffiticodeWindow && !graffiticodeWindow.closed) {
-          graffiticodeWindow.focus();
-          return;
-        }
         // Build URL with parameters
         const params = new URLSearchParams({
           lang: LANG,
-          mode: 'learnosity',
+          mode: 'editor',
           origin: window.location.origin
         });
 
@@ -572,26 +567,33 @@
         // Automatically detect if running locally
         const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
-        // Always use the /learnosity page to ensure proper communication
+        // Always use the /editor page to ensure proper communication
         // But we need a different approach for editing vs creating
-        const baseUrl = isLocal ? 'http://localhost:3000/learnosity' : 'https://graffiticode.com/learnosity';
+        const baseUrl = isLocal ? 'http://localhost:3000/editor' : 'https://graffiticode.com/editor';
 
         const fullUrl = `${baseUrl}?${params.toString()}`;
         
-        // Try to open the window - this may show a security warning in console
-        // but should still work as it's a user-initiated action (button click)
-        try {
-          graffiticodeWindow = window.open(
-            fullUrl,
-            'graffiticode',
-            'width=1200,height=800'
-          );
-        } catch (e) {
-          // If blocked, try alternative approach
-          graffiticodeWindow = window.open(
-            fullUrl,
-            '_blank'
-          );
+        // Check if window is already open and reuse it
+        if (graffiticodeWindow && !graffiticodeWindow.closed) {
+          // Reuse the existing window by navigating to the new URL
+          graffiticodeWindow.location.href = fullUrl;
+          graffiticodeWindow.focus();
+        } else {
+          // Try to open the window - this may show a security warning in console
+          // but should still work as it's a user-initiated action (button click)
+          try {
+            graffiticodeWindow = window.open(
+              fullUrl,
+              'graffiticode-editor',
+              'width=1200,height=800'
+            );
+          } catch (e) {
+            // If blocked, try alternative approach
+            graffiticodeWindow = window.open(
+              fullUrl,
+              'graffiticode-editor'
+            );
+          }
         }
         
         if (!graffiticodeWindow) {
