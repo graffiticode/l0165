@@ -247,6 +247,19 @@
 
       // Handle messages from Graffiticode - listen on multiple contexts
       function handleGraffiticodeMessage(event) {
+        // Log ALL messages for debugging origin issues
+        console.log(
+          "handleGraffiticodeMessage()",
+          "origin=" + event.origin,
+          "current window origin=" + window.location.origin,
+          "event type=" + (event.data ? event.data.type : 'unknown')
+        );
+
+        // Special debug for Graffiticode messages
+        if (event.origin === 'https://graffiticode.com' || event.origin === 'http://localhost:3000') {
+          console.log("*** RECEIVED GRAFFITICODE MESSAGE ***", event.data);
+        }
+
         // Verify origin for security (allow both production and local)
         if (event.origin !== 'https://graffiticode.com' && event.origin !== 'http://localhost:3000') {
           return;
@@ -567,11 +580,32 @@
           }
         }
         // Build URL with parameters
+        // Determine the correct origin for message communication
+        let messageOrigin = window.location.origin;
+
+        // If we're in an iframe, we might need to use a different approach
+        try {
+          // Check if we're in an iframe and can access parent
+          if (window.parent && window.parent !== window) {
+            // We're in an iframe - use current window origin for messaging
+            messageOrigin = window.location.origin;
+            console.log('Running in iframe, using current window origin:', messageOrigin);
+          }
+        } catch (e) {
+          // Cross-origin iframe, use current origin
+          console.log('Cross-origin iframe detected, using current origin:', messageOrigin);
+        }
+
         const params = new URLSearchParams({
           lang: LANG,
           mode: 'editor',
-          origin: window.location.origin
+          origin: messageOrigin,
+          // Tell Graffiticode this is opened from an external editor
+          editorMode: 'true',
+          editorOrigin: messageOrigin
         });
+
+        console.log('Using origin for Graffiticode communication:', messageOrigin);
 
         // If we have an existing itemId, add it to the URL for editing
         if (gcItemId) {
@@ -597,7 +631,7 @@
         const baseUrl = isLocal ? 'http://localhost:3000/editor' : 'https://graffiticode.com/editor';
 
         const fullUrl = `${baseUrl}?${params.toString()}`;
-        
+
         // Check if window is already open and reuse it
         if (graffiticodeWindow && !graffiticodeWindow.closed) {
           // Reuse the existing window by navigating to the new URL
@@ -612,6 +646,7 @@
               'graffiticode-editor',
               'width=1200,height=800'
             );
+
           } catch (e) {
             // If blocked, try alternative approach
             graffiticodeWindow = window.open(
