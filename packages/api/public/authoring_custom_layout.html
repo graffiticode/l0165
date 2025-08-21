@@ -129,12 +129,17 @@
           }
 
           if (dataValue) {
-            try {
-              const data = JSON.parse(dataValue);
-              hasItemId = !!data.gcItemId;
+            // Handle data as either object or JSON string for backward compatibility
+            let data = dataValue;
+            if (typeof dataValue === 'string') {
+              try {
+                data = JSON.parse(dataValue);
               } catch (e) {
-              // Failed to parse data
+                // Failed to parse, assume no itemId
+                data = null;
+              }
             }
+            hasItemId = data && !!data.gcItemId;
           }
         }
 
@@ -219,15 +224,22 @@
           }
 
           if (dataValue) {
-            try {
-              const data = JSON.parse(dataValue);
+            // Handle data as either object or JSON string
+            let data = dataValue;
+            if (typeof dataValue === 'string') {
+              try {
+                data = JSON.parse(dataValue);
+              } catch (e) {
+                // Invalid JSON
+                data = null;
+              }
+            }
+            if (data) {
               const currentItemId = data.gcItemId || null;
               if (currentItemId !== lastKnownItemId) {
                 lastKnownItemId = currentItemId;
                 updateButtonText();
               }
-            } catch (e) {
-              // Invalid JSON
             }
           }
         }
@@ -265,6 +277,7 @@
             }
           }
           if (dataInput) {
+            // Serialize the object to JSON string for the input field
             dataInput.value = JSON.stringify(currentData);
             // Trigger events to notify Learnosity of the change
             dataInput.dispatchEvent(new Event('input', { bubbles: true }));
@@ -315,7 +328,12 @@
             let currentData = {};
             // Try to parse existing data
             try {
-              currentData = dataInput.value ? JSON.parse(dataInput.value) : {};
+              // Handle both object and string formats
+              if (dataInput.value) {
+                currentData = typeof dataInput.value === 'string' ? JSON.parse(dataInput.value) : dataInput.value;
+              } else {
+                currentData = {};
+              }
             } catch (e) {
               currentData = {};
             }
@@ -330,7 +348,7 @@
             if (event.data.itemId) {
               currentData.gcItemId = event.data.itemId;
             }
-            // Update the input field
+            // Serialize the object to JSON string for the input field
             const newValue = JSON.stringify(currentData);
             // Update the input field
             // Focus the field
@@ -432,7 +450,12 @@
               let currentData = {};
               // Try to parse existing data
               try {
-                currentData = dataInput.value ? JSON.parse(dataInput.value) : {};
+                // Handle both object and string formats
+              if (dataInput.value) {
+                currentData = typeof dataInput.value === 'string' ? JSON.parse(dataInput.value) : dataInput.value;
+              } else {
+                currentData = {};
+              }
               } catch (e) {
                 currentData = {};
               }
@@ -450,6 +473,7 @@
                 currentData.gcItemId = event.data.itemId;
               }
 
+              // Serialize the object to JSON string for the input field
               const newValue = JSON.stringify(currentData);
               dataInput.value = newValue;
 
@@ -534,7 +558,8 @@
 
           if (dataValue) {
             try {
-              currentData = JSON.parse(dataValue);
+              // Handle data as either object or string
+              currentData = typeof dataValue === 'string' ? JSON.parse(dataValue) : dataValue;
               gcItemId = currentData.gcItemId || null;
             } catch (e) {
             }
