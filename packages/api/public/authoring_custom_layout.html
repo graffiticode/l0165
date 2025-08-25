@@ -264,7 +264,6 @@
         if (event.origin !== 'https://graffiticode.com' && event.origin !== 'http://localhost:3000') {
           return;
         }
-        
         // If we're in an iframe, also propagate the message to parent
         try {
           if (window.parent && window.parent !== window) {
@@ -434,9 +433,9 @@
                 forcePreviewRefresh();
 
                 // Trigger a custom event that Learnosity might listen to
-                window.dispatchEvent(new CustomEvent('lrn:qe:data:changed', { 
+                window.dispatchEvent(new CustomEvent('lrn:qe:data:changed', {
                   detail: { field: 'data', value: newValue },
-                  bubbles: true 
+                  bubbles: true
                 }));
 
                 // Dispatch a focus/blur on a different field to trigger validation
@@ -678,7 +677,6 @@
             );
           }
         }
-        
         if (!graffiticodeWindow) {
           // If still blocked, alert the user
           alert('Unable to open Graffiticode. Please check your popup blocker settings.');
@@ -714,7 +712,6 @@
         }
       });
       }
-      
       // Start attaching button handler
       attachButtonHandler();
     })();
