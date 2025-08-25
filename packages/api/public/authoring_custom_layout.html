@@ -264,6 +264,15 @@
         if (event.origin !== 'https://graffiticode.com' && event.origin !== 'http://localhost:3000') {
           return;
         }
+        
+        // If we're in an iframe, also propagate the message to parent
+        try {
+          if (window.parent && window.parent !== window) {
+            window.parent.postMessage(event.data, '*');
+          }
+        } catch (e) {
+          // Cross-origin access denied
+        }
         // Handle different message types from Graffiticode
         if (event.data.type === 'graffiticode-ready') {
           // Graffiticode editor is ready
@@ -526,6 +535,18 @@
       } catch (e) {
         // Cross-origin access denied, that's ok
       }
+
+      // Send ready message to Graffiticode if window is already open
+      setTimeout(() => {
+        if (window.opener) {
+          const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+          window.opener.postMessage(
+            { type: 'learnosity-ready' },
+            isLocal ? 'http://localhost:3000' : 'https://graffiticode.com'
+          );
+          console.log('Sent learnosity-ready message to opener');
+        }
+      }, 1000);
       // Wait for DOM to be ready before attaching button handler
       function attachButtonHandler() {
         const editBtn = document.getElementById('editQuestionBtn');
@@ -538,6 +559,8 @@
         console.log('Found button, attaching click handler');
         editBtn.addEventListener('click', function(e) {
           console.log('Button clicked');
+        // Reset last processed item ID when opening editor to allow re-processing messages
+        lastProcessedItemId = null;
         // Get current data to check if we have an existing item
         const dataContainer = document.querySelector('[data-lrn-qe-input="data"]');
         let currentData = {};
