@@ -52,7 +52,7 @@ const getValidation = ({rows = {}, cells = {}}) => (
     const points = cells[key]?.attrs?.assess && cells[key]?.attrs?.assess?.points;
     return {
       ...obj,
-      points: obj.points + (typeof points === "number" ? points : 0),
+      points: obj.points + (typeof points === "number" ? points : 1),
       ranges: {
         ...obj.ranges,
         [rowRange]: {
