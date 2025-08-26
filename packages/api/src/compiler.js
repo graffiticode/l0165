@@ -416,8 +416,8 @@ t;
       );
       const { templateVariablesRecords, title, instructions, ...tableData } = v0;
       const val = {
-        title,
-        instructions,
+        title: title || "",
+        instructions: instructions || "",
         templateVariablesRecords,
         validation: getValidation(v0),
         interaction: {
