@@ -49,7 +49,9 @@ const getValidation = ({rows = {}, cells = {}}) => (
       id: order !== "actual" && rowIndex + 1 || undefined,
       [col]: cell,
     };
-    const points = cells[key]?.attrs?.assess && cells[key]?.attrs?.assess?.points;
+    const points = cells[key]?.attrs?.assess
+          ? cells[key]?.attrs?.assess?.points
+          : 0;  // No validation so no points counted.
     return {
       ...obj,
       points: obj.points + (typeof points === "number" ? points : 1),
