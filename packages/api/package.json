@@ -5,13 +5,13 @@
   "type": "module",
   "scripts": {
     "build-lexicon": "node tools/build-lexicon.js > ./public/lexicon.js",
-    "build": "npm run build-lexicon; tsc && vite build",
+    "build": "tsc && vite build",
     "dev": "FIRESTORE_EMULATOR_HOST=\"127.0.0.1:8080\" AUTH_URL=\"http://127.0.0.1:4100\" nodemon --exec \"node src/main.js\"",
     "start": "node -r @graffiticode/tracing src/main.js",
     "coverage": "nyc npm run test",
     "lint": "eslint src/ tools/",
     "lint:fix": "eslint src/ tools/ --fix",
-    "build-spec": "npx spec-md ./spec/spec.md > ./public/spec.html",
+    "build-spec": "npx spec-md ./spec/spec.md > ./public/spec.html && cp ./spec/instructions.md ./public/instructions.md && cp ./spec/template.gc ./public/template.gc",
     "watch-spec": "npx nodemon --exec 'npx spec-md > ./public/spec.html' ./spec/spec.md"
   },
   "dependencies": {

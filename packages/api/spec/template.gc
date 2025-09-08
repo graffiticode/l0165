@@ -1,0 +1,12 @@
+columns {
+  A: {
+    width: 100,
+    justify: "center",
+  }
+}
+cells {
+  A1: { text: "A1" }
+}
+{
+  v: "0.0.1"
+}..
