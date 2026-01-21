@@ -1,0 +1,151 @@
+name: Deploy to Google Cloud Run
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - 'feature/**'
+  pull_request:
+    branches:
+      - main
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  SERVICE: l0165
+  REGION: us-central1
+
+jobs:
+  deploy:
+    name: Deploy to Cloud Run
+    runs-on: ubuntu-latest
+
+    # Add "id-token" with the intended permissions.
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Google Auth
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+          # Or use Workload Identity Federation (recommended)
+          # workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          # service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker to use gcloud as a credential helper
+        run: |
+          gcloud auth configure-docker
+
+      - name: Set environment name
+        id: env-name
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "env_name=production" >> $GITHUB_OUTPUT
+            echo "service_name=${{ env.SERVICE }}" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == "refs/heads/develop" ]]; then
+            echo "env_name=staging" >> $GITHUB_OUTPUT
+            echo "service_name=${{ env.SERVICE }}-staging" >> $GITHUB_OUTPUT
+          else
+            # For feature branches, create a preview environment
+            BRANCH_NAME=${GITHUB_REF#refs/heads/}
+            SAFE_BRANCH_NAME=$(echo $BRANCH_NAME | sed 's/[^a-z0-9-]/-/g' | cut -c1-28)
+            echo "env_name=preview" >> $GITHUB_OUTPUT
+            echo "service_name=${{ env.SERVICE }}-$SAFE_BRANCH_NAME" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build Docker image
+        run: |
+          docker build -t gcr.io/${{ env.PROJECT_ID }}/${{ env.SERVICE }}:${{ github.sha }} .
+          docker tag gcr.io/${{ env.PROJECT_ID }}/${{ env.SERVICE }}:${{ github.sha }} \
+            gcr.io/${{ env.PROJECT_ID }}/${{ env.SERVICE }}:${{ steps.env-name.outputs.env_name }}
+
+      - name: Push Docker image
+        run: |
+          docker push gcr.io/${{ env.PROJECT_ID }}/${{ env.SERVICE }}:${{ github.sha }}
+          docker push gcr.io/${{ env.PROJECT_ID }}/${{ env.SERVICE }}:${{ steps.env-name.outputs.env_name }}
+
+      - name: Deploy to Cloud Run
+        id: deploy
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ steps.env-name.outputs.service_name }}
+          image: gcr.io/${{ env.PROJECT_ID }}/${{ env.SERVICE }}:${{ github.sha }}
+          region: ${{ env.REGION }}
+          flags: |
+            --port=50165
+            --allow-unauthenticated
+          env_vars: |
+            AUTH_URL=${{ secrets.AUTH_URL || 'https://auth.graffiticode.org' }}
+            NODE_ENV=${{ steps.env-name.outputs.env_name }}
+          labels: |
+            commit-sha=${{ github.sha }}
+            branch=${{ github.ref_name }}
+            environment=${{ steps.env-name.outputs.env_name }}
+
+      - name: Show deployment URL
+        run: echo "${{ steps.deploy.outputs.url }}"
+
+      - name: Comment on PR with deployment URL
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: \`🚀 Deployed to ${{ steps.deploy.outputs.url }}\`
+            })
+
+      # Run smoke tests
+      - name: Run smoke test
+        run: |
+          sleep 10  # Wait for service to be ready
+          response=$(curl -s -o /dev/null -w "%{http_code}" "${{ steps.deploy.outputs.url }}/health" || echo "000")
+          if [ "$response" = "200" ]; then
+            echo "✅ Health check passed"
+          else
+            echo "❌ Health check failed with status $response"
+            exit 1
+          fi
+
+  cleanup:
+    name: Cleanup old preview deployments
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    steps:
+      - name: Google Auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Delete preview service
+        run: |
+          BRANCH_NAME=${{ github.head_ref }}
+          SAFE_BRANCH_NAME=$(echo $BRANCH_NAME | sed 's/[^a-z0-9-]/-/g' | cut -c1-28)
+          SERVICE_NAME="${{ env.SERVICE }}-$SAFE_BRANCH_NAME"
+
+          # Check if service exists before trying to delete
+          if gcloud run services describe $SERVICE_NAME --region=${{ env.REGION }} 2>/dev/null; then
+            gcloud run services delete $SERVICE_NAME --region=${{ env.REGION }} --quiet
+            echo "✅ Deleted preview service: $SERVICE_NAME"
+          else
+            echo "ℹ️ Preview service $SERVICE_NAME not found, skipping cleanup"
+          fi
