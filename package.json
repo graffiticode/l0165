@@ -13,7 +13,10 @@
     "lint": "npm run -w packages/api lint; npm run -w packages/app lint",
     "lint:fix": "npm run -w packages/api lint:fix; npm run -w packages/app lint:fix",
     "pack": "rm *.tgz; npm -w packages/app pack",
-    "publish": "npm -w packages/app publish --access=public"
+    "publish": "npm -w packages/app publish --access=public",
+    "gcp:build": "gcloud builds submit --config cloudbuild.yaml --substitutions=COMMIT_SHA=$(git rev-parse --short HEAD 2>/dev/null || echo latest)",
+    "gcp:deploy": "gcloud run deploy l0165 --source . --port 50165 --region us-central1 --platform managed --allow-unauthenticated",
+    "gcp:logs": "gcloud run logs read l0165 --region us-central1"
   },
   "devDependencies": {
     "eslint": "^8.44.0",
