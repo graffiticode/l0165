@@ -2,7 +2,7 @@ import bent from "bent";
 
 function getApiUrl() {
   const host = window.document.location.host;
-  return host.indexOf("localhost") === 0 && "http://localhost:3100" || "https://api.graffiticode.com";
+  return host.indexOf("localhost") === 0 && "http://localhost:3100" || "https://api.graffiticode.org";
 }
 
 export const getApiTask = async ({ auth, id }) => {

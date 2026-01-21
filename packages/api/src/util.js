@@ -100,7 +100,7 @@ export function getClientHost(lang, config) {
   if (config.useLocalCompiles) {
     return "localhost";
   }
-  return "console.graffiticode.com";
+  return "console.graffiticode.org";
 }
 
 export function getClientPort(lang, config) {

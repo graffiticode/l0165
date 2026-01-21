@@ -256,12 +256,12 @@
         );
 
         // Special debug for Graffiticode messages
-        if (event.origin === 'https://graffiticode.com' || event.origin === 'http://localhost:3000') {
+        if (event.origin === 'https://graffiticode.org' || event.origin === 'http://localhost:3000') {
           console.log("*** RECEIVED GRAFFITICODE MESSAGE ***", event.data);
         }
 
         // Verify origin for security (allow both production and local)
-        if (event.origin !== 'https://graffiticode.com' && event.origin !== 'http://localhost:3000') {
+        if (event.origin !== 'https://graffiticode.org' && event.origin !== 'http://localhost:3000') {
           return;
         }
         // If we're in an iframe, also propagate the message to parent
@@ -541,7 +541,7 @@
           const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
           window.opener.postMessage(
             { type: 'learnosity-ready' },
-            isLocal ? 'http://localhost:3000' : 'https://graffiticode.com'
+            isLocal ? 'http://localhost:3000' : 'https://graffiticode.org'
           );
           console.log('Sent learnosity-ready message to opener');
         }
@@ -650,7 +650,7 @@
 
         // Always use the /editor page to ensure proper communication
         // But we need a different approach for editing vs creating
-        const baseUrl = isLocal ? 'http://localhost:3000/editor' : 'https://graffiticode.com/editor';
+        const baseUrl = isLocal ? 'http://localhost:3000/editor' : 'https://graffiticode.org/editor';
 
         const fullUrl = `${baseUrl}?${params.toString()}`;
 
@@ -701,7 +701,7 @@
               graffiticodeWindow.postMessage({
                 type: 'establish-communication',
                 origin: window.location.origin
-              }, isLocal ? 'http://localhost:3000' : 'https://graffiticode.com');
+              }, isLocal ? 'http://localhost:3000' : 'https://graffiticode.org');
             } catch (e) {
               // Window not ready yet
             }
