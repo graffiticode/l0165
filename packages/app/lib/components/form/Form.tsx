@@ -8,7 +8,7 @@ function classNames(...classes) {
   return classes.filter(Boolean).join(' ')
 }
 
-function renderErrors(errors: string[]) {
+function renderErrors(errors: { message: string; from: number; to: number }[]) {
   return (
     <div className="flex flex-col gap-2">
       {errors.map((error, i) => (
@@ -16,7 +16,7 @@ function renderErrors(errors: string[]) {
           key={i}
           className="rounded-md p-3 border text-sm bg-red-50 border-red-200 text-red-800"
         >
-          {error}
+          {error.message}
         </div>
       ))}
     </div>
@@ -24,8 +24,8 @@ function renderErrors(errors: string[]) {
 }
 
 export const Form = ({ state }) => {
-  if (Array.isArray(state.data?.ERRORS) && state.data.ERRORS.length > 0) {
-    return renderErrors(state.data.ERRORS);
+  if (Array.isArray(state.data?.errors) && state.data.errors.length > 0) {
+    return renderErrors(state.data.errors);
   }
   return (
     <div
